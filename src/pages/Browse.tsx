@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { browseBooks } from "../api/books";
 import type { BookResponse } from "../api/books";
+import { createBorrowRequest } from "../api/borrow";
 import { useAuth } from "../context/AuthContext";
 import "./Browse.css";
 
@@ -11,6 +12,8 @@ function Browse() {
   const [requestingBookId, setRequestingBookId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [sentRequests, setSentRequests] = useState<Set<number>>(new Set());
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -27,10 +30,20 @@ function Browse() {
     fetchBooks();
   }, []);
 
-  const handleRequest = (bookId: number) => {
-    setSentRequests((prev) => new Set(prev).add(bookId));
-    setRequestingBookId(null);
-    setMessage("");
+  const handleRequest = async (bookId: number) => {
+    setError("");
+    setSubmitting(true);
+
+    try {
+      await createBorrowRequest({ bookId, message });
+      setSentRequests((prev) => new Set(prev).add(bookId));
+      setRequestingBookId(null);
+      setMessage("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send request");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -76,12 +89,14 @@ function Browse() {
                     onChange={(e) => setMessage(e.target.value)}
                     rows={3}
                   />
+                  {error && <p className="form-error">{error}</p>}
                   <div className="request-actions">
                     <button
                       className="btn btn-primary"
                       onClick={() => handleRequest(book.id)}
+                      disabled={submitting}
                     >
-                      Send Request
+                      {submitting ? "Sending..." : "Send request"}
                     </button>
                     <button
                       className="btn btn-secondary"
