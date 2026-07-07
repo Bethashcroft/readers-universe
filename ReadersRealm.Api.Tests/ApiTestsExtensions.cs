@@ -11,6 +11,7 @@ public record BookResult(
     string Author,
     string CoverUrl,
     string Shelf,
+    string Offer,
     int? Rating,
     string UserId
 );
@@ -55,7 +56,8 @@ public static class ApiTestExtensions
     public static async Task<BookResult> AddBookAsync(
         this HttpClient client,
         string title,
-        string shelf = "available-to-borrow"
+        string shelf = "read",
+        string offer = "none"
     )
     {
         var response = await client.PostAsJsonAsync(
@@ -66,6 +68,7 @@ public static class ApiTestExtensions
                 author = "Test Author",
                 coverUrl = "x",
                 shelf,
+                offer,
                 rating = (int?)null,
             }
         );

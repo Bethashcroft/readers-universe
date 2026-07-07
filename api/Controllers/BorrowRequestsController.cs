@@ -178,7 +178,7 @@ public class BorrowRequestsController : ControllerBase
 
         if (request.Status == "accepted")
         {
-            borrowRequest.Book.Shelf = "lent-out";
+            borrowRequest.Book.Offer = "lent-out";
 
             var competing = await _context
                 .BorrowRequests.Where(r =>

@@ -29,5 +29,9 @@ api/obj/
 ReadersRealm.Api.Tests/bin/
 ReadersRealm.Api.Tests/obj/
 
+# Uploaded user content
+api/wwwroot/avatars/*
+!api/wwwroot/avatars/.gitkeep
+
 # Local env overrides
 .env.local

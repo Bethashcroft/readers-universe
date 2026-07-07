@@ -10,7 +10,7 @@ import {
   deleteReview,
 } from "../api/reviews";
 import type { ReviewResponse } from "../api/reviews";
-import type { ShelfType } from "../types/book";
+import type { ShelfType, OfferType } from "../types/book";
 import "./BookDetail.css";
 
 const shelfLabels: Record<ShelfType, string> = {
@@ -18,9 +18,13 @@ const shelfLabels: Record<ShelfType, string> = {
   read: "Read",
   tbr: "To Be Read",
   dnf: "Did Not Finish",
+};
+
+const offerLabels: Record<OfferType, string> = {
+  none: "Not offered",
   "available-to-borrow": "Available to Borrow",
-  "lent-out": "Lent Out",
   "for-sale": "For Sale",
+  "lent-out": "Lent Out",
 };
 
 function BookDetail() {
@@ -36,6 +40,7 @@ function BookDetail() {
   const [text, setText] = useState("");
   const [error, setError] = useState("");
   const [shelf, setShelf] = useState("");
+  const [offer, setOffer] = useState("");
   const [bookRating, setBookRating] = useState("");
 
   useEffect(() => {
@@ -44,6 +49,7 @@ function BookDetail() {
         const data = await getBook(Number(id));
         setBook(data);
         setShelf(data.shelf);
+        setOffer(data.offer);
         setBookRating(data.rating ? String(data.rating) : "");
         const reviewData = await getReviewsForBook(data.id);
         setReviews(reviewData);
@@ -75,12 +81,31 @@ function BookDetail() {
         author: book.author,
         coverUrl: book.coverUrl,
         shelf: newShelf,
+        offer,
         rating: bookRating ? Number(bookRating) : null,
       });
       setBook({ ...book, shelf: newShelf });
     } catch (err) {
       console.error("Failed to update shelf:", err);
       setShelf(book.shelf);
+    }
+  };
+
+  const handleOfferChange = async (newOffer: string) => {
+    setOffer(newOffer);
+    try {
+      await updateBook(book.id, {
+        title: book.title,
+        author: book.author,
+        coverUrl: book.coverUrl,
+        shelf,
+        offer: newOffer,
+        rating: bookRating ? Number(bookRating) : null,
+      });
+      setBook({ ...book, offer: newOffer });
+    } catch (err) {
+      console.error("Failed to update offer:", err);
+      setOffer(book.offer);
     }
   };
 
@@ -92,6 +117,7 @@ function BookDetail() {
         author: book.author,
         coverUrl: book.coverUrl,
         shelf,
+        offer,
         rating: newRating ? Number(newRating) : null,
       });
       setBook({ ...book, rating: newRating ? Number(newRating) : null });
@@ -168,6 +194,19 @@ function BookDetail() {
                   ))}
                 </select>
 
+                <label htmlFor="book-offer">Lending & Selling</label>
+                <select
+                  id="book-offer"
+                  value={offer}
+                  onChange={(e) => handleOfferChange(e.target.value)}
+                >
+                  {Object.entries(offerLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+
                 <label htmlFor="book-rating">Rating</label>
                 <select
                   id="book-rating"
@@ -182,6 +221,15 @@ function BookDetail() {
                   <option value="5">★★★★★</option>
                 </select>
               </div>
+
+              {offer === "for-sale" && (
+                <button
+                  className="btn btn-secondary offer-clear"
+                  onClick={() => handleOfferChange("none")}
+                >
+                  Sold / No Longer Selling
+                </button>
+              )}
 
               <button className="btn-delete" onClick={handleDelete}>
                 Delete Book

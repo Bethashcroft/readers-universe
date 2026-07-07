@@ -9,6 +9,7 @@ const book: BookResponse = {
   author: "J.R.R. Tolkien",
   coverUrl: "x",
   shelf: "read",
+  offer: "none",
   rating: 4,
   userId: "u1",
   sellerVintedUrl: "",

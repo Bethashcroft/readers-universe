@@ -59,6 +59,11 @@
   text-transform: capitalize;
 }
 
+.offer-clear {
+  width: fit-content;
+  margin-top: 4px;
+}
+
 .reviews-section h2,
 .add-review-section h2 {
   font-size: 22px;

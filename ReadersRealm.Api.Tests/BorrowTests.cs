@@ -77,7 +77,8 @@ public class BorrowTests : IDisposable
         var bookAfter = await ownerClient.GetFromJsonAsync<BookResult>(
             $"/api/books/{book.Id}"
         );
-        Assert.Equal("lent-out", bookAfter!.Shelf);
+        Assert.Equal("lent-out", bookAfter!.Offer);
+        Assert.Equal("read", bookAfter.Shelf);
     }
 
         [Fact]

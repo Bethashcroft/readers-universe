@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBooks } from "../context/BookContext";
-import type { ShelfType } from "../types/book";
+import type { ShelfType, OfferType } from "../types/book";
 import "../styles/forms.css";
 import "./AddBook.css";
 
@@ -12,6 +12,7 @@ function AddBook() {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [shelf, setShelf] = useState<ShelfType>("tbr");
+  const [offer, setOffer] = useState<OfferType>("none");
   const [rating, setRating] = useState("");
   const [error, setError] = useState("");
 
@@ -25,6 +26,7 @@ function AddBook() {
         author,
         coverUrl: `https://placehold.co/200x300/1a1430/a9a3cc?text=${encodeURIComponent(title)}`,
         shelf,
+        offer,
         rating: rating ? Number(rating) : null,
       });
       navigate("/shelves");
@@ -67,9 +69,18 @@ function AddBook() {
           <option value="read">Read</option>
           <option value="tbr">To Be Read</option>
           <option value="dnf">Did Not Finish</option>
+        </select>
+
+        <label htmlFor="offer">Lending & Selling</label>
+        <select
+          id="offer"
+          value={offer}
+          onChange={(e) => setOffer(e.target.value as OfferType)}
+        >
+          <option value="none">Not offered</option>
           <option value="available-to-borrow">Available to Borrow</option>
-          <option value="lent-out">Lent Out</option>
           <option value="for-sale">For Sale</option>
+          <option value="lent-out">Lent Out</option>
         </select>
 
         <label htmlFor="rating">Optional Rating</label>

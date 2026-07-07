@@ -9,9 +9,6 @@ const shelfLabels: Record<ShelfType, string> = {
   read: "Read",
   tbr: "To Be Read",
   dnf: "Did Not Finish",
-  "available-to-borrow": "Available to Borrow",
-  "lent-out": "Lent Out",
-  "for-sale": "For Sale",
 };
 
 function Shelves() {

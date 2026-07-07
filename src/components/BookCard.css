@@ -50,3 +50,31 @@ a.book-card {
   color: #f59e0b;
   margin-top: 4px;
 }
+
+.book-offer-badge {
+  display: inline-block;
+  width: fit-content;
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.book-offer-badge.available-to-borrow {
+  background-color: rgba(34, 197, 94, 0.16);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.book-offer-badge.for-sale {
+  background-color: rgba(99, 102, 241, 0.18);
+  color: #c7d2fe;
+  border: 1px solid rgba(99, 102, 241, 0.32);
+}
+
+.book-offer-badge.lent-out {
+  background-color: rgba(250, 204, 21, 0.16);
+  color: #fde68a;
+  border: 1px solid rgba(250, 204, 21, 0.3);
+}

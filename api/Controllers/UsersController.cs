@@ -39,6 +39,7 @@ public class UsersController : ControllerBase
                 DisplayName = user.DisplayName,
                 Bio = user.Bio,
                 VintedUrl = user.VintedUrl,
+                AvatarUrl = user.AvatarUrl,
                 JoinedDate = user.JoinedDate,
             }
         );
@@ -60,7 +61,9 @@ public class UsersController : ControllerBase
 
         if (user.Id != requesterId)
         {
-            query = query.Where(b => b.Shelf != "tbr" && b.Shelf != "dnf");
+            query = query.Where(b =>
+                (b.Shelf != "tbr" && b.Shelf != "dnf") || b.Offer != "none"
+            );
         }
 
         var books = await query
@@ -71,6 +74,7 @@ public class UsersController : ControllerBase
                 Author = b.Author,
                 CoverUrl = b.CoverUrl,
                 Shelf = b.Shelf,
+                Offer = b.Offer,
                 Rating = b.Rating,
                 UserId = b.UserId,
             })

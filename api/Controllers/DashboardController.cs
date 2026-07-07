@@ -27,7 +27,7 @@ public class DashboardController : ControllerBase
 
         var nearby = await _context.Books.CountAsync(b =>
             b.UserId != userId
-            && (b.Shelf == "available-to-borrow" || b.Shelf == "for-sale")
+            && (b.Offer == "available-to-borrow" || b.Offer == "for-sale")
         );
 
         var pendingRequests = await _context.BorrowRequests.CountAsync(r =>

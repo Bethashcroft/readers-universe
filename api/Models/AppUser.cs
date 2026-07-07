@@ -14,5 +14,8 @@ public class AppUser : IdentityUser
     [MaxLength(300)]
     public string VintedUrl { get; set; } = string.Empty;
 
+    [MaxLength(300)]
+    public string AvatarUrl { get; set; } = string.Empty;
+
     public DateTime JoinedDate { get; set; } = DateTime.UtcNow;
 }

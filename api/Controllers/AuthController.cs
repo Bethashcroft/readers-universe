@@ -15,11 +15,17 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly IConfiguration _config;
+    private readonly IWebHostEnvironment _env;
 
-    public AuthController(UserManager<AppUser> userManager, IConfiguration config)
+    public AuthController(
+        UserManager<AppUser> userManager,
+        IConfiguration config,
+        IWebHostEnvironment env
+    )
     {
         _userManager = userManager;
         _config = config;
+        _env = env;
     }
 
     [HttpPost("register")]
@@ -92,6 +98,7 @@ public class AuthController : ControllerBase
                 DisplayName = user.DisplayName,
                 Bio = user.Bio,
                 VintedUrl = user.VintedUrl,
+                AvatarUrl = user.AvatarUrl,
                 JoinedDate = user.JoinedDate,
             }
         );
@@ -122,6 +129,80 @@ public class AuthController : ControllerBase
                 DisplayName = user.DisplayName,
                 Bio = user.Bio,
                 VintedUrl = user.VintedUrl,
+                AvatarUrl = user.AvatarUrl,
+                JoinedDate = user.JoinedDate,
+            }
+        );
+    }
+
+    [HttpPost("profile/avatar")]
+    [Authorize]
+    public async Task<IActionResult> UploadAvatar(IFormFile file)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _userManager.FindByIdAsync(userId!);
+
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(new { message = "No image was uploaded" });
+        }
+
+        if (file.Length > 2 * 1024 * 1024)
+        {
+            return BadRequest(new { message = "Image must be 2MB or smaller" });
+        }
+
+        var extensions = new Dictionary<string, string>
+        {
+            ["image/jpeg"] = ".jpg",
+            ["image/png"] = ".png",
+            ["image/webp"] = ".webp",
+        };
+
+        if (!extensions.TryGetValue(file.ContentType, out var extension))
+        {
+            return BadRequest(new { message = "Only JPG, PNG, or WebP images are allowed" });
+        }
+
+        var avatarsDir = Path.Combine(
+            _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot"),
+            "avatars"
+        );
+        Directory.CreateDirectory(avatarsDir);
+
+        if (!string.IsNullOrEmpty(user.AvatarUrl))
+        {
+            var oldPath = Path.Combine(avatarsDir, Path.GetFileName(user.AvatarUrl));
+            if (System.IO.File.Exists(oldPath))
+            {
+                System.IO.File.Delete(oldPath);
+            }
+        }
+
+        var fileName = $"{user.Id}-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}{extension}";
+        var filePath = Path.Combine(avatarsDir, fileName);
+
+        await using (var stream = System.IO.File.Create(filePath))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        user.AvatarUrl = $"/avatars/{fileName}";
+        await _userManager.UpdateAsync(user);
+
+        return Ok(
+            new ProfileResponse
+            {
+                UserName = user.UserName!,
+                DisplayName = user.DisplayName,
+                Bio = user.Bio,
+                VintedUrl = user.VintedUrl,
+                AvatarUrl = user.AvatarUrl,
                 JoinedDate = user.JoinedDate,
             }
         );
@@ -179,6 +260,7 @@ public class ProfileResponse
     public string DisplayName { get; set; } = string.Empty;
     public string Bio { get; set; } = string.Empty;
     public string VintedUrl { get; set; } = string.Empty;
+    public string AvatarUrl { get; set; } = string.Empty;
     public DateTime JoinedDate { get; set; }
 }
 

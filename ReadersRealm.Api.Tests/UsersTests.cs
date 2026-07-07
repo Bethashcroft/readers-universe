@@ -43,6 +43,24 @@ public class UsersTests : IDisposable
     }
 
     [Fact]
+    public async Task ViewingAnotherUsersProfile_ShowsPrivateShelfBooksWithActiveOffers()
+    {
+        var owner = await _client.RegisterAsync("owner");
+        _client.Authenticate(owner.Token);
+        await _client.AddBookAsync("Unread but Selling", "tbr", "for-sale");
+
+        var viewerClient = _factory.CreateClient();
+        var viewer = await viewerClient.RegisterAsync("viewer");
+        viewerClient.Authenticate(viewer.Token);
+
+        var theirBooks = await viewerClient.GetFromJsonAsync<BookResult[]>(
+            "/api/users/owner/books"
+        );
+
+        Assert.Contains(theirBooks!, b => b.Title == "Unread but Selling");
+    }
+
+    [Fact]
     public async Task ViewingYourOwnProfile_ShowsAllShelves()
     {
         var owner = await _client.RegisterAsync("owner");

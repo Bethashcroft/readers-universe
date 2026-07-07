@@ -56,11 +56,58 @@ public class BooksTests : IDisposable
                 title = "Hijacked",
                 author = "Intruder",
                 coverUrl = "x",
-                shelf = "for-sale",
+                shelf = "read",
+                offer = "for-sale",
                 rating = (int?)null,
             }
         );
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Browse_ShowsOfferedBooksRegardlessOfReadingShelf()
+    {
+        var owner = await _client.RegisterAsync("owner");
+        _client.Authenticate(owner.Token);
+        await _client.AddBookAsync("Read and Selling", "read", "for-sale");
+        await _client.AddBookAsync("Unread and Lending", "tbr", "available-to-borrow");
+        await _client.AddBookAsync("Just Read", "read");
+
+        var browse = await _client.GetFromJsonAsync<BookResult[]>("/api/books/browse");
+        var titles = browse!.Select(b => b.Title).ToArray();
+
+        Assert.Contains("Read and Selling", titles);
+        Assert.Contains("Unread and Lending", titles);
+        Assert.DoesNotContain("Just Read", titles);
+    }
+
+    [Fact]
+    public async Task ClearingTheOffer_RemovesBookFromBrowseButKeepsShelf()
+    {
+        var owner = await _client.RegisterAsync("owner");
+        _client.Authenticate(owner.Token);
+        var book = await _client.AddBookAsync("Sold on Vinted", "read", "for-sale");
+
+        var response = await _client.PutAsJsonAsync(
+            $"/api/books/{book.Id}",
+            new
+            {
+                title = book.Title,
+                author = book.Author,
+                coverUrl = book.CoverUrl,
+                shelf = book.Shelf,
+                offer = "none",
+                rating = book.Rating,
+            }
+        );
+        response.EnsureSuccessStatusCode();
+
+        var browse = await _client.GetFromJsonAsync<BookResult[]>("/api/books/browse");
+        Assert.DoesNotContain(browse!, b => b.Title == "Sold on Vinted");
+
+        var after = await _client.GetFromJsonAsync<BookResult>($"/api/books/{book.Id}");
+        Assert.Equal("read", after!.Shelf);
+        Assert.Equal("none", after.Offer);
     }
 }

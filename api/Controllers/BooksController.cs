@@ -37,7 +37,7 @@ public class BooksController : ControllerBase
     public async Task<IActionResult> Browse()
     {
         var books = await _context
-            .Books.Where(b => b.Shelf == "available-to-borrow" || b.Shelf == "for-sale")
+            .Books.Where(b => b.Offer == "available-to-borrow" || b.Offer == "for-sale")
             .Select(b => new BookResponse
             {
                 Id = b.Id,
@@ -45,6 +45,7 @@ public class BooksController : ControllerBase
                 Author = b.Author,
                 CoverUrl = b.CoverUrl,
                 Shelf = b.Shelf,
+                Offer = b.Offer,
                 Rating = b.Rating,
                 UserId = b.UserId,
                 SellerVintedUrl = b.User.VintedUrl,
@@ -82,6 +83,7 @@ public class BooksController : ControllerBase
             Author = request.Author,
             CoverUrl = request.CoverUrl,
             Shelf = request.Shelf,
+            Offer = request.Offer,
             Rating = request.Rating,
             UserId = userId!,
         };
@@ -113,6 +115,7 @@ public class BooksController : ControllerBase
         book.Author = request.Author;
         book.CoverUrl = request.CoverUrl;
         book.Shelf = request.Shelf;
+        book.Offer = request.Offer;
         book.Rating = request.Rating;
 
         await _context.SaveChangesAsync();
@@ -151,6 +154,7 @@ public class BooksController : ControllerBase
             Author = b.Author,
             CoverUrl = b.CoverUrl,
             Shelf = b.Shelf,
+            Offer = b.Offer,
             Rating = b.Rating,
             UserId = b.UserId,
         };
@@ -162,6 +166,7 @@ public class AddBookRequest
     public string Author { get; set; } = string.Empty;
     public string CoverUrl { get; set; } = string.Empty;
     public string Shelf { get; set; } = string.Empty;
+    public string Offer { get; set; } = "none";
     public int? Rating { get; set; }
 }
 
@@ -172,6 +177,7 @@ public class BookResponse
     public string Author { get; set; } = string.Empty;
     public string CoverUrl { get; set; } = string.Empty;
     public string Shelf { get; set; } = string.Empty;
+    public string Offer { get; set; } = "none";
     public int? Rating { get; set; }
     public string UserId { get; set; } = string.Empty;
     public string SellerVintedUrl { get; set; } = string.Empty;

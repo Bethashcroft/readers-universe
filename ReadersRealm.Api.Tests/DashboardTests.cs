@@ -24,13 +24,16 @@ public class DashboardTests : IDisposable
         var ownerClient = _factory.CreateClient();
         var owner = await ownerClient.RegisterAsync("owner");
         ownerClient.Authenticate(owner.Token);
-        var book = await ownerClient.AddBookAsync("Owner Borrow Book");
-        await ownerClient.AddBookAsync("Owner Sale Book", "for-sale");
+        var book = await ownerClient.AddBookAsync(
+            "Owner Borrow Book",
+            offer: "available-to-borrow"
+        );
+        await ownerClient.AddBookAsync("Owner Sale Book", offer: "for-sale");
 
         var borrowerClient = _factory.CreateClient();
         var borrower = await borrowerClient.RegisterAsync("borrower");
         borrowerClient.Authenticate(borrower.Token);
-        await borrowerClient.AddBookAsync("Borrower Book");
+        await borrowerClient.AddBookAsync("Borrower Book", offer: "available-to-borrow");
         await borrowerClient.RequestBookAsync(book.Id);
 
         var summary = await ownerClient.GetFromJsonAsync<DashboardResult>(

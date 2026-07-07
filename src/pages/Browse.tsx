@@ -55,7 +55,7 @@ function Browse() {
     const matchesSearch =
       book.title.toLowerCase().includes(query) ||
       book.author.toLowerCase().includes(query);
-    const matchesFilter = filter === "all" || book.shelf === filter;
+    const matchesFilter = filter === "all" || book.offer === filter;
     return matchesSearch && matchesFilter;
   });
 
@@ -124,10 +124,10 @@ function Browse() {
             <div className="browse-info">
               <h2>{book.title}</h2>
               <p className="browse-author">{book.author}</p>
-              <span className={`browse-badge ${book.shelf}`}>
-                {book.shelf === "for-sale" ? "For Sale" : "Available to Borrow"}
+              <span className={`browse-badge ${book.offer}`}>
+                {book.offer === "for-sale" ? "For Sale" : "Available to Borrow"}
               </span>
-              {book.shelf === "for-sale" ? (
+              {book.offer === "for-sale" ? (
                 <div className="for-sale-actions">
                   {book.sellerVintedUrl ? (
                     <a

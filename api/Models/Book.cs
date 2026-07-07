@@ -17,6 +17,9 @@ public class Book
 
     [MaxLength(50)]
     public string Shelf { get; set; } = string.Empty;
+
+    [MaxLength(50)]
+    public string Offer { get; set; } = "none";
     public int? Rating { get; set; }
     public string UserId { get; set; } = string.Empty;
     public AppUser User { get; set; } = null!;

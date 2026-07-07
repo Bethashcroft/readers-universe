@@ -6,6 +6,7 @@ export interface BookResponse {
   author: string;
   coverUrl: string;
   shelf: string;
+  offer: string;
   rating: number | null;
   userId: string;
   sellerVintedUrl: string;
@@ -16,6 +17,7 @@ export interface AddBookRequest {
   author: string;
   coverUrl: string;
   shelf: string;
+  offer: string;
   rating: number | null;
 }
 

@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getUserProfile, updateProfile } from "../api/profile";
+import { API_ORIGIN } from "../api/client";
+import { getUserProfile, updateProfile, uploadAvatar } from "../api/profile";
 import type { ProfileResponse } from "../api/profile";
 import { getUserBooks } from "../api/books";
 import type { BookResponse } from "../api/books";
 import BookCard from "../components/BookCard";
+import AvatarCropModal from "../components/AvatarCropModal";
 import "../styles/forms.css";
 import "./Profile.css";
 
@@ -20,6 +22,11 @@ function Profile() {
   const [bio, setBio] = useState("");
   const [vintedUrl, setVintedUrl] = useState("");
   const [error, setError] = useState("");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(
+    null,
+  );
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!username) return;
@@ -57,6 +64,30 @@ function Profile() {
     }
   };
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError("");
+    setPendingAvatarFile(file);
+    e.target.value = "";
+  };
+
+  const handleAvatarSave = async (cropped: File) => {
+    setUploadingAvatar(true);
+
+    try {
+      const updated = await uploadAvatar(cropped);
+      setProfile(updated);
+      setPendingAvatarFile(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload photo");
+      setPendingAvatarFile(null);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   if (loading) {
     return <p>Loading profile...</p>;
   }
@@ -70,10 +101,32 @@ function Profile() {
   return (
     <div className="profile">
       <div className="profile-header">
-        <div className="profile-avatar">{profile.displayName.charAt(0)}</div>
+        <div className="profile-avatar">
+          {profile.avatarUrl ? (
+            <img src={`${API_ORIGIN}${profile.avatarUrl}`} alt="" />
+          ) : (
+            profile.displayName.charAt(0)
+          )}
+        </div>
         <div className="profile-info">
           {editing ? (
             <div className="edit-profile-form">
+              <label>Profile Photo</label>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="avatar-input"
+                onChange={handleAvatarChange}
+              />
+              <button
+                type="button"
+                className="btn btn-primary avatar-upload-btn"
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={uploadingAvatar}
+              >
+                {uploadingAvatar ? "Uploading..." : "Upload New Photo"}
+              </button>
               <label htmlFor="displayName">Display Name</label>
               <input
                 type="text"
@@ -121,12 +174,18 @@ function Profile() {
               <p className="profile-bio">{profile.bio || "No bio yet"}</p>
               {profile.vintedUrl && (
                 <a
-                  className="profile-vinted"
+                  className="btn-vinted profile-vinted"
                   href={profile.vintedUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Vinted profile ↗
+                  <img
+                    className="vinted-logo"
+                    src="/vinted-logo.png"
+                    alt=""
+                    aria-hidden="true"
+                  />
+                  Vinted Profile
                 </a>
               )}
               <div className="profile-meta">
@@ -165,6 +224,15 @@ function Profile() {
         </div>
         {books.length === 0 && <p>No books added yet.</p>}
       </section>
+
+      {pendingAvatarFile && (
+        <AvatarCropModal
+          file={pendingAvatarFile}
+          saving={uploadingAvatar}
+          onCancel={() => setPendingAvatarFile(null)}
+          onSave={handleAvatarSave}
+        />
+      )}
     </div>
   );
 }

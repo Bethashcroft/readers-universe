@@ -1,7 +1,9 @@
 export const BASE_URL =
   import.meta.env.VITE_API_URL ?? "http://localhost:5128/api";
 
-export function getHeaders(): Record<string, string> {
+export const API_ORIGIN = BASE_URL.replace(/\/api$/, "");
+
+export function getAuthHeaders(): Record<string, string> {
   let token: string | null = null;
   const stored = localStorage.getItem("user");
   if (stored) {
@@ -12,15 +14,20 @@ export function getHeaders(): Record<string, string> {
     }
   }
 
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
+  const headers: Record<string, string> = {};
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
   return headers;
+}
+
+export function getHeaders(): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+    ...getAuthHeaders(),
+  };
 }
 
 export async function parseError(

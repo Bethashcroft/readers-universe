@@ -6,6 +6,12 @@ interface BookCardProps {
   book: BookResponse;
 }
 
+const offerBadges: Record<string, string> = {
+  "available-to-borrow": "Available to Borrow",
+  "for-sale": "For Sale",
+  "lent-out": "Lent Out",
+};
+
 function BookCard({ book }: BookCardProps) {
   return (
     <Link to={`/book/${book.id}`} className="book-card">
@@ -22,6 +28,11 @@ function BookCard({ book }: BookCardProps) {
             {"★".repeat(book.rating)}
             {"☆".repeat(5 - book.rating)}
           </p>
+        )}
+        {offerBadges[book.offer] && (
+          <span className={`book-offer-badge ${book.offer}`}>
+            {offerBadges[book.offer]}
+          </span>
         )}
       </div>
     </Link>
