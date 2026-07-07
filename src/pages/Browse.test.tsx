@@ -9,7 +9,7 @@ vi.mock("../api/books", () => ({
   browseBooks: mockBrowseBooks,
 }));
 
-vi.mock("../context/AuthContext", () => ({
+vi.mock("../context/useAuth", () => ({
   useAuth: () => ({
     user: {
       token: "t",

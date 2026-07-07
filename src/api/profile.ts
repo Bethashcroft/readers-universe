@@ -1,4 +1,4 @@
-import { BASE_URL, getAuthHeaders, getHeaders, parseError } from "./client";
+import { getAuthHeaders, request } from "./client";
 
 export interface ProfileResponse {
   userName: string;
@@ -15,49 +15,26 @@ export interface UpdateProfileRequest {
   vintedUrl: string;
 }
 
-export async function getUserProfile(
-  username: string,
-): Promise<ProfileResponse> {
-  const response = await fetch(`${BASE_URL}/users/${username}`, {
-    headers: getHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to fetch profile"));
-  }
-
-  return response.json();
+export function getUserProfile(username: string): Promise<ProfileResponse> {
+  return request(`/users/${username}`, "Failed to fetch profile");
 }
 
-export async function updateProfile(
+export function updateProfile(
   data: UpdateProfileRequest,
 ): Promise<ProfileResponse> {
-  const response = await fetch(`${BASE_URL}/auth/profile`, {
+  return request("/auth/profile", "Failed to update profile", {
     method: "PUT",
-    headers: getHeaders(),
     body: JSON.stringify(data),
   });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to update profile"));
-  }
-
-  return response.json();
 }
 
-export async function uploadAvatar(file: File): Promise<ProfileResponse> {
+export function uploadAvatar(file: File): Promise<ProfileResponse> {
   const body = new FormData();
   body.append("file", file);
 
-  const response = await fetch(`${BASE_URL}/auth/profile/avatar`, {
+  return request("/auth/profile/avatar", "Failed to upload photo", {
     method: "POST",
     headers: getAuthHeaders(),
     body,
   });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to upload photo"));
-  }
-
-  return response.json();
 }

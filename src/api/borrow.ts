@@ -1,4 +1,4 @@
-import { BASE_URL, getHeaders, parseError } from "./client";
+import { request, requestVoid } from "./client";
 
 export type BorrowStatus = "pending" | "accepted" | "declined";
 
@@ -19,58 +19,31 @@ export interface CreateBorrowRequest {
   message: string;
 }
 
-export async function createBorrowRequest(
-  request: CreateBorrowRequest,
+export function createBorrowRequest(
+  data: CreateBorrowRequest,
 ): Promise<BorrowRequestResponse> {
-  const response = await fetch(`${BASE_URL}/borrowrequests`, {
+  return request("/borrowrequests", "Failed to send borrow request", {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(request),
+    body: JSON.stringify(data),
   });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to send borrow request"));
-  }
-
-  return response.json();
 }
 
-export async function getMyRequests(): Promise<BorrowRequestResponse[]> {
-  const response = await fetch(`${BASE_URL}/borrowrequests`, {
-    headers: getHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to fetch borrow requests"));
-  }
-
-  return response.json();
+export function getMyRequests(): Promise<BorrowRequestResponse[]> {
+  return request("/borrowrequests", "Failed to fetch borrow requests");
 }
 
-export async function updateBorrowStatus(
+export function updateBorrowStatus(
   id: number,
   status: BorrowStatus,
 ): Promise<BorrowRequestResponse> {
-  const response = await fetch(`${BASE_URL}/borrowrequests/${id}`, {
+  return request(`/borrowrequests/${id}`, "Failed to update borrow request", {
     method: "PUT",
-    headers: getHeaders(),
     body: JSON.stringify({ status }),
   });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to update borrow request"));
-  }
-
-  return response.json();
 }
 
-export async function withdrawBorrowRequest(id: number): Promise<void> {
-  const response = await fetch(`${BASE_URL}/borrowrequests/${id}`, {
+export function withdrawBorrowRequest(id: number): Promise<void> {
+  return requestVoid(`/borrowrequests/${id}`, "Failed to withdraw request", {
     method: "DELETE",
-    headers: getHeaders(),
   });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to withdraw request"));
-  }
 }

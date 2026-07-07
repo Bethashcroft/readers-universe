@@ -53,3 +53,37 @@ export async function parseError(
   if (Array.isArray(data) && data[0]?.description) return data[0].description;
   return fallback;
 }
+
+async function checkedFetch(
+  path: string,
+  fallback: string,
+  options: RequestInit,
+): Promise<Response> {
+  const response = await fetch(`${BASE_URL}${path}`, {
+    headers: getHeaders(),
+    ...options,
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response, fallback));
+  }
+
+  return response;
+}
+
+export async function request<T>(
+  path: string,
+  fallback: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const response = await checkedFetch(path, fallback, options);
+  return response.json();
+}
+
+export async function requestVoid(
+  path: string,
+  fallback: string,
+  options: RequestInit = {},
+): Promise<void> {
+  await checkedFetch(path, fallback, options);
+}

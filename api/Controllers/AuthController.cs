@@ -91,17 +91,7 @@ public class AuthController : ControllerBase
             return NotFound();
         }
 
-        return Ok(
-            new ProfileResponse
-            {
-                UserName = user.UserName!,
-                DisplayName = user.DisplayName,
-                Bio = user.Bio,
-                VintedUrl = user.VintedUrl,
-                AvatarUrl = user.AvatarUrl,
-                JoinedDate = user.JoinedDate,
-            }
-        );
+        return Ok(ProfileResponse.FromUser(user));
     }
 
     [HttpPut("profile")]
@@ -122,17 +112,7 @@ public class AuthController : ControllerBase
 
         await _userManager.UpdateAsync(user);
 
-        return Ok(
-            new ProfileResponse
-            {
-                UserName = user.UserName!,
-                DisplayName = user.DisplayName,
-                Bio = user.Bio,
-                VintedUrl = user.VintedUrl,
-                AvatarUrl = user.AvatarUrl,
-                JoinedDate = user.JoinedDate,
-            }
-        );
+        return Ok(ProfileResponse.FromUser(user));
     }
 
     [HttpPost("profile/avatar")]
@@ -195,17 +175,7 @@ public class AuthController : ControllerBase
         user.AvatarUrl = $"/avatars/{fileName}";
         await _userManager.UpdateAsync(user);
 
-        return Ok(
-            new ProfileResponse
-            {
-                UserName = user.UserName!,
-                DisplayName = user.DisplayName,
-                Bio = user.Bio,
-                VintedUrl = user.VintedUrl,
-                AvatarUrl = user.AvatarUrl,
-                JoinedDate = user.JoinedDate,
-            }
-        );
+        return Ok(ProfileResponse.FromUser(user));
     }
 
     private string GenerateToken(AppUser user)
@@ -262,6 +232,17 @@ public class ProfileResponse
     public string VintedUrl { get; set; } = string.Empty;
     public string AvatarUrl { get; set; } = string.Empty;
     public DateTime JoinedDate { get; set; }
+
+    public static ProfileResponse FromUser(AppUser user) =>
+        new()
+        {
+            UserName = user.UserName!,
+            DisplayName = user.DisplayName,
+            Bio = user.Bio,
+            VintedUrl = user.VintedUrl,
+            AvatarUrl = user.AvatarUrl,
+            JoinedDate = user.JoinedDate,
+        };
 }
 
 public class UpdateProfileRequest

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { API_ORIGIN } from "../api/client";
 import { getUserProfile, updateProfile, uploadAvatar } from "../api/profile";
 import type { ProfileResponse } from "../api/profile";
@@ -8,6 +8,7 @@ import { getUserBooks } from "../api/books";
 import type { BookResponse } from "../api/books";
 import BookCard from "../components/BookCard";
 import AvatarCropModal from "../components/AvatarCropModal";
+import VintedButton from "../components/VintedButton";
 import "../styles/forms.css";
 import "./Profile.css";
 
@@ -173,20 +174,11 @@ function Profile() {
               <p className="profile-username">@{profile.userName}</p>
               <p className="profile-bio">{profile.bio || "No bio yet"}</p>
               {profile.vintedUrl && (
-                <a
-                  className="btn-vinted profile-vinted"
+                <VintedButton
                   href={profile.vintedUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img
-                    className="vinted-logo"
-                    src="/vinted-logo.png"
-                    alt=""
-                    aria-hidden="true"
-                  />
-                  Vinted Profile
-                </a>
+                  label="Vinted Profile"
+                  className="profile-vinted"
+                />
               )}
               <div className="profile-meta">
                 {isOwnProfile && (

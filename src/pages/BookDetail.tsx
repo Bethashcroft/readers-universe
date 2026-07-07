@@ -1,31 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useBooks } from "../context/BookContext";
-import { useAuth } from "../context/AuthContext";
+import { useBooks } from "../context/useBooks";
+import { useAuth } from "../context/useAuth";
 import { getBook } from "../api/books";
-import type { BookResponse } from "../api/books";
+import type { BookResponse, AddBookRequest } from "../api/books";
 import {
   getReviewsForBook,
   addReview as addReviewApi,
   deleteReview,
 } from "../api/reviews";
 import type { ReviewResponse } from "../api/reviews";
-import type { ShelfType, OfferType } from "../types/book";
+import { shelfLabels, offerLabels } from "../types/book";
 import "./BookDetail.css";
-
-const shelfLabels: Record<ShelfType, string> = {
-  "currently-reading": "Currently Reading",
-  read: "Read",
-  tbr: "To Be Read",
-  dnf: "Did Not Finish",
-};
-
-const offerLabels: Record<OfferType, string> = {
-  none: "Not offered",
-  "available-to-borrow": "Available to Borrow",
-  "for-sale": "For Sale",
-  "lent-out": "Lent Out",
-};
 
 function BookDetail() {
   const { updateBook, removeBook } = useBooks();
@@ -73,17 +59,21 @@ function BookDetail() {
 
   const isOwner = user?.userId === book.userId;
 
+  const saveBook = (changes: Partial<AddBookRequest>) =>
+    updateBook(book.id, {
+      title: book.title,
+      author: book.author,
+      coverUrl: book.coverUrl,
+      shelf,
+      offer,
+      rating: bookRating ? Number(bookRating) : null,
+      ...changes,
+    });
+
   const handleShelfChange = async (newShelf: string) => {
     setShelf(newShelf);
     try {
-      await updateBook(book.id, {
-        title: book.title,
-        author: book.author,
-        coverUrl: book.coverUrl,
-        shelf: newShelf,
-        offer,
-        rating: bookRating ? Number(bookRating) : null,
-      });
+      await saveBook({ shelf: newShelf });
       setBook({ ...book, shelf: newShelf });
     } catch (err) {
       console.error("Failed to update shelf:", err);
@@ -94,14 +84,7 @@ function BookDetail() {
   const handleOfferChange = async (newOffer: string) => {
     setOffer(newOffer);
     try {
-      await updateBook(book.id, {
-        title: book.title,
-        author: book.author,
-        coverUrl: book.coverUrl,
-        shelf,
-        offer: newOffer,
-        rating: bookRating ? Number(bookRating) : null,
-      });
+      await saveBook({ offer: newOffer });
       setBook({ ...book, offer: newOffer });
     } catch (err) {
       console.error("Failed to update offer:", err);
@@ -112,14 +95,7 @@ function BookDetail() {
   const handleRatingChange = async (newRating: string) => {
     setBookRating(newRating);
     try {
-      await updateBook(book.id, {
-        title: book.title,
-        author: book.author,
-        coverUrl: book.coverUrl,
-        shelf,
-        offer,
-        rating: newRating ? Number(newRating) : null,
-      });
+      await saveBook({ rating: newRating ? Number(newRating) : null });
       setBook({ ...book, rating: newRating ? Number(newRating) : null });
     } catch (err) {
       console.error("Failed to update rating:", err);

@@ -66,6 +66,63 @@ public class BooksTests : IDisposable
     }
 
     [Fact]
+    public async Task AddingBookWithInvalidShelfOrOffer_ReturnsBadRequest()
+    {
+        var owner = await _client.RegisterAsync("owner");
+        _client.Authenticate(owner.Token);
+
+        var badShelf = await _client.PostAsJsonAsync(
+            "/api/books",
+            new
+            {
+                title = "Bad Shelf",
+                author = "x",
+                coverUrl = "x",
+                shelf = "banana",
+                offer = "none",
+                rating = (int?)null,
+            }
+        );
+        Assert.Equal(HttpStatusCode.BadRequest, badShelf.StatusCode);
+
+        var badOffer = await _client.PostAsJsonAsync(
+            "/api/books",
+            new
+            {
+                title = "Bad Offer",
+                author = "x",
+                coverUrl = "x",
+                shelf = "read",
+                offer = "banana",
+                rating = (int?)null,
+            }
+        );
+        Assert.Equal(HttpStatusCode.BadRequest, badOffer.StatusCode);
+    }
+
+    [Fact]
+    public async Task FetchingSomeoneElsesPrivateShelfBook_ReturnsNotFound()
+    {
+        var ownerClient = _factory.CreateClient();
+        var owner = await ownerClient.RegisterAsync("owner");
+        ownerClient.Authenticate(owner.Token);
+        var privateBook = await ownerClient.AddBookAsync("Secret Wishlist", "tbr");
+        var offeredBook = await ownerClient.AddBookAsync("Public Wishlist", "tbr", "for-sale");
+
+        var viewer = await _client.RegisterAsync("viewer");
+        _client.Authenticate(viewer.Token);
+
+        var hidden = await _client.GetAsync($"/api/books/{privateBook.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, hidden.StatusCode);
+
+        var visible = await _client.GetAsync($"/api/books/{offeredBook.Id}");
+        Assert.Equal(HttpStatusCode.OK, visible.StatusCode);
+
+        var own = await ownerClient.GetAsync($"/api/books/{privateBook.Id}");
+        Assert.Equal(HttpStatusCode.OK, own.StatusCode);
+    }
+
+    [Fact]
     public async Task Browse_ShowsOfferedBooksRegardlessOfReadingShelf()
     {
         var owner = await _client.RegisterAsync("owner");

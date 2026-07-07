@@ -1,4 +1,4 @@
-import { BASE_URL, getHeaders, parseError } from "./client";
+import { request, requestVoid } from "./client";
 
 export interface ReviewResponse {
   id: number;
@@ -16,41 +16,19 @@ export interface AddReviewRequest {
   bookId: number;
 }
 
-export async function getReviewsForBook(
-  bookId: number,
-): Promise<ReviewResponse[]> {
-  const response = await fetch(`${BASE_URL}/reviews/book/${bookId}`);
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to fetch reviews"));
-  }
-
-  return response.json();
+export function getReviewsForBook(bookId: number): Promise<ReviewResponse[]> {
+  return request(`/reviews/book/${bookId}`, "Failed to fetch reviews");
 }
 
-export async function addReview(
-  review: AddReviewRequest,
-): Promise<ReviewResponse> {
-  const response = await fetch(`${BASE_URL}/reviews`, {
+export function addReview(review: AddReviewRequest): Promise<ReviewResponse> {
+  return request("/reviews", "Failed to add review", {
     method: "POST",
-    headers: getHeaders(),
     body: JSON.stringify(review),
   });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to add review"));
-  }
-
-  return response.json();
 }
 
-export async function deleteReview(id: number): Promise<void> {
-  const response = await fetch(`${BASE_URL}/reviews/${id}`, {
+export function deleteReview(id: number): Promise<void> {
+  return requestVoid(`/reviews/${id}`, "Failed to delete review", {
     method: "DELETE",
-    headers: getHeaders(),
   });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to delete review"));
-  }
 }

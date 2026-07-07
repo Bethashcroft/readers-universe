@@ -1,4 +1,4 @@
-import { BASE_URL, parseError } from "./client";
+import { request } from "./client";
 
 export interface AuthResponse {
   token: string;
@@ -7,38 +7,24 @@ export interface AuthResponse {
   displayName: string;
 }
 
-export async function loginUser(
+export function loginUser(
   email: string,
   password: string,
 ): Promise<AuthResponse> {
-  const response = await fetch(`${BASE_URL}/auth/login`, {
+  return request("/auth/login", "Login failed", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Login failed"));
-  }
-
-  return response.json();
 }
 
-export async function registerUser(
+export function registerUser(
   userName: string,
   email: string,
   displayName: string,
   password: string,
 ): Promise<AuthResponse> {
-  const response = await fetch(`${BASE_URL}/auth/register`, {
+  return request("/auth/register", "Registration failed", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ userName, email, displayName, password }),
   });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Registration failed"));
-  }
-
-  return response.json();
 }

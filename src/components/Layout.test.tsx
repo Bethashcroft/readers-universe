@@ -10,7 +10,7 @@ const { mockUseAuth, mockGetMyRequests } = vi.hoisted(() => ({
   mockGetMyRequests: vi.fn(),
 }));
 
-vi.mock("../context/AuthContext", () => ({
+vi.mock("../context/useAuth", () => ({
   useAuth: mockUseAuth,
 }));
 

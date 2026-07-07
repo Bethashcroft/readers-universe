@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { browseBooks } from "../api/books";
 import type { BookResponse } from "../api/books";
 import { createBorrowRequest } from "../api/borrow";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
+import VintedButton from "../components/VintedButton";
 import "./Browse.css";
 
 function Browse() {
@@ -130,20 +131,10 @@ function Browse() {
               {book.offer === "for-sale" ? (
                 <div className="for-sale-actions">
                   {book.sellerVintedUrl ? (
-                    <a
-                      className="btn-vinted"
+                    <VintedButton
                       href={book.sellerVintedUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <img
-                        className="vinted-logo"
-                        src="/vinted-logo.png"
-                        alt=""
-                        aria-hidden="true"
-                      />
-                      View on Vinted
-                    </a>
+                      label="View on Vinted"
+                    />
                   ) : (
                     <p className="no-vinted">
                       {book.userId === user?.userId
@@ -191,7 +182,11 @@ function Browse() {
               ) : (
                 <button
                   className="btn btn-primary"
-                  onClick={() => setRequestingBookId(book.id)}
+                  onClick={() => {
+                    setRequestingBookId(book.id);
+                    setMessage("");
+                    setError("");
+                  }}
                 >
                   Request to Borrow
                 </button>

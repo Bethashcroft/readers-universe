@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { BookResponse, AddBookRequest } from "../api/books";
 import {
   getMyBooks,
@@ -12,17 +6,8 @@ import {
   updateBook as updateBookApi,
   deleteBook as deleteBookApi,
 } from "../api/books";
-import { useAuth } from "./AuthContext";
-
-interface BookContextType {
-  books: BookResponse[];
-  loading: boolean;
-  addBook: (book: AddBookRequest) => Promise<void>;
-  updateBook: (id: number, book: AddBookRequest) => Promise<void>;
-  removeBook: (id: number) => Promise<void>;
-}
-
-const BookContext = createContext<BookContextType | null>(null);
+import { useAuth } from "./useAuth";
+import { BookContext } from "./useBooks";
 
 export function BookProvider({ children }: { children: React.ReactNode }) {
   const [books, setBooks] = useState<BookResponse[]>([]);
@@ -79,14 +64,4 @@ export function BookProvider({ children }: { children: React.ReactNode }) {
       {children}
     </BookContext.Provider>
   );
-}
-
-export function useBooks() {
-  const context = useContext(BookContext);
-
-  if (!context) {
-    throw new Error("useBooks must be used within a BookProvider");
-  }
-
-  return context;
 }

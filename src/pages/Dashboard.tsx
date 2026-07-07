@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { getDashboardSummary } from "../api/dashboard";
 import type { DashboardSummary } from "../api/dashboard";
 import "./Dashboard.css";

@@ -32,9 +32,10 @@ function AvatarCropModal({
   } | null>(null);
 
   useEffect(() => {
-    const url = URL.createObjectURL(file);
-    setImageUrl(url);
-    return () => URL.revokeObjectURL(url);
+    const reader = new FileReader();
+    reader.onload = () => setImageUrl(reader.result as string);
+    reader.readAsDataURL(file);
+    return () => reader.abort();
   }, [file]);
 
   const baseScale = size ? VIEWPORT / Math.min(size.width, size.height) : 1;

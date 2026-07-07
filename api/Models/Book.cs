@@ -19,7 +19,7 @@ public class Book
     public string Shelf { get; set; } = string.Empty;
 
     [MaxLength(50)]
-    public string Offer { get; set; } = "none";
+    public string Offer { get; set; } = BookOffer.None;
     public int? Rating { get; set; }
     public string UserId { get; set; } = string.Empty;
     public AppUser User { get; set; } = null!;

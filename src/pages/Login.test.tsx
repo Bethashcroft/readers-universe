@@ -5,7 +5,7 @@ import Login from "./Login";
 
 const { mockLogin } = vi.hoisted(() => ({ mockLogin: vi.fn() }));
 
-vi.mock("../context/AuthContext", () => ({
+vi.mock("../context/useAuth", () => ({
   useAuth: () => ({ login: mockLogin }),
 }));
 

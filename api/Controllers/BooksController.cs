@@ -37,7 +37,9 @@ public class BooksController : ControllerBase
     public async Task<IActionResult> Browse()
     {
         var books = await _context
-            .Books.Where(b => b.Offer == "available-to-borrow" || b.Offer == "for-sale")
+            .Books.Where(b =>
+                b.Offer == BookOffer.AvailableToBorrow || b.Offer == BookOffer.ForSale
+            )
             .Select(b => new BookResponse
             {
                 Id = b.Id,
@@ -58,11 +60,19 @@ public class BooksController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetBook(int id)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
         var book = await _context
             .Books.Include(b => b.User)
             .FirstOrDefaultAsync(b => b.Id == id);
 
         if (book == null)
+        {
+            return NotFound(new { message = "Book not found" });
+        }
+
+        var isPrivateShelf = book.Shelf == BookShelf.Tbr || book.Shelf == BookShelf.Dnf;
+        if (book.UserId != userId && isPrivateShelf && book.Offer == BookOffer.None)
         {
             return NotFound(new { message = "Book not found" });
         }
@@ -76,6 +86,12 @@ public class BooksController : ControllerBase
     public async Task<IActionResult> AddBook([FromBody] AddBookRequest request)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var validationError = ValidateStates(request);
+        if (validationError != null)
+        {
+            return BadRequest(new { message = validationError });
+        }
 
         var book = new Book
         {
@@ -98,6 +114,12 @@ public class BooksController : ControllerBase
     public async Task<IActionResult> UpdateBook(int id, [FromBody] AddBookRequest request)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var validationError = ValidateStates(request);
+        if (validationError != null)
+        {
+            return BadRequest(new { message = validationError });
+        }
 
         var book = await _context.Books.FindAsync(id);
 
@@ -146,6 +168,21 @@ public class BooksController : ControllerBase
         return Ok();
     }
 
+    private static string? ValidateStates(AddBookRequest request)
+    {
+        if (!BookShelf.All.Contains(request.Shelf))
+        {
+            return $"Shelf must be one of: {string.Join(", ", BookShelf.All)}";
+        }
+
+        if (!BookOffer.All.Contains(request.Offer))
+        {
+            return $"Offer must be one of: {string.Join(", ", BookOffer.All)}";
+        }
+
+        return null;
+    }
+
     private static BookResponse ToResponse(Book b) =>
         new()
         {
@@ -166,7 +203,7 @@ public class AddBookRequest
     public string Author { get; set; } = string.Empty;
     public string CoverUrl { get; set; } = string.Empty;
     public string Shelf { get; set; } = string.Empty;
-    public string Offer { get; set; } = "none";
+    public string Offer { get; set; } = BookOffer.None;
     public int? Rating { get; set; }
 }
 

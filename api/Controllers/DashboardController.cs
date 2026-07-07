@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ReadersRealm.Api.Data;
+using ReadersRealm.Api.Models;
 
 namespace ReadersRealm.Api.Controllers;
 
@@ -27,11 +28,11 @@ public class DashboardController : ControllerBase
 
         var nearby = await _context.Books.CountAsync(b =>
             b.UserId != userId
-            && (b.Offer == "available-to-borrow" || b.Offer == "for-sale")
+            && (b.Offer == BookOffer.AvailableToBorrow || b.Offer == BookOffer.ForSale)
         );
 
         var pendingRequests = await _context.BorrowRequests.CountAsync(r =>
-            r.ToUserId == userId && r.Status == "pending"
+            r.ToUserId == userId && r.Status == BorrowStatus.Pending
         );
 
         return Ok(

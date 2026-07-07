@@ -1,15 +1,9 @@
 import { useState } from "react";
-import { useBooks } from "../context/BookContext";
+import { useBooks } from "../context/useBooks";
 import BookCard from "../components/BookCard";
+import { shelfLabels } from "../types/book";
 import type { ShelfType } from "../types/book";
 import "./Shelves.css";
-
-const shelfLabels: Record<ShelfType, string> = {
-  "currently-reading": "Currently Reading",
-  read: "Read",
-  tbr: "To Be Read",
-  dnf: "Did Not Finish",
-};
 
 function Shelves() {
   const { books, loading } = useBooks();

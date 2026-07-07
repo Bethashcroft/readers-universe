@@ -32,17 +32,7 @@ public class UsersController : ControllerBase
             return NotFound(new { message = "User not found" });
         }
 
-        return Ok(
-            new ProfileResponse
-            {
-                UserName = user.UserName!,
-                DisplayName = user.DisplayName,
-                Bio = user.Bio,
-                VintedUrl = user.VintedUrl,
-                AvatarUrl = user.AvatarUrl,
-                JoinedDate = user.JoinedDate,
-            }
-        );
+        return Ok(ProfileResponse.FromUser(user));
     }
 
     [HttpGet("{username}/books")]
@@ -62,7 +52,8 @@ public class UsersController : ControllerBase
         if (user.Id != requesterId)
         {
             query = query.Where(b =>
-                (b.Shelf != "tbr" && b.Shelf != "dnf") || b.Offer != "none"
+                (b.Shelf != BookShelf.Tbr && b.Shelf != BookShelf.Dnf)
+                || b.Offer != BookOffer.None
             );
         }
 

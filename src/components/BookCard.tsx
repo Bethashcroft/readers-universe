@@ -1,16 +1,12 @@
 import { Link } from "react-router-dom";
 import type { BookResponse } from "../api/books";
+import { offerLabels } from "../types/book";
+import type { OfferType } from "../types/book";
 import "./BookCard.css";
 
 interface BookCardProps {
   book: BookResponse;
 }
-
-const offerBadges: Record<string, string> = {
-  "available-to-borrow": "Available to Borrow",
-  "for-sale": "For Sale",
-  "lent-out": "Lent Out",
-};
 
 function BookCard({ book }: BookCardProps) {
   return (
@@ -29,9 +25,9 @@ function BookCard({ book }: BookCardProps) {
             {"☆".repeat(5 - book.rating)}
           </p>
         )}
-        {offerBadges[book.offer] && (
+        {book.offer !== "none" && (
           <span className={`book-offer-badge ${book.offer}`}>
-            {offerBadges[book.offer]}
+            {offerLabels[book.offer as OfferType] ?? book.offer}
           </span>
         )}
       </div>

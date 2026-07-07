@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Outlet, Link, NavLink, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { getMyRequests } from "../api/borrow";
 import "./Layout.css";
 
@@ -12,7 +12,6 @@ function Layout() {
 
   useEffect(() => {
     if (!user) {
-      setPendingCount(0);
       return;
     }
 
@@ -82,7 +81,7 @@ function Layout() {
               <li>
                 <NavLink to="/requests">
                   Requests
-                  {pendingCount > 0 && (
+                  {user && pendingCount > 0 && (
                     <span className="nav-badge">{pendingCount}</span>
                   )}
                 </NavLink>

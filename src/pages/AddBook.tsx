@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useBooks } from "../context/BookContext";
+import { useBooks } from "../context/useBooks";
+import { shelfLabels, offerLabels } from "../types/book";
 import type { ShelfType, OfferType } from "../types/book";
 import "../styles/forms.css";
 import "./AddBook.css";
@@ -65,10 +66,11 @@ function AddBook() {
           value={shelf}
           onChange={(e) => setShelf(e.target.value as ShelfType)}
         >
-          <option value="currently-reading">Currently Reading</option>
-          <option value="read">Read</option>
-          <option value="tbr">To Be Read</option>
-          <option value="dnf">Did Not Finish</option>
+          {Object.entries(shelfLabels).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
         </select>
 
         <label htmlFor="offer">Lending & Selling</label>
@@ -77,10 +79,11 @@ function AddBook() {
           value={offer}
           onChange={(e) => setOffer(e.target.value as OfferType)}
         >
-          <option value="none">Not offered</option>
-          <option value="available-to-borrow">Available to Borrow</option>
-          <option value="for-sale">For Sale</option>
-          <option value="lent-out">Lent Out</option>
+          {Object.entries(offerLabels).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
         </select>
 
         <label htmlFor="rating">Optional Rating</label>

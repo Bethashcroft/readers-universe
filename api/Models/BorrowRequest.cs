@@ -7,7 +7,7 @@ public class BorrowRequest
     public int Id { get; set; }
 
     [MaxLength(20)]
-    public string Status { get; set; } = "pending";
+    public string Status { get; set; } = BorrowStatus.Pending;
 
     [MaxLength(1000)]
     public string Message { get; set; } = string.Empty;

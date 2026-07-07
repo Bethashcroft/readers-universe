@@ -1,4 +1,4 @@
-import { BASE_URL, getHeaders, parseError } from "./client";
+import { request, requestVoid } from "./client";
 
 export interface BookResponse {
   id: number;
@@ -21,90 +21,41 @@ export interface AddBookRequest {
   rating: number | null;
 }
 
-export async function getMyBooks(): Promise<BookResponse[]> {
-  const response = await fetch(`${BASE_URL}/books`, {
-    headers: getHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to fetch books"));
-  }
-
-  return response.json();
+export function getMyBooks(): Promise<BookResponse[]> {
+  return request("/books", "Failed to fetch books");
 }
 
-export async function browseBooks(): Promise<BookResponse[]> {
-  const response = await fetch(`${BASE_URL}/books/browse`);
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to fetch books"));
-  }
-
-  return response.json();
+export function browseBooks(): Promise<BookResponse[]> {
+  return request("/books/browse", "Failed to fetch books");
 }
 
-export async function getBook(id: number): Promise<BookResponse> {
-  const response = await fetch(`${BASE_URL}/books/${id}`, {
-    headers: getHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to fetch book"));
-  }
-
-  return response.json();
+export function getBook(id: number): Promise<BookResponse> {
+  return request(`/books/${id}`, "Failed to fetch book");
 }
 
-export async function getUserBooks(username: string): Promise<BookResponse[]> {
-  const response = await fetch(`${BASE_URL}/users/${username}/books`, {
-    headers: getHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to fetch books"));
-  }
-
-  return response.json();
+export function getUserBooks(username: string): Promise<BookResponse[]> {
+  return request(`/users/${username}/books`, "Failed to fetch books");
 }
 
-export async function addBook(book: AddBookRequest): Promise<BookResponse> {
-  const response = await fetch(`${BASE_URL}/books`, {
+export function addBook(book: AddBookRequest): Promise<BookResponse> {
+  return request("/books", "Failed to add book", {
     method: "POST",
-    headers: getHeaders(),
     body: JSON.stringify(book),
   });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to add book"));
-  }
-
-  return response.json();
 }
 
-export async function updateBook(
+export function updateBook(
   id: number,
   book: AddBookRequest,
 ): Promise<BookResponse> {
-  const response = await fetch(`${BASE_URL}/books/${id}`, {
+  return request(`/books/${id}`, "Failed to update book", {
     method: "PUT",
-    headers: getHeaders(),
     body: JSON.stringify(book),
   });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to update book"));
-  }
-
-  return response.json();
 }
 
-export async function deleteBook(id: number): Promise<void> {
-  const response = await fetch(`${BASE_URL}/books/${id}`, {
+export function deleteBook(id: number): Promise<void> {
+  return requestVoid(`/books/${id}`, "Failed to delete book", {
     method: "DELETE",
-    headers: getHeaders(),
   });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, "Failed to delete book"));
-  }
 }

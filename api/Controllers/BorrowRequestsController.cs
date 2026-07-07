@@ -37,7 +37,9 @@ public class BorrowRequestsController : ControllerBase
         }
 
         var alreadyRequested = await _context.BorrowRequests.AnyAsync(r =>
-            r.BookId == request.BookId && r.FromUserId == fromUserId && r.Status == "pending"
+            r.BookId == request.BookId
+            && r.FromUserId == fromUserId
+            && r.Status == BorrowStatus.Pending
         );
 
         if (alreadyRequested)
@@ -58,39 +60,7 @@ public class BorrowRequestsController : ControllerBase
 
         var fromUser = await _context.Users.FindAsync(fromUserId);
 
-        return Ok(
-            new BorrowRequestResponse
-            {
-                Id = borrowRequest.Id,
-                BookId = borrowRequest.BookId,
-                BookTitle = book.Title,
-                FromUserId = borrowRequest.FromUserId,
-                FromUserName = fromUser?.DisplayName ?? "Unknown",
-                ToUserId = borrowRequest.ToUserId,
-                Status = borrowRequest.Status,
-                Message = borrowRequest.Message,
-                Date = borrowRequest.Date,
-            }
-        );
-    }
-
-    public class CreateBorrowRequest
-    {
-        public int BookId { get; set; }
-        public string Message { get; set; } = string.Empty;
-    }
-
-    public class BorrowRequestResponse
-    {
-        public int Id { get; set; }
-        public int BookId { get; set; }
-        public string BookTitle { get; set; } = string.Empty;
-        public string FromUserId { get; set; } = string.Empty;
-        public string FromUserName { get; set; } = string.Empty;
-        public string ToUserId { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
-        public string Message { get; set; } = string.Empty;
-        public DateTime Date { get; set; }
+        return Ok(ToResponse(borrowRequest, book.Title, fromUser?.DisplayName ?? "Unknown"));
     }
 
     [HttpGet]
@@ -135,7 +105,7 @@ public class BorrowRequestsController : ControllerBase
             return Forbid();
         }
 
-        if (borrowRequest.Status != "pending")
+        if (borrowRequest.Status != BorrowStatus.Pending)
         {
             return BadRequest(new { message = "Only pending requests can be withdrawn" });
         }
@@ -154,7 +124,7 @@ public class BorrowRequestsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if (request.Status != "accepted" && request.Status != "declined")
+        if (request.Status != BorrowStatus.Accepted && request.Status != BorrowStatus.Declined)
         {
             return BadRequest(new { message = "Status must be 'accepted' or 'declined'" });
         }
@@ -176,41 +146,71 @@ public class BorrowRequestsController : ControllerBase
 
         borrowRequest.Status = request.Status;
 
-        if (request.Status == "accepted")
+        if (request.Status == BorrowStatus.Accepted)
         {
-            borrowRequest.Book.Offer = "lent-out";
+            borrowRequest.Book.Offer = BookOffer.LentOut;
 
             var competing = await _context
                 .BorrowRequests.Where(r =>
                     r.BookId == borrowRequest.BookId
                     && r.Id != borrowRequest.Id
-                    && r.Status == "pending"
+                    && r.Status == BorrowStatus.Pending
                 )
                 .ToListAsync();
 
             foreach (var other in competing)
             {
-                other.Status = "declined";
+                other.Status = BorrowStatus.Declined;
             }
         }
 
         await _context.SaveChangesAsync();
 
         return Ok(
-            new BorrowRequestResponse
-            {
-                Id = borrowRequest.Id,
-                BookId = borrowRequest.BookId,
-                BookTitle = borrowRequest.Book.Title,
-                FromUserId = borrowRequest.FromUserId,
-                FromUserName = borrowRequest.FromUser.DisplayName,
-                ToUserId = borrowRequest.ToUserId,
-                Status = borrowRequest.Status,
-                Message = borrowRequest.Message,
-                Date = borrowRequest.Date,
-            }
+            ToResponse(
+                borrowRequest,
+                borrowRequest.Book.Title,
+                borrowRequest.FromUser.DisplayName
+            )
         );
     }
+
+    private static BorrowRequestResponse ToResponse(
+        BorrowRequest request,
+        string bookTitle,
+        string fromUserName
+    ) =>
+        new()
+        {
+            Id = request.Id,
+            BookId = request.BookId,
+            BookTitle = bookTitle,
+            FromUserId = request.FromUserId,
+            FromUserName = fromUserName,
+            ToUserId = request.ToUserId,
+            Status = request.Status,
+            Message = request.Message,
+            Date = request.Date,
+        };
+}
+
+public class CreateBorrowRequest
+{
+    public int BookId { get; set; }
+    public string Message { get; set; } = string.Empty;
+}
+
+public class BorrowRequestResponse
+{
+    public int Id { get; set; }
+    public int BookId { get; set; }
+    public string BookTitle { get; set; } = string.Empty;
+    public string FromUserId { get; set; } = string.Empty;
+    public string FromUserName { get; set; } = string.Empty;
+    public string ToUserId { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public DateTime Date { get; set; }
 }
 
 public class UpdateBorrowStatusRequest

@@ -1,20 +1,7 @@
-import { createContext, useContext, useState } from "react";
+import { useState } from "react";
 import type { AuthResponse } from "../api/auth";
 import { loginUser, registerUser } from "../api/auth";
-
-interface AuthContextType {
-  user: AuthResponse | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (
-    userName: string,
-    email: string,
-    displayName: string,
-    password: string,
-  ) => Promise<void>;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthContextType | null>(null);
+import { AuthContext } from "./useAuth";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthResponse | null>(() => {
@@ -55,14 +42,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-
-  return context;
 }
