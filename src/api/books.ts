@@ -10,6 +10,8 @@ export interface BookResponse {
   rating: number | null;
   userId: string;
   sellerVintedUrl: string;
+  ownerName: string;
+  ownerUserName: string;
 }
 
 export interface AddBookRequest {

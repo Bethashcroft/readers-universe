@@ -11,6 +11,7 @@ import AddBook from "./pages/AddBook";
 import BookDetail from "./pages/BookDetail";
 import Browse from "./pages/Browse";
 import Requests from "./pages/Requests";
+import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -71,6 +72,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
         </BookProvider>

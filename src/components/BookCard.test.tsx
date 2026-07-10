@@ -13,6 +13,8 @@ const book: BookResponse = {
   rating: 4,
   userId: "u1",
   sellerVintedUrl: "",
+  ownerName: "Owner",
+  ownerUserName: "owner",
 };
 
 function renderCard(b: BookResponse = book) {

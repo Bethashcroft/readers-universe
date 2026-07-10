@@ -1,0 +1,54 @@
+.not-found {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.not-found-art {
+  width: 140px;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  animation: nf-drift 7s ease-in-out infinite;
+}
+
+@keyframes nf-drift {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-5deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(5deg);
+  }
+}
+
+.not-found-code {
+  font-family: var(--font-display);
+  font-size: 72px;
+  font-weight: 700;
+  line-height: 1;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.not-found h1 {
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.not-found-text {
+  color: var(--color-text-muted);
+  max-width: 420px;
+  line-height: 1.6;
+}
+
+.not-found .btn {
+  margin-top: 14px;
+}

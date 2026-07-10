@@ -51,6 +51,8 @@ public class BooksController : ControllerBase
                 Rating = b.Rating,
                 UserId = b.UserId,
                 SellerVintedUrl = b.User.VintedUrl,
+                OwnerName = b.User.DisplayName,
+                OwnerUserName = b.User.UserName!,
             })
             .ToListAsync();
 
@@ -79,6 +81,8 @@ public class BooksController : ControllerBase
 
         var response = ToResponse(book);
         response.SellerVintedUrl = book.User?.VintedUrl ?? string.Empty;
+        response.OwnerName = book.User?.DisplayName ?? string.Empty;
+        response.OwnerUserName = book.User?.UserName ?? string.Empty;
         return Ok(response);
     }
 
@@ -218,4 +222,6 @@ public class BookResponse
     public int? Rating { get; set; }
     public string UserId { get; set; } = string.Empty;
     public string SellerVintedUrl { get; set; } = string.Empty;
+    public string OwnerName { get; set; } = string.Empty;
+    public string OwnerUserName { get; set; } = string.Empty;
 }

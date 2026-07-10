@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import Browse from "./Browse";
 import type { BookResponse } from "../api/books";
 
@@ -31,6 +32,8 @@ const books: BookResponse[] = [
     rating: null,
     userId: "u1",
     sellerVintedUrl: "",
+    ownerName: "Hobbit Owner",
+    ownerUserName: "hobbitowner",
   },
   {
     id: 2,
@@ -42,6 +45,8 @@ const books: BookResponse[] = [
     rating: null,
     userId: "u2",
     sellerVintedUrl: "https://www.vinted.co.uk/member/dune-seller",
+    ownerName: "Dune Seller",
+    ownerUserName: "duneseller",
   },
 ];
 
@@ -52,7 +57,7 @@ describe("Browse", () => {
 
   it("shows a loading message, then the fetched books", async () => {
     mockBrowseBooks.mockResolvedValue(books);
-    render(<Browse />);
+    render(<MemoryRouter><Browse /></MemoryRouter>);
 
     expect(screen.getByText("Loading books...")).toBeInTheDocument();
 
@@ -63,7 +68,7 @@ describe("Browse", () => {
 
   it("shows an empty-state message when no books are available", async () => {
     mockBrowseBooks.mockResolvedValue([]);
-    render(<Browse />);
+    render(<MemoryRouter><Browse /></MemoryRouter>);
 
     expect(
       await screen.findByText("No books available nearby right now."),
@@ -73,7 +78,7 @@ describe("Browse", () => {
   it("filters the list by search text", async () => {
     mockBrowseBooks.mockResolvedValue(books);
     const user = userEvent.setup();
-    render(<Browse />);
+    render(<MemoryRouter><Browse /></MemoryRouter>);
 
     await screen.findByText("The Hobbit");
 
@@ -89,7 +94,7 @@ describe("Browse", () => {
   it("filters the list by the For Sale tab", async () => {
     mockBrowseBooks.mockResolvedValue(books);
     const user = userEvent.setup();
-    render(<Browse />);
+    render(<MemoryRouter><Browse /></MemoryRouter>);
 
     await screen.findByText("The Hobbit");
 
@@ -102,7 +107,7 @@ describe("Browse", () => {
   it("shows a no-match message when nothing matches the search", async () => {
     mockBrowseBooks.mockResolvedValue(books);
     const user = userEvent.setup();
-    render(<Browse />);
+    render(<MemoryRouter><Browse /></MemoryRouter>);
 
     await screen.findByText("The Hobbit");
 

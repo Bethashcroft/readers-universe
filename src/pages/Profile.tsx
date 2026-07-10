@@ -9,6 +9,7 @@ import type { BookResponse } from "../api/books";
 import BookCard from "../components/BookCard";
 import AvatarCropModal from "../components/AvatarCropModal";
 import VintedButton from "../components/VintedButton";
+import { usePageTitle } from "../hooks/usePageTitle";
 import "../styles/forms.css";
 import "./Profile.css";
 
@@ -28,6 +29,8 @@ function Profile() {
     null,
   );
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  usePageTitle(profile ? profile.displayName : "Profile");
 
   useEffect(() => {
     if (!username) return;

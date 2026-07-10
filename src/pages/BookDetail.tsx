@@ -11,6 +11,7 @@ import {
 } from "../api/reviews";
 import type { ReviewResponse } from "../api/reviews";
 import { shelfLabels, offerLabels } from "../types/book";
+import { usePageTitle } from "../hooks/usePageTitle";
 import "./BookDetail.css";
 
 function BookDetail() {
@@ -28,6 +29,8 @@ function BookDetail() {
   const [shelf, setShelf] = useState("");
   const [offer, setOffer] = useState("");
   const [bookRating, setBookRating] = useState("");
+
+  usePageTitle(book ? book.title : "Book");
 
   useEffect(() => {
     const fetchBook = async () => {

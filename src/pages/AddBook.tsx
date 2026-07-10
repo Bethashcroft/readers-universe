@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useBooks } from "../context/useBooks";
 import { shelfLabels, offerLabels } from "../types/book";
 import type { ShelfType, OfferType } from "../types/book";
+import { usePageTitle } from "../hooks/usePageTitle";
 import "../styles/forms.css";
 import "./AddBook.css";
 
 function AddBook() {
+  usePageTitle("Add a Book");
   const { addBook } = useBooks();
   const navigate = useNavigate();
 

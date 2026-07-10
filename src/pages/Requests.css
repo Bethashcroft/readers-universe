@@ -23,6 +23,15 @@
   backdrop-filter: blur(8px);
 }
 
+.request-details h3 a {
+  color: var(--color-text);
+  transition: color 0.15s ease;
+}
+
+.request-details h3 a:hover {
+  color: var(--color-primary);
+}
+
 .request-from {
   color: var(--color-text);
   font-size: 0.9rem;

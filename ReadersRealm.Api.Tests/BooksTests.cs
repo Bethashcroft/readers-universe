@@ -137,6 +137,7 @@ public class BooksTests : IDisposable
         Assert.Contains("Read and Selling", titles);
         Assert.Contains("Unread and Lending", titles);
         Assert.DoesNotContain("Just Read", titles);
+        Assert.All(browse!, b => Assert.Equal("owner", b.OwnerName));
     }
 
     [Fact]

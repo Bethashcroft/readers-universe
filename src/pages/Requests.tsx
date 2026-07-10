@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import {
   getMyRequests,
@@ -6,9 +7,11 @@ import {
   withdrawBorrowRequest,
 } from "../api/borrow";
 import type { BorrowRequestResponse, BorrowStatus } from "../api/borrow";
+import { usePageTitle } from "../hooks/usePageTitle";
 import "./Requests.css";
 
 function Requests() {
+  usePageTitle("Requests");
   const { user } = useAuth();
   const [requests, setRequests] = useState<BorrowRequestResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,7 +90,9 @@ function Requests() {
         {incoming.map((req) => (
           <div key={req.id} className="request-card">
             <div className="request-details">
-              <h3>{req.bookTitle}</h3>
+              <h3>
+                <Link to={`/book/${req.bookId}`}>{req.bookTitle}</Link>
+              </h3>
               <p className="request-from">Requested by {req.fromUserName}</p>
               {req.message && (
                 <p className="request-message">"{req.message}"</p>
@@ -126,7 +131,9 @@ function Requests() {
         {outgoing.map((req) => (
           <div key={req.id} className="request-card">
             <div className="request-details">
-              <h3>{req.bookTitle}</h3>
+              <h3>
+                <Link to={`/book/${req.bookId}`}>{req.bookTitle}</Link>
+              </h3>
               {req.message && (
                 <p className="request-message">"{req.message}"</p>
               )}

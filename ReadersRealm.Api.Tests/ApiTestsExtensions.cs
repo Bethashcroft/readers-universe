@@ -13,7 +13,8 @@ public record BookResult(
     string Shelf,
     string Offer,
     int? Rating,
-    string UserId
+    string UserId,
+    string OwnerName
 );
 
 public record BorrowResult(int Id, int BookId, string Status, string FromUserName);

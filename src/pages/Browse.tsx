@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { browseBooks } from "../api/books";
 import type { BookResponse } from "../api/books";
 import { createBorrowRequest } from "../api/borrow";
 import { useAuth } from "../context/useAuth";
 import VintedButton from "../components/VintedButton";
+import { usePageTitle } from "../hooks/usePageTitle";
 import "./Browse.css";
 
 function Browse() {
+  usePageTitle("Browse Nearby");
   const { user } = useAuth();
   const [books, setBooks] = useState<BookResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,6 +128,14 @@ function Browse() {
             <div className="browse-info">
               <h2>{book.title}</h2>
               <p className="browse-author">{book.author}</p>
+              {book.userId !== user?.userId && (
+                <Link
+                  className="browse-owner"
+                  to={`/profile/${book.ownerUserName}`}
+                >
+                  Offered by {book.ownerName}
+                </Link>
+              )}
               <span className={`browse-badge ${book.offer}`}>
                 {book.offer === "for-sale" ? "For Sale" : "Available to Borrow"}
               </span>

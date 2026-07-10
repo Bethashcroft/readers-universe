@@ -3,9 +3,11 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { getDashboardSummary } from "../api/dashboard";
 import type { DashboardSummary } from "../api/dashboard";
+import { usePageTitle } from "../hooks/usePageTitle";
 import "./Dashboard.css";
 
 function Dashboard() {
+  usePageTitle("Dashboard");
   const { user } = useAuth();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
 

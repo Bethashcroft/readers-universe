@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
+import { usePageTitle } from "../hooks/usePageTitle";
 import "../styles/forms.css";
 
 function Register() {
+  usePageTitle("Register");
   const [userName, setUserName] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");

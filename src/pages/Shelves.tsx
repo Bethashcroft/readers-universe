@@ -3,9 +3,11 @@ import { useBooks } from "../context/useBooks";
 import BookCard from "../components/BookCard";
 import { shelfLabels } from "../types/book";
 import type { ShelfType } from "../types/book";
+import { usePageTitle } from "../hooks/usePageTitle";
 import "./Shelves.css";
 
 function Shelves() {
+  usePageTitle("My Shelves");
   const { books, loading } = useBooks();
   const [activeShelf, setActiveShelf] = useState<ShelfType | "all">("all");
 

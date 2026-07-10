@@ -106,6 +106,16 @@ public class AuthController : ControllerBase
             return NotFound();
         }
 
+        if (!string.IsNullOrEmpty(request.VintedUrl) && !IsVintedUrl(request.VintedUrl))
+        {
+            return BadRequest(
+                new
+                {
+                    message = "That doesn't look like a Vinted link. It should start with https:// and point to vinted, e.g. https://www.vinted.co.uk/member/...",
+                }
+            );
+        }
+
         user.DisplayName = request.DisplayName;
         user.Bio = request.Bio;
         user.VintedUrl = request.VintedUrl;
@@ -176,6 +186,56 @@ public class AuthController : ControllerBase
         await _userManager.UpdateAsync(user);
 
         return Ok(ProfileResponse.FromUser(user));
+    }
+
+    private static readonly string[] VintedDomains =
+    [
+        "com",
+        "co.uk",
+        "fr",
+        "de",
+        "pl",
+        "es",
+        "it",
+        "nl",
+        "be",
+        "at",
+        "cz",
+        "sk",
+        "lt",
+        "lu",
+        "pt",
+        "se",
+        "dk",
+        "fi",
+        "hu",
+        "ro",
+        "gr",
+        "hr",
+        "ie",
+        "us",
+        "com.tr",
+    ];
+
+    private static bool IsVintedUrl(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
+        {
+            return false;
+        }
+
+        var host = uri.Host.ToLowerInvariant();
+        if (host.StartsWith("www."))
+        {
+            host = host["www.".Length..];
+        }
+
+        if (!host.StartsWith("vinted."))
+        {
+            return false;
+        }
+
+        return VintedDomains.Contains(host["vinted.".Length..]);
     }
 
     private string GenerateToken(AppUser user)
