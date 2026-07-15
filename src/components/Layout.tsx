@@ -2,6 +2,12 @@ import { useState, useEffect } from "react";
 import { Outlet, Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { getMyRequests } from "../api/borrow";
+import { getUnreadCount } from "../api/messages";
+import {
+  getChatConnection,
+  startChatConnection,
+  stopChatConnection,
+} from "../realtime/connection";
 import "./Layout.css";
 
 function Layout() {
@@ -9,26 +15,58 @@ function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [pendingCount, setPendingCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (!user) {
       return;
     }
 
-    const fetchCount = async () => {
+    const fetchCounts = async () => {
       try {
         const requests = await getMyRequests();
         const incomingPending = requests.filter(
           (r) => r.toUserId === user.userId && r.status === "pending",
         );
         setPendingCount(incomingPending.length);
+        setUnreadCount((await getUnreadCount()).count);
       } catch (err) {
-        console.error("Failed to load request count:", err);
+        console.error("Failed to load nav counts:", err);
       }
     };
 
-    fetchCount();
+    fetchCounts();
   }, [user, location.pathname]);
+
+  useEffect(() => {
+    if (!user) {
+      stopChatConnection();
+      return;
+    }
+
+    let active = true;
+
+    const handleMessageReceived = () => {
+      setUnreadCount((count) => count + 1);
+    };
+
+    const connect = async () => {
+      try {
+        const conn = await startChatConnection();
+        if (!active) return;
+        conn.on("MessageReceived", handleMessageReceived);
+      } catch (err) {
+        console.error("Failed to connect to live updates:", err);
+      }
+    };
+
+    connect();
+
+    return () => {
+      active = false;
+      getChatConnection().off("MessageReceived", handleMessageReceived);
+    };
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -83,6 +121,11 @@ function Layout() {
                   Requests
                   {user && pendingCount > 0 && (
                     <span className="nav-badge">{pendingCount}</span>
+                  )}
+                  {user && unreadCount > 0 && (
+                    <span className="nav-badge nav-badge-messages">
+                      {unreadCount}
+                    </span>
                   )}
                 </NavLink>
               </li>

@@ -159,3 +159,7 @@
   line-height: 1.25rem;
   text-align: center;
 }
+
+.nav-badge-messages {
+  background: #0d9488;
+}

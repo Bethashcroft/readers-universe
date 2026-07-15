@@ -12,6 +12,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<Book> Books { get; set; }
     public DbSet<Review> Reviews { get; set; }
     public DbSet<BorrowRequest> BorrowRequests { get; set; }
+    public DbSet<Message> Messages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -49,6 +50,20 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .HasOne(r => r.User)
             .WithMany()
             .HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder
+            .Entity<Message>()
+            .HasOne(m => m.BorrowRequest)
+            .WithMany()
+            .HasForeignKey(m => m.BorrowRequestId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .Entity<Message>()
+            .HasOne(m => m.Sender)
+            .WithMany()
+            .HasForeignKey(m => m.SenderId)
             .OnDelete(DeleteBehavior.NoAction);
     }
 }

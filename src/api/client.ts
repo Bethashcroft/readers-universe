@@ -3,24 +3,19 @@ export const BASE_URL =
 
 export const API_ORIGIN = BASE_URL.replace(/\/api$/, "");
 
-export function getAuthHeaders(): Record<string, string> {
-  let token: string | null = null;
+export function getToken(): string | null {
   const stored = localStorage.getItem("user");
-  if (stored) {
-    try {
-      token = JSON.parse(stored).token ?? null;
-    } catch {
-      token = null;
-    }
+  if (!stored) return null;
+  try {
+    return JSON.parse(stored).token ?? null;
+  } catch {
+    return null;
   }
+}
 
-  const headers: Record<string, string> = {};
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  return headers;
+export function getAuthHeaders(): Record<string, string> {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export function getHeaders(): Record<string, string> {

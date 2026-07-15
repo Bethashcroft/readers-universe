@@ -48,6 +48,28 @@
   font-size: 0.85rem;
 }
 
+.request-chat {
+  display: inline-block;
+  width: fit-content;
+  margin-top: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--gradient);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.request-chat:hover {
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -8px rgba(139, 92, 246, 0.6);
+}
+
 .request-actions {
   display: flex;
   align-items: center;

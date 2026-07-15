@@ -5,10 +5,13 @@ import Layout from "./Layout";
 const navbar = () =>
   within(screen.getByRole("navigation", { name: "Primary" }));
 
-const { mockUseAuth, mockGetMyRequests } = vi.hoisted(() => ({
-  mockUseAuth: vi.fn(),
-  mockGetMyRequests: vi.fn(),
-}));
+const { mockUseAuth, mockGetMyRequests, mockGetUnreadCount } = vi.hoisted(
+  () => ({
+    mockUseAuth: vi.fn(),
+    mockGetMyRequests: vi.fn(),
+    mockGetUnreadCount: vi.fn(),
+  }),
+);
 
 vi.mock("../context/useAuth", () => ({
   useAuth: mockUseAuth,
@@ -17,6 +20,19 @@ vi.mock("../context/useAuth", () => ({
 vi.mock("../api/borrow", () => ({
   getMyRequests: mockGetMyRequests,
 }));
+
+vi.mock("../api/messages", () => ({
+  getUnreadCount: mockGetUnreadCount,
+}));
+
+vi.mock("../realtime/connection", () => {
+  const conn = { on: vi.fn(), off: vi.fn(), invoke: vi.fn() };
+  return {
+    getChatConnection: () => conn,
+    startChatConnection: vi.fn().mockResolvedValue(conn),
+    stopChatConnection: vi.fn(),
+  };
+});
 
 function renderLayout() {
   return render(
@@ -38,6 +54,8 @@ describe("Layout", () => {
     mockUseAuth.mockReset();
     mockGetMyRequests.mockReset();
     mockGetMyRequests.mockResolvedValue([]);
+    mockGetUnreadCount.mockReset();
+    mockGetUnreadCount.mockResolvedValue({ count: 0 });
   });
 
   it("shows only Login and Register when logged out", () => {
@@ -73,5 +91,13 @@ describe("Layout", () => {
     renderLayout();
 
     expect(await screen.findByText("2")).toBeInTheDocument();
+  });
+
+  it("shows a badge with the unread message count", async () => {
+    mockUseAuth.mockReturnValue({ user: loggedInUser, logout: vi.fn() });
+    mockGetUnreadCount.mockResolvedValue({ count: 3 });
+    renderLayout();
+
+    expect(await screen.findByText("3")).toBeInTheDocument();
   });
 });

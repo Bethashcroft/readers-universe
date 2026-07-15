@@ -98,6 +98,9 @@ function Requests() {
                 <p className="request-message">"{req.message}"</p>
               )}
               <p className="request-date">{formatDate(req.date)}</p>
+              <Link className="request-chat" to={`/messages/${req.id}`}>
+                Open chat →
+              </Link>
             </div>
             {req.status === "pending" ? (
               <div className="request-actions">
@@ -138,6 +141,9 @@ function Requests() {
                 <p className="request-message">"{req.message}"</p>
               )}
               <p className="request-date">{formatDate(req.date)}</p>
+              <Link className="request-chat" to={`/messages/${req.id}`}>
+                Open chat →
+              </Link>
             </div>
             <div className="request-actions">
               <span className={`status-badge ${req.status}`}>{req.status}</span>

@@ -11,6 +11,7 @@ import AddBook from "./pages/AddBook";
 import BookDetail from "./pages/BookDetail";
 import Browse from "./pages/Browse";
 import Requests from "./pages/Requests";
+import Conversation from "./pages/Conversation";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -69,6 +70,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Requests />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/messages/:requestId"
+                element={
+                  <ProtectedRoute>
+                    <Conversation />
                   </ProtectedRoute>
                 }
               />
