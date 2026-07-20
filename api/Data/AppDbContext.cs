@@ -23,7 +23,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .HasIndex(u => u.NormalizedEmail)
             .HasDatabaseName("EmailIndex")
             .IsUnique()
-            .HasFilter("[NormalizedEmail] IS NOT NULL");
+            .HasFilter("\"NormalizedEmail\" IS NOT NULL");
 
         builder
             .Entity<BorrowRequest>()
