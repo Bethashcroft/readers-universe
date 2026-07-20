@@ -7,7 +7,7 @@ public static class DatabaseConfig
         var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
         if (!string.IsNullOrEmpty(databaseUrl))
         {
-            return FromUrl(databaseUrl);
+            return ConvertUrlToConnectionString(databaseUrl);
         }
 
         return configuration.GetConnectionString("DefaultConnection")
@@ -16,7 +16,7 @@ public static class DatabaseConfig
             );
     }
 
-    private static string FromUrl(string databaseUrl)
+    public static string ConvertUrlToConnectionString(string databaseUrl)
     {
         var uri = new Uri(databaseUrl);
         var userInfo = uri.UserInfo.Split(':', 2);

@@ -15,8 +15,8 @@ public class TestWebAppFactory : WebApplicationFactory<Program>
     public TestWebAppFactory()
     {
         Environment.SetEnvironmentVariable("Jwt__Key", "TestSignKeyThatIsAtLeast32CharsLong!");
-        Environment.SetEnvironmentVariable("Jwt__Issuer", "ReadersRealm");
-        Environment.SetEnvironmentVariable("Jwt__Audience", "ReadersRealmUsers");
+        Environment.SetEnvironmentVariable("Jwt__Issuer", "ReadersUniverse");
+        Environment.SetEnvironmentVariable("Jwt__Audience", "ReadersUniverseUsers");
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
     }
