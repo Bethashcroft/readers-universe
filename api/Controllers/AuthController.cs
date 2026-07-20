@@ -15,17 +15,11 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly IConfiguration _config;
-    private readonly IWebHostEnvironment _env;
 
-    public AuthController(
-        UserManager<AppUser> userManager,
-        IConfiguration config,
-        IWebHostEnvironment env
-    )
+    public AuthController(UserManager<AppUser> userManager, IConfiguration config)
     {
         _userManager = userManager;
         _config = config;
-        _env = env;
     }
 
     [HttpPost("register")]
@@ -147,42 +141,19 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Image must be 2MB or smaller" });
         }
 
-        var extensions = new Dictionary<string, string>
-        {
-            ["image/jpeg"] = ".jpg",
-            ["image/png"] = ".png",
-            ["image/webp"] = ".webp",
-        };
-
-        if (!extensions.TryGetValue(file.ContentType, out var extension))
+        var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp" };
+        if (!allowedTypes.Contains(file.ContentType))
         {
             return BadRequest(new { message = "Only JPG, PNG, or WebP images are allowed" });
         }
 
-        var avatarsDir = Path.Combine(
-            _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot"),
-            "avatars"
-        );
-        Directory.CreateDirectory(avatarsDir);
+        using var memory = new MemoryStream();
+        await file.CopyToAsync(memory);
 
-        if (!string.IsNullOrEmpty(user.AvatarUrl))
-        {
-            var oldPath = Path.Combine(avatarsDir, Path.GetFileName(user.AvatarUrl));
-            if (System.IO.File.Exists(oldPath))
-            {
-                System.IO.File.Delete(oldPath);
-            }
-        }
-
-        var fileName = $"{user.Id}-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}{extension}";
-        var filePath = Path.Combine(avatarsDir, fileName);
-
-        await using (var stream = System.IO.File.Create(filePath))
-        {
-            await file.CopyToAsync(stream);
-        }
-
-        user.AvatarUrl = $"/avatars/{fileName}";
+        user.AvatarData = memory.ToArray();
+        user.AvatarContentType = file.ContentType;
+        var version = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        user.AvatarUrl = $"/api/avatars/{user.Id}?v={version}";
         await _userManager.UpdateAsync(user);
 
         return Ok(ProfileResponse.FromUser(user));

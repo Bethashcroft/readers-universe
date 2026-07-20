@@ -122,7 +122,8 @@ textarea::placeholder {
 }
 
 option {
-  color: #1a1430;
+  background-color: #1a1430;
+  color: var(--color-text);
 }
 
 .btn {

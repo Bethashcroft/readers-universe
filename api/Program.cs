@@ -152,8 +152,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowReactApp");
 
-app.UseStaticFiles();
-
 app.UseAuthentication();
 app.UseAuthorization();
 

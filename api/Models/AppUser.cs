@@ -17,5 +17,10 @@ public class AppUser : IdentityUser
     [MaxLength(300)]
     public string AvatarUrl { get; set; } = string.Empty;
 
+    public byte[]? AvatarData { get; set; }
+
+    [MaxLength(100)]
+    public string AvatarContentType { get; set; } = string.Empty;
+
     public DateTime JoinedDate { get; set; } = DateTime.UtcNow;
 }

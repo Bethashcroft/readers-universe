@@ -1,8 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace ReadersRealm.Api.Tests;
 
@@ -39,7 +37,7 @@ public class AvatarTests : IDisposable
     }
 
     [Fact]
-    public async Task UploadingValidImage_SetsAvatarUrl()
+    public async Task UploadingValidImage_StoresItAndServesItBack()
     {
         var user = await _client.RegisterAsync("avataruser");
         _client.Authenticate(user.Token);
@@ -51,18 +49,23 @@ public class AvatarTests : IDisposable
 
         response.EnsureSuccessStatusCode();
         var profile = await response.Content.ReadFromJsonAsync<ProfileResult>();
+        Assert.Contains("/api/avatars/", profile!.AvatarUrl);
 
-        Assert.StartsWith("/avatars/", profile!.AvatarUrl);
-        Assert.EndsWith(".png", profile.AvatarUrl);
+        var image = await _client.GetAsync(profile.AvatarUrl);
+        image.EnsureSuccessStatusCode();
+        Assert.Equal("image/png", image.Content.Headers.ContentType!.MediaType);
+        Assert.Equal(new byte[] { 1, 2, 3 }, await image.Content.ReadAsByteArrayAsync());
+    }
 
-        var env = _factory.Services.GetRequiredService<IWebHostEnvironment>();
-        var savedPath = Path.Combine(
-            env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot"),
-            "avatars",
-            Path.GetFileName(profile.AvatarUrl)
-        );
-        Assert.True(File.Exists(savedPath));
-        File.Delete(savedPath);
+    [Fact]
+    public async Task FetchingAnAvatarForSomeoneWithoutOne_ReturnsNotFound()
+    {
+        var user = await _client.RegisterAsync("avataruser");
+        _client.Authenticate(user.Token);
+
+        var response = await _client.GetAsync($"/api/avatars/{user.UserId}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
