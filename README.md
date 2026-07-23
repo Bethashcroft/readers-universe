@@ -28,14 +28,21 @@ A social reading app for real-world book lovers. Track what you're reading, revi
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [Node.js 20+](https://nodejs.org)
-- SQL Server Express (a `localhost\SQLEXPRESS` instance)
+- A PostgreSQL database. The easiest zero-install option is a free [Neon](https://neon.tech) branch — create a `dev` branch off your project and copy its connection string.
 
 ### API
+
+Configure secrets once (kept out of git via .NET user-secrets):
 
 ```bash
 cd api
 dotnet user-secrets set "Jwt:Key" "<any random string of 32+ characters>"
-dotnet ef database update
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "<your Neon dev connection string>"
+```
+
+Then run it — in Development the database tables are created automatically on startup:
+
+```bash
 dotnet run --urls "http://localhost:5128"
 ```
 

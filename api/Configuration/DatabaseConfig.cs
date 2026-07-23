@@ -4,16 +4,32 @@ public static class DatabaseConfig
 {
     public static string ResolveConnectionString(IConfiguration configuration)
     {
-        var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-        if (!string.IsNullOrEmpty(databaseUrl))
+        var raw = Environment.GetEnvironmentVariable("DATABASE_URL");
+        if (string.IsNullOrEmpty(raw))
         {
-            return ConvertUrlToConnectionString(databaseUrl);
+            raw = configuration.GetConnectionString("DefaultConnection");
         }
 
-        return configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException(
+        if (string.IsNullOrEmpty(raw))
+        {
+            throw new InvalidOperationException(
                 "No database connection string configured. Set DATABASE_URL or ConnectionStrings:DefaultConnection."
             );
+        }
+
+        return Normalize(raw);
+    }
+
+    public static string Normalize(string connectionStringOrUrl)
+    {
+        var isUrl =
+            connectionStringOrUrl.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase)
+            || connectionStringOrUrl.StartsWith(
+                "postgresql://",
+                StringComparison.OrdinalIgnoreCase
+            );
+
+        return isUrl ? ConvertUrlToConnectionString(connectionStringOrUrl) : connectionStringOrUrl;
     }
 
     public static string ConvertUrlToConnectionString(string databaseUrl)

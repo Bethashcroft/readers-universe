@@ -28,4 +28,23 @@ public class DatabaseConfigTests
 
         Assert.Contains("Port=6543", result);
     }
+
+    [Fact]
+    public void Normalize_LeavesAKeywordConnectionStringUntouched()
+    {
+        var keyword = "Host=localhost;Port=5432;Database=dev;Username=u;Password=p";
+
+        Assert.Equal(keyword, DatabaseConfig.Normalize(keyword));
+    }
+
+    [Fact]
+    public void Normalize_ConvertsAUrlFromEitherSource()
+    {
+        var result = DatabaseConfig.Normalize(
+            "postgresql://u:p@ep-x.eu-west-2.aws.neon.tech/db?sslmode=require"
+        );
+
+        Assert.Contains("Host=ep-x.eu-west-2.aws.neon.tech", result);
+        Assert.Contains("SSL Mode=Require", result);
+    }
 }
