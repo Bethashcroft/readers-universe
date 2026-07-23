@@ -7,9 +7,11 @@ export interface ProfileResponse {
   vintedUrl: string;
   avatarUrl: string;
   joinedDate: string;
+  usernameChangeableOn: string | null;
 }
 
 export interface UpdateProfileRequest {
+  userName: string;
   displayName: string;
   bio: string;
   vintedUrl: string;

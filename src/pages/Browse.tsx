@@ -168,7 +168,7 @@ function Browse() {
                     </p>
                   )}
                   <p className="sale-disclaimer">
-                    The Readers Universe isn't involved in sales — purchases are
+                    The Readers Universe isn't involved in sales. Purchases are
                     made on Vinted, at your own risk.
                   </p>
                 </div>

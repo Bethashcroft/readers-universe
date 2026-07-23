@@ -12,3 +12,30 @@
 .auth-form select:focus {
   border-color: var(--color-primary);
 }
+
+.isbn-lookup {
+  display: flex;
+  gap: 8px;
+}
+
+.isbn-lookup input {
+  flex: 1;
+}
+
+.isbn-lookup .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.isbn-status {
+  font-size: 13px;
+  margin-top: -6px;
+}
+
+.isbn-status.found {
+  color: #86efac;
+}
+
+.isbn-status.notfound {
+  color: var(--color-text-muted);
+}

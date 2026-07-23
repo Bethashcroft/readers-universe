@@ -61,3 +61,16 @@ export function deleteBook(id: number): Promise<void> {
     method: "DELETE",
   });
 }
+
+export interface BookLookupResult {
+  title: string;
+  author: string;
+  coverUrl: string;
+}
+
+export function lookupBook(isbn: string): Promise<BookLookupResult> {
+  return request(
+    `/books/lookup/${encodeURIComponent(isbn)}`,
+    "No book found for that ISBN",
+  );
+}

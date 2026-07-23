@@ -23,4 +23,6 @@ public class AppUser : IdentityUser
     public string AvatarContentType { get; set; } = string.Empty;
 
     public DateTime JoinedDate { get; set; } = DateTime.UtcNow;
+
+    public DateTime? UsernameLastChangedAt { get; set; }
 }

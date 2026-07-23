@@ -43,6 +43,15 @@ public class TestWebAppFactory : WebApplicationFactory<Program>
 
             services.AddDbContext<AppDbContext>(options => options.UseSqlite(_connection));
 
+            var lookupDescriptor = services.SingleOrDefault(d =>
+                d.ServiceType == typeof(ReadersRealm.Api.Services.IBookLookup)
+            );
+            if (lookupDescriptor != null)
+            {
+                services.Remove(lookupDescriptor);
+            }
+            services.AddSingleton<ReadersRealm.Api.Services.IBookLookup, FakeBookLookup>();
+
             using var scope = services.BuildServiceProvider().CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             db.Database.EnsureCreated();

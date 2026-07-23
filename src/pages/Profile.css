@@ -66,6 +66,12 @@
   width: fit-content;
 }
 
+.username-note {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: -4px;
+}
+
 .profile-meta {
   display: flex;
   align-items: center;

@@ -95,4 +95,68 @@ public class AuthTests : IDisposable
         var prefixTrick = await UpdateProfileAsync("https://www.vinted-shop.com/member/12345");
         Assert.Equal(HttpStatusCode.BadRequest, prefixTrick.StatusCode);
     }
+
+    private record MessageResult(string Message);
+
+    private Task<HttpResponseMessage> ChangeUsernameAsync(string newUserName) =>
+        _client.PutAsJsonAsync(
+            "/api/auth/profile",
+            new
+            {
+                userName = newUserName,
+                displayName = "Alice",
+                bio = "",
+                vintedUrl = "",
+            }
+        );
+
+    [Fact]
+    public async Task ChangingUsername_ToAValidNewName_Works()
+    {
+        var user = await _client.RegisterAsync("alice");
+        _client.Authenticate(user.Token);
+
+        var response = await ChangeUsernameAsync("alice.reads");
+
+        response.EnsureSuccessStatusCode();
+        var profile = await response.Content.ReadFromJsonAsync<ProfileResult>();
+        Assert.Equal("alice.reads", profile!.UserName);
+    }
+
+    [Fact]
+    public async Task ChangingUsername_TwiceWithin30Days_IsBlocked()
+    {
+        var user = await _client.RegisterAsync("alice");
+        _client.Authenticate(user.Token);
+
+        (await ChangeUsernameAsync("alice.reads")).EnsureSuccessStatusCode();
+
+        var second = await ChangeUsernameAsync("alice.books");
+        Assert.Equal(HttpStatusCode.BadRequest, second.StatusCode);
+        var body = await second.Content.ReadFromJsonAsync<MessageResult>();
+        Assert.Contains("once every 30 days", body!.Message);
+    }
+
+    [Fact]
+    public async Task ChangingUsername_ToATakenName_IsBlocked()
+    {
+        var otherClient = _factory.CreateClient();
+        await otherClient.RegisterAsync("bobby");
+
+        var user = await _client.RegisterAsync("alice");
+        _client.Authenticate(user.Token);
+
+        var response = await ChangeUsernameAsync("bobby");
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ChangingUsername_ToTooShort_IsBlocked()
+    {
+        var user = await _client.RegisterAsync("alice");
+        _client.Authenticate(user.Token);
+
+        var response = await ChangeUsernameAsync("abc");
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 }

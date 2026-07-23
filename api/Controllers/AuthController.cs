@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -110,11 +111,56 @@ public class AuthController : ControllerBase
             );
         }
 
+        var newUserName = request.UserName?.Trim();
+        if (
+            !string.IsNullOrEmpty(newUserName)
+            && !string.Equals(newUserName, user.UserName, StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            if (user.UsernameLastChangedAt is DateTime lastChanged)
+            {
+                var nextAllowed = lastChanged.AddDays(30);
+                if (DateTime.UtcNow < nextAllowed)
+                {
+                    return BadRequest(
+                        new
+                        {
+                            message = $"You can only change your username once every 30 days. You can change it again on {nextAllowed:d MMMM yyyy}.",
+                        }
+                    );
+                }
+            }
+
+            if (!UsernameRegex.IsMatch(newUserName))
+            {
+                return BadRequest(
+                    new
+                    {
+                        message = "Username must be 5–20 characters, using only letters, numbers, dots and underscores.",
+                    }
+                );
+            }
+
+            var existing = await _userManager.FindByNameAsync(newUserName);
+            if (existing != null && existing.Id != user.Id)
+            {
+                return BadRequest(new { message = "That username is already taken." });
+            }
+
+            user.UserName = newUserName;
+            user.NormalizedUserName = _userManager.NormalizeName(newUserName);
+            user.UsernameLastChangedAt = DateTime.UtcNow;
+        }
+
         user.DisplayName = request.DisplayName;
         user.Bio = request.Bio;
         user.VintedUrl = request.VintedUrl;
 
-        await _userManager.UpdateAsync(user);
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            return BadRequest(result.Errors);
+        }
 
         return Ok(ProfileResponse.FromUser(user));
     }
@@ -158,6 +204,8 @@ public class AuthController : ControllerBase
 
         return Ok(ProfileResponse.FromUser(user));
     }
+
+    private static readonly Regex UsernameRegex = new("^[a-zA-Z0-9._]{5,20}$");
 
     private static readonly string[] VintedDomains =
     [
@@ -263,6 +311,7 @@ public class ProfileResponse
     public string VintedUrl { get; set; } = string.Empty;
     public string AvatarUrl { get; set; } = string.Empty;
     public DateTime JoinedDate { get; set; }
+    public DateTime? UsernameChangeableOn { get; set; }
 
     public static ProfileResponse FromUser(AppUser user) =>
         new()
@@ -273,11 +322,13 @@ public class ProfileResponse
             VintedUrl = user.VintedUrl,
             AvatarUrl = user.AvatarUrl,
             JoinedDate = user.JoinedDate,
+            UsernameChangeableOn = user.UsernameLastChangedAt?.AddDays(30),
         };
 }
 
 public class UpdateProfileRequest
 {
+    public string UserName { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string Bio { get; set; } = string.Empty;
     public string VintedUrl { get; set; } = string.Empty;

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { API_ORIGIN } from "../api/client";
 import { getUserProfile, updateProfile, uploadAvatar } from "../api/profile";
@@ -16,11 +16,13 @@ import "./Profile.css";
 
 function Profile() {
   const { username } = useParams();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [books, setBooks] = useState<BookResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [userName, setUserName] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [vintedUrl, setVintedUrl] = useState("");
@@ -41,6 +43,7 @@ function Profile() {
     try {
       const data = await getUserProfile(username);
       setProfile(data);
+      setUserName(data.userName);
       setDisplayName(data.displayName);
       setBio(data.bio);
       setVintedUrl(data.vintedUrl);
@@ -62,9 +65,18 @@ function Profile() {
     setError("");
 
     try {
-      const updated = await updateProfile({ displayName, bio, vintedUrl });
+      const updated = await updateProfile({
+        userName,
+        displayName,
+        bio,
+        vintedUrl,
+      });
       setProfile(updated);
       setEditing(false);
+      if (user && updated.userName !== user.userName) {
+        updateUser({ userName: updated.userName });
+        navigate(`/profile/${updated.userName}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update profile");
     }
@@ -112,6 +124,11 @@ function Profile() {
   }
 
   const isOwnProfile = user?.userName === profile.userName;
+  const usernameLockedUntil =
+    profile.usernameChangeableOn &&
+    new Date(profile.usernameChangeableOn) > new Date()
+      ? new Date(profile.usernameChangeableOn)
+      : null;
 
   return (
     <div className="profile">
@@ -142,6 +159,29 @@ function Profile() {
               >
                 {uploadingAvatar ? "Uploading..." : "Upload New Photo"}
               </button>
+              <label htmlFor="userName">Username</label>
+              <input
+                type="text"
+                id="userName"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                disabled={usernameLockedUntil !== null}
+              />
+              {usernameLockedUntil ? (
+                <p className="username-note">
+                  You can change your username again on{" "}
+                  {usernameLockedUntil.toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                  .
+                </p>
+              ) : (
+                <p className="username-note">
+                  Choose carefully. You can change this once every 30 days.
+                </p>
+              )}
               <label htmlFor="displayName">Display Name</label>
               <input
                 type="text"
@@ -173,6 +213,7 @@ function Profile() {
                   className="btn btn-secondary"
                   onClick={() => {
                     setEditing(false);
+                    setUserName(profile.userName);
                     setDisplayName(profile.displayName);
                     setBio(profile.bio);
                     setVintedUrl(profile.vintedUrl);

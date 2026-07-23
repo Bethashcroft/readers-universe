@@ -7,6 +7,7 @@ using ReadersRealm.Api.Configuration;
 using ReadersRealm.Api.Data;
 using ReadersRealm.Api.Hubs;
 using ReadersRealm.Api.Models;
+using ReadersRealm.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -99,6 +100,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
+builder.Services.AddHttpClient<IBookLookup, OpenLibraryBookLookup>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {

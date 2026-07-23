@@ -11,6 +11,7 @@ export interface AuthContextType {
     password: string,
   ) => Promise<void>;
   logout: () => void;
+  updateUser: (changes: Partial<AuthResponse>) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);

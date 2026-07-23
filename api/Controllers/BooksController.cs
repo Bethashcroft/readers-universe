@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ReadersRealm.Api.Data;
 using ReadersRealm.Api.Models;
+using ReadersRealm.Api.Services;
 
 namespace ReadersRealm.Api.Controllers;
 
@@ -13,10 +14,32 @@ namespace ReadersRealm.Api.Controllers;
 public class BooksController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IBookLookup _lookup;
 
-    public BooksController(AppDbContext context)
+    public BooksController(AppDbContext context, IBookLookup lookup)
     {
         _context = context;
+        _lookup = lookup;
+    }
+
+    [HttpGet("lookup/{isbn}")]
+    public async Task<IActionResult> Lookup(string isbn)
+    {
+        if (string.IsNullOrWhiteSpace(isbn))
+        {
+            return BadRequest(new { message = "Enter an ISBN." });
+        }
+
+        var result = await _lookup.LookupAsync(isbn);
+
+        if (result == null)
+        {
+            return NotFound(
+                new { message = "No book found for that ISBN. You can enter the details by hand." }
+            );
+        }
+
+        return Ok(result);
     }
 
     [HttpGet]
