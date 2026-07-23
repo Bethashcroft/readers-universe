@@ -4,9 +4,11 @@ import type { BookResponse, AddBookRequest } from "../api/books";
 export interface BookContextType {
   books: BookResponse[];
   loading: boolean;
+  error: boolean;
   addBook: (book: AddBookRequest) => Promise<void>;
   updateBook: (id: number, book: AddBookRequest) => Promise<void>;
   removeBook: (id: number) => Promise<void>;
+  refresh: () => void;
 }
 
 export const BookContext = createContext<BookContextType | null>(null);

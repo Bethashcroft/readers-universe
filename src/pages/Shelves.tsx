@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useBooks } from "../context/useBooks";
 import BookCard from "../components/BookCard";
+import ErrorState from "../components/ErrorState";
 import { shelfLabels } from "../types/book";
 import type { ShelfType } from "../types/book";
 import { usePageTitle } from "../hooks/usePageTitle";
@@ -8,7 +9,7 @@ import "./Shelves.css";
 
 function Shelves() {
   usePageTitle("My Shelves");
-  const { books, loading } = useBooks();
+  const { books, loading, error, refresh } = useBooks();
   const [activeShelf, setActiveShelf] = useState<ShelfType | "all">("all");
 
   const filteredBooks =
@@ -18,6 +19,15 @@ function Shelves() {
 
   if (loading) {
     return <p>Loading your shelves...</p>;
+  }
+
+  if (error) {
+    return (
+      <ErrorState
+        message="We couldn't load your shelves. Check your connection and try again."
+        onRetry={refresh}
+      />
+    );
   }
 
   return (

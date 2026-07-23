@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { API_ORIGIN } from "../api/client";
@@ -9,6 +9,7 @@ import type { BookResponse } from "../api/books";
 import BookCard from "../components/BookCard";
 import AvatarCropModal from "../components/AvatarCropModal";
 import VintedButton from "../components/VintedButton";
+import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
 import "../styles/forms.css";
 import "./Profile.css";
@@ -24,6 +25,7 @@ function Profile() {
   const [bio, setBio] = useState("");
   const [vintedUrl, setVintedUrl] = useState("");
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(
     null,
@@ -32,29 +34,29 @@ function Profile() {
 
   usePageTitle(profile ? profile.displayName : "Profile");
 
-  useEffect(() => {
+  const loadProfile = useCallback(async () => {
     if (!username) return;
-
-    const fetchProfile = async () => {
-      setLoading(true);
-      try {
-        const data = await getUserProfile(username);
-        setProfile(data);
-        setDisplayName(data.displayName);
-        setBio(data.bio);
-        setVintedUrl(data.vintedUrl);
-        const userBooks = await getUserBooks(username);
-        setBooks(userBooks);
-      } catch (err) {
-        console.error("Failed to fetch profile:", err);
-        setProfile(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const data = await getUserProfile(username);
+      setProfile(data);
+      setDisplayName(data.displayName);
+      setBio(data.bio);
+      setVintedUrl(data.vintedUrl);
+      const userBooks = await getUserBooks(username);
+      setBooks(userBooks);
+    } catch (err) {
+      console.error("Failed to fetch profile:", err);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }, [username]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   const handleSave = async () => {
     setError("");
@@ -94,6 +96,15 @@ function Profile() {
 
   if (loading) {
     return <p>Loading profile...</p>;
+  }
+
+  if (loadError) {
+    return (
+      <ErrorState
+        message="We couldn't load this profile. Check your connection and try again."
+        onRetry={loadProfile}
+      />
+    );
   }
 
   if (!profile) {

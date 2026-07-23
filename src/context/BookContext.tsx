@@ -12,21 +12,25 @@ import { BookContext } from "./useBooks";
 export function BookProvider({ children }: { children: React.ReactNode }) {
   const [books, setBooks] = useState<BookResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const { user } = useAuth();
 
   const fetchBooks = useCallback(async () => {
     if (!user) {
       setBooks([]);
       setLoading(false);
+      setError(false);
       return;
     }
 
     try {
       setLoading(true);
+      setError(false);
       const data = await getMyBooks();
       setBooks(data);
     } catch (err) {
       console.error("Failed to fetch books:", err);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -56,9 +60,11 @@ export function BookProvider({ children }: { children: React.ReactNode }) {
       value={{
         books,
         loading,
+        error,
         addBook,
         updateBook,
         removeBook,
+        refresh: fetchBooks,
       }}
     >
       {children}

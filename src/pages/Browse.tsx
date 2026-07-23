@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { browseBooks } from "../api/books";
 import type { BookResponse } from "../api/books";
 import { createBorrowRequest } from "../api/borrow";
 import { useAuth } from "../context/useAuth";
 import VintedButton from "../components/VintedButton";
+import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
 import "./Browse.css";
 
@@ -13,6 +14,7 @@ function Browse() {
   const { user } = useAuth();
   const [books, setBooks] = useState<BookResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [requestingBookId, setRequestingBookId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [sentRequests, setSentRequests] = useState<Set<number>>(new Set());
@@ -23,20 +25,23 @@ function Browse() {
     "all" | "available-to-borrow" | "for-sale"
   >("all");
 
-  useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        const data = await browseBooks();
-        setBooks(data);
-      } catch (err) {
-        console.error("Failed to load browse books:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBooks();
+  const loadBooks = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const data = await browseBooks();
+      setBooks(data);
+    } catch (err) {
+      console.error("Failed to load browse books:", err);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadBooks();
+  }, [loadBooks]);
 
   const handleRequest = async (bookId: number) => {
     setError("");
@@ -65,6 +70,15 @@ function Browse() {
 
   if (loading) {
     return <p>Loading books...</p>;
+  }
+
+  if (loadError) {
+    return (
+      <ErrorState
+        message="We couldn't load nearby books. Check your connection and try again."
+        onRetry={loadBooks}
+      />
+    );
   }
 
   return (

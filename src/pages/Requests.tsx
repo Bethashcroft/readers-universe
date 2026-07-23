@@ -7,6 +7,7 @@ import {
   withdrawBorrowRequest,
 } from "../api/borrow";
 import type { BorrowRequestResponse, BorrowStatus } from "../api/borrow";
+import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
 import "./Requests.css";
 
@@ -15,15 +16,19 @@ function Requests() {
   const { user } = useAuth();
   const [requests, setRequests] = useState<BorrowRequestResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [error, setError] = useState("");
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const fetchRequests = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
     try {
       const data = await getMyRequests();
       setRequests(data);
     } catch (err) {
       console.error("Failed to fetch requests:", err);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -75,6 +80,15 @@ function Requests() {
 
   if (loading) {
     return <p>Loading requests...</p>;
+  }
+
+  if (loadError) {
+    return (
+      <ErrorState
+        message="We couldn't load your requests. Check your connection and try again."
+        onRetry={fetchRequests}
+      />
+    );
   }
 
   return (

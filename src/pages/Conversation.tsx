@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { getConversation, sendMessage } from "../api/messages";
@@ -7,6 +7,7 @@ import {
   getChatConnection,
   startChatConnection,
 } from "../realtime/connection";
+import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
 import "./Conversation.css";
 
@@ -16,6 +17,7 @@ function Conversation() {
   const [conversation, setConversation] =
     useState<ConversationResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
@@ -25,19 +27,22 @@ function Conversation() {
     conversation ? `Chat about ${conversation.bookTitle}` : "Messages",
   );
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setConversation(await getConversation(Number(requestId)));
-      } catch (err) {
-        console.error("Failed to load conversation:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
+  const loadConversation = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
+    try {
+      setConversation(await getConversation(Number(requestId)));
+    } catch (err) {
+      console.error("Failed to load conversation:", err);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }, [requestId]);
+
+  useEffect(() => {
+    loadConversation();
+  }, [loadConversation]);
 
   useEffect(() => {
     let active = true;
@@ -107,6 +112,15 @@ function Conversation() {
 
   if (loading) {
     return <p>Loading conversation...</p>;
+  }
+
+  if (loadError) {
+    return (
+      <ErrorState
+        message="We couldn't load this conversation. Check your connection and try again."
+        onRetry={loadConversation}
+      />
+    );
   }
 
   if (!conversation) {

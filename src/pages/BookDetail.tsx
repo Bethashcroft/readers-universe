@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useBooks } from "../context/useBooks";
 import { useAuth } from "../context/useAuth";
@@ -11,6 +11,7 @@ import {
 } from "../api/reviews";
 import type { ReviewResponse } from "../api/reviews";
 import { shelfLabels, offerLabels } from "../types/book";
+import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
 import "./BookDetail.css";
 
@@ -22,6 +23,7 @@ function BookDetail() {
 
   const [book, setBook] = useState<BookResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [reviews, setReviews] = useState<ReviewResponse[]>([]);
   const [rating, setRating] = useState("");
   const [text, setText] = useState("");
@@ -32,28 +34,40 @@ function BookDetail() {
 
   usePageTitle(book ? book.title : "Book");
 
-  useEffect(() => {
-    const fetchBook = async () => {
-      try {
-        const data = await getBook(Number(id));
-        setBook(data);
-        setShelf(data.shelf);
-        setOffer(data.offer);
-        setBookRating(data.rating ? String(data.rating) : "");
-        const reviewData = await getReviewsForBook(data.id);
-        setReviews(reviewData);
-      } catch (err) {
-        console.error("Failed to load book:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBook();
+  const loadBook = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const data = await getBook(Number(id));
+      setBook(data);
+      setShelf(data.shelf);
+      setOffer(data.offer);
+      setBookRating(data.rating ? String(data.rating) : "");
+      const reviewData = await getReviewsForBook(data.id);
+      setReviews(reviewData);
+    } catch (err) {
+      console.error("Failed to load book:", err);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    loadBook();
+  }, [loadBook]);
 
   if (loading) {
     return <p>Loading book...</p>;
+  }
+
+  if (loadError) {
+    return (
+      <ErrorState
+        message="We couldn't load this book. Check your connection and try again."
+        onRetry={loadBook}
+      />
+    );
   }
 
   if (!book) {
