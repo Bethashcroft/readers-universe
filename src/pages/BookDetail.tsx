@@ -298,7 +298,7 @@ function BookDetail() {
                 </button>
               )}
 
-              <button className="btn-delete" onClick={handleRemove}>
+              <button className="btn btn-secondary remove-entry" onClick={handleRemove}>
                 Remove from My Shelves
               </button>
             </>
@@ -358,6 +358,8 @@ function BookDetail() {
                 )
               ) : myEntry ? (
                 <p className="rating-meta">Already on your shelves</p>
+              ) : myReview ? (
+                <p className="rating-meta">You've already rated this book</p>
               ) : sentRequests.has(owner.libraryEntryId) ? (
                 <p className="request-sent">Request sent!</p>
               ) : requestingEntryId === owner.libraryEntryId ? (

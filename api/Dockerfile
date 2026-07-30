@@ -7,5 +7,7 @@ RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
+ENV DOTNET_hostBuilder__reloadConfigOnChange=false
+ENV DOTNET_gcServer=0
 COPY --from=build /app/publish ./
 ENTRYPOINT ["dotnet", "ReadersRealm.Api.dll"]

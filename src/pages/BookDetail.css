@@ -351,18 +351,10 @@
   background-color: var(--color-bg);
 }
 
-.btn-delete {
+.remove-entry {
   margin-top: 16px;
-  padding: 8px 16px;
-  background-color: #ef4444;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font: inherit;
-  cursor: pointer;
+  padding: 9px 18px;
+  font-size: 14px;
   align-self: flex-start;
-}
-
-.btn-delete:hover {
-  background-color: #dc2626;
+  width: fit-content;
 }

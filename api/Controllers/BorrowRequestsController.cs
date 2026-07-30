@@ -49,6 +49,17 @@ public class BorrowRequestsController : ControllerBase
             );
         }
 
+        var alreadyRated = await _context.Reviews.AnyAsync(r =>
+            r.BookId == entry.BookId && r.UserId == fromUserId
+        );
+
+        if (alreadyRated)
+        {
+            return BadRequest(
+                new { message = "You've already rated this book, so you can't request it." }
+            );
+        }
+
         var alreadyRequested = await _context.BorrowRequests.AnyAsync(r =>
             r.LibraryEntryId == entry.Id
             && r.FromUserId == fromUserId

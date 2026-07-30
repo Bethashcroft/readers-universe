@@ -42,6 +42,34 @@ public class BorrowTests : IDisposable
     private record MessageResult(string Message);
 
     [Fact]
+    public async Task RequestingABookYouHaveAlreadyRated_ReturnsBadRequest()
+    {
+        var lenderClient = _factory.CreateClient();
+        var lender = await lenderClient.RegisterAsync("lender");
+        lenderClient.Authenticate(lender.Token);
+        var theirs = await lenderClient.AddBookAsync(
+            "The Hobbit",
+            offer: "available-to-borrow"
+        );
+
+        var reader = await _client.RegisterAsync("reader");
+        _client.Authenticate(reader.Token);
+        await _client.AddReviewAsync(theirs.BookId, 5, "Read it years ago");
+
+        var response = await _client.PostAsJsonAsync(
+            "/api/borrowrequests",
+            new { libraryEntryId = theirs.Id, message = "fancy a reread" }
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<MessageResult>();
+        Assert.Equal(
+            "You've already rated this book, so you can't request it.",
+            body!.Message
+        );
+    }
+
+    [Fact]
     public async Task RequestingABookYouAlreadyHaveOnYourShelves_ReturnsBadRequest()
     {
         var lenderClient = _factory.CreateClient();
