@@ -5,7 +5,7 @@ import { API_ORIGIN } from "../api/client";
 import { getUserProfile, updateProfile, uploadAvatar } from "../api/profile";
 import type { ProfileResponse } from "../api/profile";
 import { getUserBooks } from "../api/books";
-import type { BookResponse } from "../api/books";
+import type { LibraryEntryResponse } from "../api/books";
 import BookCard from "../components/BookCard";
 import AvatarCropModal from "../components/AvatarCropModal";
 import VintedButton from "../components/VintedButton";
@@ -19,7 +19,7 @@ function Profile() {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
-  const [books, setBooks] = useState<BookResponse[]>([]);
+  const [books, setBooks] = useState<LibraryEntryResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [userName, setUserName] = useState("");

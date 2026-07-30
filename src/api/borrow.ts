@@ -15,7 +15,7 @@ export interface BorrowRequestResponse {
 }
 
 export interface CreateBorrowRequest {
-  bookId: number;
+  libraryEntryId: number;
   message: string;
 }
 

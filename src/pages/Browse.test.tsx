@@ -2,12 +2,19 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import Browse from "./Browse";
-import type { BookResponse } from "../api/books";
+import type { LibraryEntryResponse } from "../api/books";
 
-const { mockBrowseBooks } = vi.hoisted(() => ({ mockBrowseBooks: vi.fn() }));
+const { mockBrowseBooks, mockUseBooks } = vi.hoisted(() => ({
+  mockBrowseBooks: vi.fn(),
+  mockUseBooks: vi.fn(),
+}));
 
 vi.mock("../api/books", () => ({
   browseBooks: mockBrowseBooks,
+}));
+
+vi.mock("../context/useBooks", () => ({
+  useBooks: mockUseBooks,
 }));
 
 vi.mock("../context/useAuth", () => ({
@@ -21,12 +28,14 @@ vi.mock("../context/useAuth", () => ({
   }),
 }));
 
-const books: BookResponse[] = [
+const books: LibraryEntryResponse[] = [
   {
     id: 1,
+    bookId: 101,
     title: "The Hobbit",
     author: "J.R.R. Tolkien",
     coverUrl: "x",
+    isbn: "",
     shelf: "read",
     offer: "available-to-borrow",
     rating: null,
@@ -37,9 +46,11 @@ const books: BookResponse[] = [
   },
   {
     id: 2,
+    bookId: 102,
     title: "Dune",
     author: "Frank Herbert",
     coverUrl: "x",
+    isbn: "",
     shelf: "read",
     offer: "for-sale",
     rating: null,
@@ -53,6 +64,8 @@ const books: BookResponse[] = [
 describe("Browse", () => {
   beforeEach(() => {
     mockBrowseBooks.mockReset();
+    mockUseBooks.mockReset();
+    mockUseBooks.mockReturnValue({ books: [] });
   });
 
   it("shows a loading message, then the fetched books", async () => {
@@ -102,6 +115,35 @@ describe("Browse", () => {
 
     expect(screen.getByText("Dune")).toBeInTheDocument();
     expect(screen.queryByText("The Hobbit")).not.toBeInTheDocument();
+  });
+
+  it("links each book to its book page", async () => {
+    mockBrowseBooks.mockResolvedValue(books);
+    render(
+      <MemoryRouter>
+        <Browse />
+      </MemoryRouter>,
+    );
+
+    const title = await screen.findByRole("link", { name: "The Hobbit" });
+    expect(title).toHaveAttribute("href", "/book/101");
+  });
+
+  it("won't offer to borrow a book already on your shelves", async () => {
+    mockBrowseBooks.mockResolvedValue([books[0]]);
+    mockUseBooks.mockReturnValue({ books: [{ ...books[0], id: 99 }] });
+    render(
+      <MemoryRouter>
+        <Browse />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("The Hobbit");
+
+    expect(screen.getByText("Already on your shelves")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Request to Borrow" }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows a no-match message when nothing matches the search", async () => {

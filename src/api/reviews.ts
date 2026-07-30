@@ -4,6 +4,7 @@ export interface ReviewResponse {
   id: number;
   rating: number;
   text: string;
+  containsSpoiler: boolean;
   date: string;
   bookId: number;
   userId: string;
@@ -13,6 +14,7 @@ export interface ReviewResponse {
 export interface AddReviewRequest {
   rating: number;
   text: string;
+  containsSpoiler: boolean;
   bookId: number;
 }
 
@@ -23,6 +25,22 @@ export function getReviewsForBook(bookId: number): Promise<ReviewResponse[]> {
 export function addReview(review: AddReviewRequest): Promise<ReviewResponse> {
   return request("/reviews", "Failed to add review", {
     method: "POST",
+    body: JSON.stringify(review),
+  });
+}
+
+export interface UpdateReviewRequest {
+  rating: number;
+  text: string;
+  containsSpoiler: boolean;
+}
+
+export function updateReview(
+  id: number,
+  review: UpdateReviewRequest,
+): Promise<ReviewResponse> {
+  return request(`/reviews/${id}`, "Failed to update review", {
+    method: "PUT",
     body: JSON.stringify(review),
   });
 }

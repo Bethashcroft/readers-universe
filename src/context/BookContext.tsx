@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import type { BookResponse, AddBookRequest } from "../api/books";
+import type {
+  LibraryEntryResponse,
+  AddToLibraryRequest,
+  UpdateLibraryEntryRequest,
+} from "../api/books";
 import {
   getMyBooks,
   addBook as addBookApi,
@@ -10,7 +14,7 @@ import { useAuth } from "./useAuth";
 import { BookContext } from "./useBooks";
 
 export function BookProvider({ children }: { children: React.ReactNode }) {
-  const [books, setBooks] = useState<BookResponse[]>([]);
+  const [books, setBooks] = useState<LibraryEntryResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const { user } = useAuth();
@@ -40,14 +44,18 @@ export function BookProvider({ children }: { children: React.ReactNode }) {
     fetchBooks();
   }, [fetchBooks]);
 
-  const addBook = async (book: AddBookRequest) => {
+  const addBook = async (book: AddToLibraryRequest) => {
     const newBook = await addBookApi(book);
     setBooks((prev) => [...prev, newBook]);
   };
 
-  const updateBook = async (id: number, bookData: AddBookRequest) => {
-    const updated = await updateBookApi(id, bookData);
+  const updateBook = async (
+    id: number,
+    changes: UpdateLibraryEntryRequest,
+  ) => {
+    const updated = await updateBookApi(id, changes);
     setBooks((prev) => prev.map((b) => (b.id === id ? updated : b)));
+    return updated;
   };
 
   const removeBook = async (id: number) => {

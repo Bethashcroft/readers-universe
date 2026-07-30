@@ -1,13 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import BookCard from "./BookCard";
-import type { BookResponse } from "../api/books";
+import type { LibraryEntryResponse } from "../api/books";
 
-const book: BookResponse = {
+const book: LibraryEntryResponse = {
   id: 1,
+  bookId: 77,
   title: "The Hobbit",
   author: "J.R.R. Tolkien",
   coverUrl: "x",
+  isbn: "",
   shelf: "read",
   offer: "none",
   rating: 4,
@@ -17,7 +19,7 @@ const book: BookResponse = {
   ownerUserName: "owner",
 };
 
-function renderCard(b: BookResponse = book) {
+function renderCard(b: LibraryEntryResponse = book) {
   return render(
     <MemoryRouter>
       <BookCard book={b} />
@@ -36,7 +38,7 @@ describe("BookCard", () => {
   it("links to the book's detail page", () => {
     renderCard();
 
-    expect(screen.getByRole("link")).toHaveAttribute("href", "/book/1");
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/book/77");
   });
 
   it("shows the star rating", () => {

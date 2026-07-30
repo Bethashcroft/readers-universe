@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text;
 
 namespace ReadersRealm.Api.Models;
 
@@ -15,12 +16,27 @@ public class Book
     [MaxLength(2000)]
     public string CoverUrl { get; set; } = string.Empty;
 
-    [MaxLength(50)]
-    public string Shelf { get; set; } = string.Empty;
+    [MaxLength(20)]
+    public string Isbn { get; set; } = string.Empty;
 
-    [MaxLength(50)]
-    public string Offer { get; set; } = BookOffer.None;
-    public int? Rating { get; set; }
-    public string UserId { get; set; } = string.Empty;
-    public AppUser User { get; set; } = null!;
+    [MaxLength(500)]
+    public string MatchKey { get; set; } = string.Empty;
+
+    public static string BuildMatchKey(string title, string author)
+    {
+        var builder = new StringBuilder();
+
+        foreach (var c in $"{title}|{author}")
+        {
+            if (char.IsLetterOrDigit(c) || c == '|')
+            {
+                builder.Append(char.ToLowerInvariant(c));
+            }
+        }
+
+        return builder.ToString();
+    }
+
+    public static string CleanIsbn(string isbn) =>
+        new(isbn.Where(char.IsLetterOrDigit).ToArray());
 }

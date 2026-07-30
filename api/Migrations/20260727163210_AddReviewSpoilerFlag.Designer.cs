@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ReadersRealm.Api.Data;
@@ -11,9 +12,11 @@ using ReadersRealm.Api.Data;
 namespace ReadersRealm.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260727163210_AddReviewSpoilerFlag")]
+    partial class AddReviewSpoilerFlag
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -272,26 +275,31 @@ namespace ReadersRealm.Api.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
-                    b.Property<string>("Isbn")
+                    b.Property<string>("Offer")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
-                    b.Property<string>("MatchKey")
+                    b.Property<int?>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Shelf")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("Isbn");
-
-                    b.HasIndex("MatchKey");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Books");
                 });
@@ -304,15 +312,15 @@ namespace ReadersRealm.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("BookId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("FromUserId")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<int>("LibraryEntryId")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Message")
                         .IsRequired()
@@ -330,51 +338,13 @@ namespace ReadersRealm.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FromUserId");
+                    b.HasIndex("BookId");
 
-                    b.HasIndex("LibraryEntryId");
+                    b.HasIndex("FromUserId");
 
                     b.HasIndex("ToUserId");
 
                     b.ToTable("BorrowRequests");
-                });
-
-            modelBuilder.Entity("ReadersRealm.Api.Models.LibraryEntry", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("AddedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("BookId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Offer")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("Shelf")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BookId");
-
-                    b.HasIndex("UserId", "BookId")
-                        .IsUnique();
-
-                    b.ToTable("LibraryEntries");
                 });
 
             modelBuilder.Entity("ReadersRealm.Api.Models.Message", b =>
@@ -443,10 +413,9 @@ namespace ReadersRealm.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("BookId");
 
-                    b.HasIndex("BookId", "UserId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
                     b.ToTable("Reviews");
                 });
@@ -502,18 +471,29 @@ namespace ReadersRealm.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ReadersRealm.Api.Models.Book", b =>
+                {
+                    b.HasOne("ReadersRealm.Api.Models.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ReadersRealm.Api.Models.BorrowRequest", b =>
                 {
+                    b.HasOne("ReadersRealm.Api.Models.Book", "Book")
+                        .WithMany()
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("ReadersRealm.Api.Models.AppUser", "FromUser")
                         .WithMany()
                         .HasForeignKey("FromUserId")
                         .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("ReadersRealm.Api.Models.LibraryEntry", "LibraryEntry")
-                        .WithMany()
-                        .HasForeignKey("LibraryEntryId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("ReadersRealm.Api.Models.AppUser", "ToUser")
@@ -522,30 +502,11 @@ namespace ReadersRealm.Api.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.Navigation("FromUser");
-
-                    b.Navigation("LibraryEntry");
-
-                    b.Navigation("ToUser");
-                });
-
-            modelBuilder.Entity("ReadersRealm.Api.Models.LibraryEntry", b =>
-                {
-                    b.HasOne("ReadersRealm.Api.Models.Book", "Book")
-                        .WithMany()
-                        .HasForeignKey("BookId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ReadersRealm.Api.Models.AppUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
                     b.Navigation("Book");
 
-                    b.Navigation("User");
+                    b.Navigation("FromUser");
+
+                    b.Navigation("ToUser");
                 });
 
             modelBuilder.Entity("ReadersRealm.Api.Models.Message", b =>

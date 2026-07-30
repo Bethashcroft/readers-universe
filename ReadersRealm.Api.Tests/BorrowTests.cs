@@ -30,7 +30,7 @@ public class BorrowTests : IDisposable
 
         var response = await _client.PostAsJsonAsync(
             "/api/borrowrequests",
-            new {bookId = book.Id, message = "lend me my own book"}
+            new { libraryEntryId = book.Id, message = "lend me my own book" }
         );
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -40,6 +40,39 @@ public class BorrowTests : IDisposable
     }
 
     private record MessageResult(string Message);
+
+    [Fact]
+    public async Task RequestingABookYouAlreadyHaveOnYourShelves_ReturnsBadRequest()
+    {
+        var lenderClient = _factory.CreateClient();
+        var lender = await lenderClient.RegisterAsync("lender");
+        lenderClient.Authenticate(lender.Token);
+        var theirs = await lenderClient.AddBookAsync(
+            "The Hobbit",
+            offer: "available-to-borrow"
+        );
+
+        var reader = await _client.RegisterAsync("reader");
+        _client.Authenticate(reader.Token);
+        await _client.PostAsJsonAsync(
+            "/api/library",
+            new
+            {
+                bookId = theirs.BookId,
+                shelf = "read",
+                offer = "none",
+            }
+        );
+
+        var response = await _client.PostAsJsonAsync(
+            "/api/borrowrequests",
+            new { libraryEntryId = theirs.Id, message = "can I borrow it" }
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<MessageResult>();
+        Assert.Equal("This book is already on your shelves.", body!.Message);
+    }
 
     [Fact]
     public async Task AcceptingRequest_DeclinesCompetitorsAndLendsOutTheBook()
@@ -74,11 +107,10 @@ public class BorrowTests : IDisposable
         Assert.Equal("accepted", aliceAfter.Status);
         Assert.Equal("declined", bobAfter.Status);
 
-        var bookAfter = await ownerClient.GetFromJsonAsync<BookResult>(
-            $"/api/books/{book.Id}"
-        );
-        Assert.Equal("lent-out", bookAfter!.Offer);
-        Assert.Equal("read", bookAfter.Shelf);
+        var ownerLibrary = await ownerClient.GetFromJsonAsync<BookResult[]>("/api/library");
+        var entryAfter = ownerLibrary!.Single(e => e.Id == book.Id);
+        Assert.Equal("lent-out", entryAfter.Offer);
+        Assert.Equal("read", entryAfter.Shelf);
     }
 
         [Fact]
@@ -97,7 +129,7 @@ public class BorrowTests : IDisposable
 
         var second = await borrowerClient.PostAsJsonAsync(
             "/api/borrowrequests",
-            new { bookId = book.Id, message = "again" }
+            new { libraryEntryId = book.Id, message = "again" }
         );
 
         Assert.Equal(HttpStatusCode.BadRequest, second.StatusCode);

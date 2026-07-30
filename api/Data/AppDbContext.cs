@@ -10,6 +10,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
         : base(options) { }
 
     public DbSet<Book> Books { get; set; }
+    public DbSet<LibraryEntry> LibraryEntries { get; set; }
     public DbSet<Review> Reviews { get; set; }
     public DbSet<BorrowRequest> BorrowRequests { get; set; }
     public DbSet<Message> Messages { get; set; }
@@ -24,6 +25,32 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .HasDatabaseName("EmailIndex")
             .IsUnique()
             .HasFilter("\"NormalizedEmail\" IS NOT NULL");
+
+        builder.Entity<Book>().HasIndex(b => b.MatchKey);
+        builder.Entity<Book>().HasIndex(b => b.Isbn);
+
+        builder
+            .Entity<LibraryEntry>()
+            .HasOne(e => e.Book)
+            .WithMany()
+            .HasForeignKey(e => e.BookId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .Entity<LibraryEntry>()
+            .HasOne(e => e.User)
+            .WithMany()
+            .HasForeignKey(e => e.UserId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<LibraryEntry>().HasIndex(e => new { e.UserId, e.BookId }).IsUnique();
+
+        builder
+            .Entity<BorrowRequest>()
+            .HasOne(b => b.LibraryEntry)
+            .WithMany()
+            .HasForeignKey(b => b.LibraryEntryId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder
             .Entity<BorrowRequest>()
@@ -51,6 +78,8 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .WithMany()
             .HasForeignKey(r => r.UserId)
             .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<Review>().HasIndex(r => new { r.BookId, r.UserId }).IsUnique();
 
         builder
             .Entity<Message>()

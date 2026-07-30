@@ -1,12 +1,19 @@
 import { createContext, useContext } from "react";
-import type { BookResponse, AddBookRequest } from "../api/books";
+import type {
+  LibraryEntryResponse,
+  AddToLibraryRequest,
+  UpdateLibraryEntryRequest,
+} from "../api/books";
 
 export interface BookContextType {
-  books: BookResponse[];
+  books: LibraryEntryResponse[];
   loading: boolean;
   error: boolean;
-  addBook: (book: AddBookRequest) => Promise<void>;
-  updateBook: (id: number, book: AddBookRequest) => Promise<void>;
+  addBook: (book: AddToLibraryRequest) => Promise<void>;
+  updateBook: (
+    id: number,
+    changes: UpdateLibraryEntryRequest,
+  ) => Promise<LibraryEntryResponse>;
   removeBook: (id: number) => Promise<void>;
   refresh: () => void;
 }

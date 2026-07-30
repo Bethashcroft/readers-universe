@@ -31,6 +31,7 @@ public class ReviewsController : ControllerBase
                 Id = r.Id,
                 Rating = r.Rating,
                 Text = r.Text,
+                ContainsSpoiler = r.ContainsSpoiler,
                 Date = r.Date,
                 BookId = r.BookId,
                 UserId = r.UserId,
@@ -59,11 +60,6 @@ public class ReviewsController : ControllerBase
             return NotFound(new { message = "Book not found" });
         }
 
-        if (book.UserId == userId)
-        {
-            return BadRequest(new { message = "You cannot review your own book" });
-        }
-
         var alreadyReviewed = await _context.Reviews.AnyAsync(r =>
             r.BookId == request.BookId && r.UserId == userId
         );
@@ -77,6 +73,7 @@ public class ReviewsController : ControllerBase
         {
             Rating = request.Rating,
             Text = request.Text,
+            ContainsSpoiler = request.ContainsSpoiler,
             BookId = request.BookId,
             UserId = userId!,
         };
@@ -92,6 +89,48 @@ public class ReviewsController : ControllerBase
                 Id = review.Id,
                 Rating = review.Rating,
                 Text = review.Text,
+                ContainsSpoiler = review.ContainsSpoiler,
+                Date = review.Date,
+                BookId = review.BookId,
+                UserId = review.UserId,
+                UserName = user?.DisplayName ?? "Unknown",
+            }
+        );
+    }
+
+    [HttpPut("{id}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateReview(int id, [FromBody] UpdateReviewRequest request)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (request.Rating < 1 || request.Rating > 5)
+        {
+            return BadRequest(new { message = "Rating must be between 1 and 5" });
+        }
+
+        var review = await _context.Reviews.FindAsync(id);
+
+        if (review == null || review.UserId != userId)
+        {
+            return NotFound(new { message = "Review not found" });
+        }
+
+        review.Rating = request.Rating;
+        review.Text = request.Text;
+        review.ContainsSpoiler = request.ContainsSpoiler;
+
+        await _context.SaveChangesAsync();
+
+        var user = await _userManager.FindByIdAsync(userId!);
+
+        return Ok(
+            new ReviewResponse
+            {
+                Id = review.Id,
+                Rating = review.Rating,
+                Text = review.Text,
+                ContainsSpoiler = review.ContainsSpoiler,
                 Date = review.Date,
                 BookId = review.BookId,
                 UserId = review.UserId,
@@ -123,7 +162,15 @@ public class AddReviewRequest
 {
     public int Rating { get; set; }
     public string Text { get; set; } = string.Empty;
+    public bool ContainsSpoiler { get; set; }
     public int BookId { get; set; }
+}
+
+public class UpdateReviewRequest
+{
+    public int Rating { get; set; }
+    public string Text { get; set; } = string.Empty;
+    public bool ContainsSpoiler { get; set; }
 }
 
 public class ReviewResponse
@@ -131,6 +178,7 @@ public class ReviewResponse
     public int Id { get; set; }
     public int Rating { get; set; }
     public string Text { get; set; } = string.Empty;
+    public bool ContainsSpoiler { get; set; }
     public DateTime Date { get; set; }
     public int BookId { get; set; }
     public string UserId { get; set; } = string.Empty;

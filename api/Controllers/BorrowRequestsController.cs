@@ -24,20 +24,33 @@ public class BorrowRequestsController : ControllerBase
     {
         var fromUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        var book = await _context.Books.FindAsync(request.BookId);
+        var entry = await _context
+            .LibraryEntries.Include(e => e.Book)
+            .FirstOrDefaultAsync(e => e.Id == request.LibraryEntryId);
 
-        if (book == null)
+        if (entry == null)
         {
             return NotFound(new { message = "Book not found" });
         }
 
-        if (book.UserId == fromUserId)
+        if (entry.UserId == fromUserId)
         {
             return BadRequest(new { message = "You cannot request your own book" });
         }
 
+        var alreadyOnMyShelves = await _context.LibraryEntries.AnyAsync(e =>
+            e.BookId == entry.BookId && e.UserId == fromUserId
+        );
+
+        if (alreadyOnMyShelves)
+        {
+            return BadRequest(
+                new { message = "This book is already on your shelves." }
+            );
+        }
+
         var alreadyRequested = await _context.BorrowRequests.AnyAsync(r =>
-            r.BookId == request.BookId
+            r.LibraryEntryId == entry.Id
             && r.FromUserId == fromUserId
             && r.Status == BorrowStatus.Pending
         );
@@ -49,9 +62,9 @@ public class BorrowRequestsController : ControllerBase
 
         var borrowRequest = new BorrowRequest
         {
-            BookId = book.Id,
+            LibraryEntryId = entry.Id,
             FromUserId = fromUserId!,
-            ToUserId = book.UserId,
+            ToUserId = entry.UserId,
             Message = request.Message,
         };
 
@@ -60,7 +73,14 @@ public class BorrowRequestsController : ControllerBase
 
         var fromUser = await _context.Users.FindAsync(fromUserId);
 
-        return Ok(ToResponse(borrowRequest, book.Title, fromUser?.DisplayName ?? "Unknown"));
+        return Ok(
+            ToResponse(
+                borrowRequest,
+                entry.BookId,
+                entry.Book.Title,
+                fromUser?.DisplayName ?? "Unknown"
+            )
+        );
     }
 
     [HttpGet]
@@ -70,12 +90,13 @@ public class BorrowRequestsController : ControllerBase
 
         var requests = await _context
             .BorrowRequests.Where(r => r.FromUserId == userId || r.ToUserId == userId)
-            .Include(r => r.Book)
+            .Include(r => r.LibraryEntry)
+            .ThenInclude(e => e.Book)
             .Select(r => new BorrowRequestResponse
             {
                 Id = r.Id,
-                BookId = r.BookId,
-                BookTitle = r.Book.Title,
+                BookId = r.LibraryEntry.BookId,
+                BookTitle = r.LibraryEntry.Book.Title,
                 FromUserId = r.FromUserId,
                 FromUserName = r.FromUser.DisplayName,
                 ToUserId = r.ToUserId,
@@ -130,7 +151,8 @@ public class BorrowRequestsController : ControllerBase
         }
 
         var borrowRequest = await _context
-            .BorrowRequests.Include(r => r.Book)
+            .BorrowRequests.Include(r => r.LibraryEntry)
+            .ThenInclude(e => e.Book)
             .Include(r => r.FromUser)
             .FirstOrDefaultAsync(r => r.Id == id);
 
@@ -148,11 +170,11 @@ public class BorrowRequestsController : ControllerBase
 
         if (request.Status == BorrowStatus.Accepted)
         {
-            borrowRequest.Book.Offer = BookOffer.LentOut;
+            borrowRequest.LibraryEntry.Offer = BookOffer.LentOut;
 
             var competing = await _context
                 .BorrowRequests.Where(r =>
-                    r.BookId == borrowRequest.BookId
+                    r.LibraryEntryId == borrowRequest.LibraryEntryId
                     && r.Id != borrowRequest.Id
                     && r.Status == BorrowStatus.Pending
                 )
@@ -169,7 +191,8 @@ public class BorrowRequestsController : ControllerBase
         return Ok(
             ToResponse(
                 borrowRequest,
-                borrowRequest.Book.Title,
+                borrowRequest.LibraryEntry.BookId,
+                borrowRequest.LibraryEntry.Book.Title,
                 borrowRequest.FromUser.DisplayName
             )
         );
@@ -177,13 +200,14 @@ public class BorrowRequestsController : ControllerBase
 
     private static BorrowRequestResponse ToResponse(
         BorrowRequest request,
+        int bookId,
         string bookTitle,
         string fromUserName
     ) =>
         new()
         {
             Id = request.Id,
-            BookId = request.BookId,
+            BookId = bookId,
             BookTitle = bookTitle,
             FromUserId = request.FromUserId,
             FromUserName = fromUserName,
@@ -196,7 +220,7 @@ public class BorrowRequestsController : ControllerBase
 
 public class CreateBorrowRequest
 {
-    public int BookId { get; set; }
+    public int LibraryEntryId { get; set; }
     public string Message { get; set; } = string.Empty;
 }
 

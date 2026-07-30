@@ -24,11 +24,11 @@ public class DashboardController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        var myBooks = await _context.Books.CountAsync(b => b.UserId == userId);
+        var myBooks = await _context.LibraryEntries.CountAsync(e => e.UserId == userId);
 
-        var nearby = await _context.Books.CountAsync(b =>
-            b.UserId != userId
-            && (b.Offer == BookOffer.AvailableToBorrow || b.Offer == BookOffer.ForSale)
+        var nearby = await _context.LibraryEntries.CountAsync(e =>
+            e.UserId != userId
+            && (e.Offer == BookOffer.AvailableToBorrow || e.Offer == BookOffer.ForSale)
         );
 
         var pendingRequests = await _context.BorrowRequests.CountAsync(r =>

@@ -23,6 +23,8 @@ function AddBook() {
   const [shelf, setShelf] = useState<ShelfType>("tbr");
   const [offer, setOffer] = useState<OfferType>("none");
   const [rating, setRating] = useState("");
+  const [reviewText, setReviewText] = useState("");
+  const [containsSpoiler, setContainsSpoiler] = useState(false);
   const [error, setError] = useState("");
 
   const handleLookup = async () => {
@@ -52,9 +54,12 @@ function AddBook() {
         coverUrl:
           coverUrl ||
           `https://placehold.co/200x300/1a1430/a9a3cc?text=${encodeURIComponent(title)}`,
+        isbn,
         shelf,
         offer,
         rating: rating ? Number(rating) : null,
+        reviewText,
+        containsSpoiler,
       });
       navigate("/shelves");
     } catch (err) {
@@ -152,6 +157,26 @@ function AddBook() {
           <option value="4">★★★★☆</option>
           <option value="5">★★★★★</option>
         </select>
+
+        {rating && (
+          <>
+            <label htmlFor="reviewText">Review (optional)</label>
+            <textarea
+              id="reviewText"
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              rows={4}
+            />
+            <label className="review-spoiler-check">
+              <input
+                type="checkbox"
+                checked={containsSpoiler}
+                onChange={(e) => setContainsSpoiler(e.target.checked)}
+              />
+              This review contains spoilers
+            </label>
+          </>
+        )}
 
         <button type="submit">Add book</button>
       </form>

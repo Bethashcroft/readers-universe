@@ -1,16 +1,16 @@
 import { Link } from "react-router-dom";
-import type { BookResponse } from "../api/books";
+import type { LibraryEntryResponse } from "../api/books";
 import { offerLabels } from "../types/book";
 import type { OfferType } from "../types/book";
 import "./BookCard.css";
 
 interface BookCardProps {
-  book: BookResponse;
+  book: LibraryEntryResponse;
 }
 
 function BookCard({ book }: BookCardProps) {
   return (
-    <Link to={`/book/${book.id}`} className="book-card">
+    <Link to={`/book/${book.bookId}`} className="book-card">
       <img
         className="book-cover"
         src={book.coverUrl}

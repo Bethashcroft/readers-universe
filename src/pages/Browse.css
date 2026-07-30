@@ -67,6 +67,15 @@
   font-weight: 600;
 }
 
+.browse-title-link {
+  color: var(--color-text);
+  transition: color 0.15s ease;
+}
+
+.browse-title-link:hover {
+  color: var(--color-primary);
+}
+
 .browse-author {
   color: var(--color-text-muted);
   font-size: 15px;

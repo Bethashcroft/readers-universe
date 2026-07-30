@@ -13,8 +13,8 @@ public class BorrowRequest
     public string Message { get; set; } = string.Empty;
     public DateTime Date { get; set; } = DateTime.UtcNow;
 
-    public int BookId { get; set; }
-    public Book Book { get; set; } = null!;
+    public int LibraryEntryId { get; set; }
+    public LibraryEntry LibraryEntry { get; set; } = null!;
 
     public string FromUserId { get; set; } = string.Empty;
     public AppUser FromUser { get; set; } = null!;

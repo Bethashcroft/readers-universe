@@ -1,46 +1,79 @@
 import { request, requestVoid } from "./client";
 
-export interface BookResponse {
+export interface LibraryEntryResponse {
   id: number;
+  bookId: number;
   title: string;
   author: string;
   coverUrl: string;
+  isbn: string;
   shelf: string;
   offer: string;
   rating: number | null;
   userId: string;
-  sellerVintedUrl: string;
   ownerName: string;
   ownerUserName: string;
+  sellerVintedUrl: string;
 }
 
-export interface AddBookRequest {
+export interface BookOwnerResponse {
+  libraryEntryId: number;
+  userName: string;
+  displayName: string;
+  offer: string;
+  sellerVintedUrl: string;
+}
+
+export interface BookDetailResponse {
+  id: number;
   title: string;
   author: string;
   coverUrl: string;
+  isbn: string;
+  averageRating: number | null;
+  ratingCount: number;
+  myEntry: LibraryEntryResponse | null;
+  owners: BookOwnerResponse[];
+}
+
+export interface AddToLibraryRequest {
+  bookId?: number;
+  title: string;
+  author: string;
+  coverUrl: string;
+  isbn: string;
   shelf: string;
   offer: string;
   rating: number | null;
+  reviewText: string;
+  containsSpoiler: boolean;
 }
 
-export function getMyBooks(): Promise<BookResponse[]> {
-  return request("/books", "Failed to fetch books");
+export interface UpdateLibraryEntryRequest {
+  shelf: string;
+  offer: string;
 }
 
-export function browseBooks(): Promise<BookResponse[]> {
+export function getMyBooks(): Promise<LibraryEntryResponse[]> {
+  return request("/library", "Failed to fetch books");
+}
+
+export function browseBooks(): Promise<LibraryEntryResponse[]> {
   return request("/books/browse", "Failed to fetch books");
 }
 
-export function getBook(id: number): Promise<BookResponse> {
+export function getBook(id: number): Promise<BookDetailResponse> {
   return request(`/books/${id}`, "Failed to fetch book");
 }
 
-export function getUserBooks(username: string): Promise<BookResponse[]> {
+export function getUserBooks(username: string): Promise<LibraryEntryResponse[]> {
   return request(`/users/${username}/books`, "Failed to fetch books");
 }
 
-export function addBook(book: AddBookRequest): Promise<BookResponse> {
-  return request("/books", "Failed to add book", {
+export function addBook(
+  book: AddToLibraryRequest,
+): Promise<LibraryEntryResponse> {
+  return request("/library", "Failed to add book", {
     method: "POST",
     body: JSON.stringify(book),
   });
@@ -48,16 +81,16 @@ export function addBook(book: AddBookRequest): Promise<BookResponse> {
 
 export function updateBook(
   id: number,
-  book: AddBookRequest,
-): Promise<BookResponse> {
-  return request(`/books/${id}`, "Failed to update book", {
+  changes: UpdateLibraryEntryRequest,
+): Promise<LibraryEntryResponse> {
+  return request(`/library/${id}`, "Failed to update book", {
     method: "PUT",
-    body: JSON.stringify(book),
+    body: JSON.stringify(changes),
   });
 }
 
 export function deleteBook(id: number): Promise<void> {
-  return requestVoid(`/books/${id}`, "Failed to delete book", {
+  return requestVoid(`/library/${id}`, "Failed to delete book", {
     method: "DELETE",
   });
 }

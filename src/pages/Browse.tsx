@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { browseBooks } from "../api/books";
-import type { BookResponse } from "../api/books";
+import type { LibraryEntryResponse } from "../api/books";
 import { createBorrowRequest } from "../api/borrow";
 import { useAuth } from "../context/useAuth";
+import { useBooks } from "../context/useBooks";
 import VintedButton from "../components/VintedButton";
 import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
@@ -12,7 +13,8 @@ import "./Browse.css";
 function Browse() {
   usePageTitle("Browse Nearby");
   const { user } = useAuth();
-  const [books, setBooks] = useState<BookResponse[]>([]);
+  const { books: myBooks } = useBooks();
+  const [books, setBooks] = useState<LibraryEntryResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [requestingBookId, setRequestingBookId] = useState<number | null>(null);
@@ -48,7 +50,7 @@ function Browse() {
     setSubmitting(true);
 
     try {
-      await createBorrowRequest({ bookId, message });
+      await createBorrowRequest({ libraryEntryId: bookId, message });
       setSentRequests((prev) => new Set(prev).add(bookId));
       setRequestingBookId(null);
       setMessage("");
@@ -58,6 +60,8 @@ function Browse() {
       setSubmitting(false);
     }
   };
+
+  const myBookIds = new Set(myBooks.map((b) => b.bookId));
 
   const filteredBooks = books.filter((book) => {
     const query = search.toLowerCase();
@@ -134,13 +138,19 @@ function Browse() {
       <div className="browse-list">
         {filteredBooks.map((book) => (
           <div key={book.id} className="browse-card">
-            <img
-              className="browse-cover"
-              src={book.coverUrl}
-              alt={`Cover of ${book.title}`}
-            />
+            <Link to={`/book/${book.bookId}`}>
+              <img
+                className="browse-cover"
+                src={book.coverUrl}
+                alt={`Cover of ${book.title}`}
+              />
+            </Link>
             <div className="browse-info">
-              <h2>{book.title}</h2>
+              <h2>
+                <Link className="browse-title-link" to={`/book/${book.bookId}`}>
+                  {book.title}
+                </Link>
+              </h2>
               <p className="browse-author">{book.author}</p>
               {book.userId !== user?.userId && (
                 <Link
@@ -174,6 +184,8 @@ function Browse() {
                 </div>
               ) : book.userId === user?.userId ? (
                 <p className="own-book-label">Your book</p>
+              ) : myBookIds.has(book.bookId) ? (
+                <p className="own-book-label">Already on your shelves</p>
               ) : sentRequests.has(book.id) ? (
                 <p className="request-sent">Request sent!</p>
               ) : requestingBookId === book.id ? (

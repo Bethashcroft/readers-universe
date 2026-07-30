@@ -47,30 +47,22 @@ public class UsersController : ControllerBase
 
         var requesterId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        var query = _context.Books.Where(b => b.UserId == user.Id);
+        var query = _context.LibraryEntries.Where(e => e.UserId == user.Id);
 
         if (user.Id != requesterId)
         {
-            query = query.Where(b =>
-                (b.Shelf != BookShelf.Tbr && b.Shelf != BookShelf.Dnf)
-                || b.Offer != BookOffer.None
+            query = query.Where(e =>
+                (e.Shelf != BookShelf.Tbr && e.Shelf != BookShelf.Dnf)
+                || e.Offer != BookOffer.None
             );
         }
 
-        var books = await query
-            .Select(b => new BookResponse
-            {
-                Id = b.Id,
-                Title = b.Title,
-                Author = b.Author,
-                CoverUrl = b.CoverUrl,
-                Shelf = b.Shelf,
-                Offer = b.Offer,
-                Rating = b.Rating,
-                UserId = b.UserId,
-            })
+        var entries = await query
+            .Include(e => e.Book)
+            .Include(e => e.User)
+            .OrderByDescending(e => e.Id)
             .ToListAsync();
 
-        return Ok(books);
+        return Ok(await LibraryEntryMapper.MapAsync(_context, entries, e => e.UserId));
     }
 }

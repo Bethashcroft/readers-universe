@@ -98,7 +98,8 @@ public class MessagesController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         var borrowRequest = await _context
-            .BorrowRequests.Include(r => r.Book)
+            .BorrowRequests.Include(r => r.LibraryEntry)
+            .ThenInclude(e => e.Book)
             .Include(r => r.FromUser)
             .Include(r => r.ToUser)
             .FirstOrDefaultAsync(r => r.Id == borrowRequestId);
@@ -136,7 +137,7 @@ public class MessagesController : ControllerBase
         return Ok(
             new ConversationResponse
             {
-                BookTitle = borrowRequest.Book.Title,
+                BookTitle = borrowRequest.LibraryEntry.Book.Title,
                 OtherUserName = otherUser.DisplayName,
                 Messages = messages
                     .Select(m => ToResponse(m, m.Sender.DisplayName))

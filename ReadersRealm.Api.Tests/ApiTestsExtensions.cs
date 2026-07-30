@@ -7,14 +7,34 @@ public record AuthResult(string Token, string UserId, string UserName, string Di
 
 public record BookResult(
     int Id,
+    int BookId,
     string Title,
     string Author,
     string CoverUrl,
+    string Isbn,
     string Shelf,
     string Offer,
     int? Rating,
     string UserId,
     string OwnerName
+);
+
+public record BookOwnerResult(
+    int LibraryEntryId,
+    string UserName,
+    string DisplayName,
+    string Offer
+);
+
+public record BookDetailResult(
+    int Id,
+    string Title,
+    string Author,
+    string Isbn,
+    double? AverageRating,
+    int RatingCount,
+    BookResult? MyEntry,
+    BookOwnerResult[] Owners
 );
 
 public record BorrowResult(int Id, int BookId, string Status, string FromUserName);
@@ -58,19 +78,23 @@ public static class ApiTestExtensions
         this HttpClient client,
         string title,
         string shelf = "read",
-        string offer = "none"
+        string offer = "none",
+        string author = "Test Author",
+        int? rating = null,
+        string isbn = ""
     )
     {
         var response = await client.PostAsJsonAsync(
-            "/api/books",
+            "/api/library",
             new
             {
                 title,
-                author = "Test Author",
+                author,
                 coverUrl = "x",
+                isbn,
                 shelf,
                 offer,
-                rating = (int?)null,
+                rating,
             }
         );
 
@@ -78,15 +102,15 @@ public static class ApiTestExtensions
         return (await response.Content.ReadFromJsonAsync<BookResult>())!;
     }
 
-        public static async Task<BorrowResult> RequestBookAsync(
+    public static async Task<BorrowResult> RequestBookAsync(
         this HttpClient client,
-        int bookId,
+        int libraryEntryId,
         string message = ""
     )
     {
         var response = await client.PostAsJsonAsync(
             "/api/borrowrequests",
-            new { bookId, message }
+            new { libraryEntryId, message }
         );
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<BorrowResult>())!;
