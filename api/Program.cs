@@ -9,13 +9,20 @@ using ReadersRealm.Api.Hubs;
 using ReadersRealm.Api.Models;
 using ReadersRealm.Api.Services;
 
+Console.WriteLine("[startup] building host");
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Hosts like Render tell us which port to listen on via the PORT env var.
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrEmpty(port))
 {
-    builder.WebHost.UseUrls($"http://+:{port}");
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+    Console.WriteLine($"[startup] binding to port {port} from PORT env var");
+}
+else
+{
+    Console.WriteLine("[startup] no PORT env var, using default urls");
 }
 
 // Database
@@ -136,12 +143,27 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+Console.WriteLine("[startup] host built");
 
 if (app.Configuration.GetValue<bool>("RunMigrationsOnStartup"))
 {
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
+    Console.WriteLine("[startup] applying migrations");
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Database.Migrate();
+        Console.WriteLine("[startup] migrations applied");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[startup] MIGRATIONS FAILED: {ex.Message}");
+        throw;
+    }
+}
+else
+{
+    Console.WriteLine("[startup] skipping migrations");
 }
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
