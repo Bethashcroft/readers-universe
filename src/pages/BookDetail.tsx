@@ -16,6 +16,7 @@ import {
 } from "../api/reviews";
 import type { ReviewResponse } from "../api/reviews";
 import { shelfLabels, offerLabels } from "../types/book";
+import BookCover from "../components/BookCover";
 import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
 import "./BookDetail.css";
@@ -179,7 +180,7 @@ function BookDetail() {
 
   const startEditingReview = (review: ReviewResponse) => {
     setEditingReviewId(review.id);
-    setRating(String(review.rating));
+    setRating(review.rating === null ? "" : String(review.rating));
     setText(review.text);
     setReviewSpoiler(review.containsSpoiler);
     setError("");
@@ -197,8 +198,13 @@ function BookDetail() {
     e.preventDefault();
     setError("");
 
+    if (rating === "" && !text.trim()) {
+      setError("Add a rating or write a review");
+      return;
+    }
+
     const details = {
-      rating: Number(rating),
+      rating: rating === "" ? null : Number(rating),
       text,
       containsSpoiler: reviewSpoiler,
     };
@@ -237,10 +243,10 @@ function BookDetail() {
   return (
     <div className="book-detail">
       <div className="book-detail-header">
-        <img
+        <BookCover
           className="book-detail-cover"
           src={book.coverUrl}
-          alt={`Cover of ${book.title}`}
+          title={book.title}
         />
         <div className="book-detail-info">
           <h1>{book.title}</h1>
@@ -298,7 +304,10 @@ function BookDetail() {
                 </button>
               )}
 
-              <button className="btn btn-secondary remove-entry" onClick={handleRemove}>
+              <button
+                className="btn btn-secondary remove-entry"
+                onClick={handleRemove}
+              >
                 Remove from My Shelves
               </button>
             </>
@@ -341,7 +350,9 @@ function BookDetail() {
                   {owner.displayName}
                 </Link>
                 <span className={`browse-badge ${owner.offer}`}>
-                  {owner.offer === "for-sale" ? "For Sale" : "Available to Borrow"}
+                  {owner.offer === "for-sale"
+                    ? "For Sale"
+                    : "Available to Borrow"}
                 </span>
               </div>
 
@@ -413,9 +424,14 @@ function BookDetail() {
             <div className="review-header">
               <span className="review-author">{review.userName}</span>
               <span className="review-rating">
-                {" "}
-                {"★".repeat(review.rating)}
-                {"☆".repeat(5 - review.rating)}
+                {review.rating === null ? (
+                  <span className="review-unrated">No rating</span>
+                ) : (
+                  <>
+                    {"★".repeat(review.rating)}
+                    {"☆".repeat(5 - review.rating)}
+                  </>
+                )}
               </span>
               <span className="review-date">
                 {new Date(review.date).toLocaleDateString("en-GB", {
@@ -472,9 +488,8 @@ function BookDetail() {
               id="review-rating"
               value={rating}
               onChange={(e) => setRating(e.target.value)}
-              required
             >
-              <option value="">Select a rating</option>
+              <option value="">No rating</option>
               <option value="1">★☆☆☆☆</option>
               <option value="2">★★☆☆☆</option>
               <option value="3">★★★☆☆</option>

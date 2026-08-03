@@ -5,9 +5,10 @@ public static class BookShelf
     public const string CurrentlyReading = "currently-reading";
     public const string Read = "read";
     public const string Tbr = "tbr";
+    public const string WantToRead = "want-to-read";
     public const string Dnf = "dnf";
 
-    public static readonly string[] All = [CurrentlyReading, Read, Tbr, Dnf];
+    public static readonly string[] All = [CurrentlyReading, Read, Tbr, WantToRead, Dnf];
 }
 
 public static class BookOffer

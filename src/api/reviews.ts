@@ -2,7 +2,7 @@ import { request, requestVoid } from "./client";
 
 export interface ReviewResponse {
   id: number;
-  rating: number;
+  rating: number | null;
   text: string;
   containsSpoiler: boolean;
   date: string;
@@ -12,7 +12,7 @@ export interface ReviewResponse {
 }
 
 export interface AddReviewRequest {
-  rating: number;
+  rating: number | null;
   text: string;
   containsSpoiler: boolean;
   bookId: number;
@@ -30,7 +30,7 @@ export function addReview(review: AddReviewRequest): Promise<ReviewResponse> {
 }
 
 export interface UpdateReviewRequest {
-  rating: number;
+  rating: number | null;
   text: string;
   containsSpoiler: boolean;
 }

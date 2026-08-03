@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import type { LibraryEntryResponse } from "../api/books";
 import { offerLabels } from "../types/book";
 import type { OfferType } from "../types/book";
+import BookCover from "./BookCover";
 import "./BookCard.css";
 
 interface BookCardProps {
@@ -11,10 +12,10 @@ interface BookCardProps {
 function BookCard({ book }: BookCardProps) {
   return (
     <Link to={`/book/${book.bookId}`} className="book-card">
-      <img
+      <BookCover
         className="book-cover"
         src={book.coverUrl}
-        alt={`Cover of ${book.title}`}
+        title={book.title}
       />
       <div className="book-info">
         <h3 className="book-title">{book.title}</h3>

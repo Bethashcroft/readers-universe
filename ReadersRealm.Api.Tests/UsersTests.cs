@@ -26,6 +26,7 @@ public class UsersTests : IDisposable
         _client.Authenticate(owner.Token);
         await _client.AddBookAsync("Public Read", "read");
         await _client.AddBookAsync("Secret Wishlist", "tbr");
+        await _client.AddBookAsync("Books I Fancy", "want-to-read");
         await _client.AddBookAsync("Abandoned", "dnf");
 
         var viewerClient = _factory.CreateClient();
@@ -39,6 +40,7 @@ public class UsersTests : IDisposable
 
         Assert.Contains("Public Read", titles);
         Assert.DoesNotContain("Secret Wishlist", titles);
+        Assert.DoesNotContain("Books I Fancy", titles);
         Assert.DoesNotContain("Abandoned", titles);
     }
 

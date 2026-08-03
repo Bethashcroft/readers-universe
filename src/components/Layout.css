@@ -15,7 +15,6 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  overflow: hidden;
 }
 
 .nav-decor {
@@ -65,8 +64,93 @@
   z-index: 1;
   display: flex;
   list-style: none;
-  gap: 24px;
+  gap: 12px;
   align-items: center;
+}
+
+.nav-menu {
+  position: relative;
+}
+
+.nav-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--color-primary);
+  background-color: rgba(167, 139, 250, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.nav-menu-trigger:hover,
+.nav-menu-trigger[aria-expanded="true"] {
+  background-color: rgba(167, 139, 250, 0.22);
+  border-color: rgba(167, 139, 250, 0.6);
+}
+
+.nav-menu-trigger .nav-badge {
+  margin-left: 0;
+}
+
+.nav-menu-chevron {
+  width: 10px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.15s ease;
+}
+
+.nav-menu-trigger[aria-expanded="true"] .nav-menu-chevron {
+  transform: rotate(180deg);
+}
+
+.nav-menu-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 190px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  background-color: rgba(16, 12, 44, 0.96);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+.nav-menu-panel a,
+.nav-menu-panel .nav-logout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  text-align: left;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.nav-menu-panel a:hover,
+.nav-menu-panel .nav-logout:hover {
+  background-color: rgba(167, 139, 250, 0.14);
+  color: var(--color-text);
+}
+
+.nav-menu-panel a.active {
+  background-color: rgba(167, 139, 250, 0.12);
 }
 
 @media (max-width: 768px) {

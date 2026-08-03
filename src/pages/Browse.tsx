@@ -6,6 +6,7 @@ import { createBorrowRequest } from "../api/borrow";
 import { useAuth } from "../context/useAuth";
 import { useBooks } from "../context/useBooks";
 import VintedButton from "../components/VintedButton";
+import BookCover from "../components/BookCover";
 import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
 import "./Browse.css";
@@ -139,10 +140,10 @@ function Browse() {
         {filteredBooks.map((book) => (
           <div key={book.id} className="browse-card">
             <Link to={`/book/${book.bookId}`}>
-              <img
+              <BookCover
                 className="browse-cover"
                 src={book.coverUrl}
-                alt={`Cover of ${book.title}`}
+                title={book.title}
               />
             </Link>
             <div className="browse-info">

@@ -79,7 +79,7 @@ public class LibraryController : ControllerBase
         };
         _context.LibraryEntries.Add(entry);
 
-        if (request.Rating.HasValue)
+        if (request.Rating.HasValue || !string.IsNullOrWhiteSpace(request.ReviewText))
         {
             var alreadyReviewed = await _context.Reviews.AnyAsync(r =>
                 r.BookId == book.Id && r.UserId == userId
@@ -92,7 +92,7 @@ public class LibraryController : ControllerBase
                     {
                         BookId = book.Id,
                         UserId = userId!,
-                        Rating = request.Rating.Value,
+                        Rating = request.Rating,
                         Text = request.ReviewText ?? string.Empty,
                         ContainsSpoiler = request.ContainsSpoiler,
                     }

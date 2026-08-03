@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { Outlet, Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { getMyRequests } from "../api/borrow";
@@ -9,6 +9,66 @@ import {
   stopChatConnection,
 } from "../realtime/connection";
 import "./Layout.css";
+
+type NavMenuProps = {
+  label: string;
+  badgeCount?: number;
+  children: ReactNode;
+};
+
+function NavMenu({ label, badgeCount = 0, children }: NavMenuProps) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <li className="nav-menu" ref={containerRef}>
+      <button
+        type="button"
+        className="nav-menu-trigger"
+        aria-haspopup="true"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        {label}
+        {badgeCount > 0 && <span className="nav-badge">{badgeCount}</span>}
+        <svg className="nav-menu-chevron" viewBox="0 0 12 8" aria-hidden="true">
+          <path d="M1 1.5 L6 6.5 L11 1.5" />
+        </svg>
+      </button>
+      {open && (
+        <div className="nav-menu-panel" onClick={() => setOpen(false)}>
+          {children}
+        </div>
+      )}
+    </li>
+  );
+}
 
 function Layout() {
   const { user, logout } = useAuth();
@@ -107,36 +167,31 @@ function Layout() {
         <ul className="navbar-links">
           {user ? (
             <>
-              <li>
+              <NavMenu
+                label="My Shelves"
+                badgeCount={pendingCount + unreadCount}
+              >
                 <NavLink to="/shelves">My Shelves</NavLink>
-              </li>
-              <li>
-                <NavLink to="/add-book">Add Book</NavLink>
-              </li>
-              <li>
+                <NavLink to="/add-book">Add Books</NavLink>
                 <NavLink to="/browse">Browse</NavLink>
-              </li>
-              <li>
                 <NavLink to="/requests">
                   Requests
-                  {user && pendingCount > 0 && (
+                  {pendingCount > 0 && (
                     <span className="nav-badge">{pendingCount}</span>
                   )}
-                  {user && unreadCount > 0 && (
+                  {unreadCount > 0 && (
                     <span className="nav-badge nav-badge-messages">
                       {unreadCount}
                     </span>
                   )}
                 </NavLink>
-              </li>
-              <li>
+              </NavMenu>
+              <NavMenu label="Profile">
                 <NavLink to={`/profile/${user.userName}`}>Profile</NavLink>
-              </li>
-              <li>
                 <button className="nav-logout" onClick={handleLogout}>
-                  Logout
+                  Log Out
                 </button>
-              </li>
+              </NavMenu>
             </>
           ) : (
             <>

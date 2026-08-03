@@ -30,7 +30,7 @@ public static class LibraryEntryMapper
             })
             .ToListAsync();
 
-        var lookup = ratings.ToDictionary(r => (r.BookId, r.UserId), r => (int?)r.Rating);
+        var lookup = ratings.ToDictionary(r => (r.BookId, r.UserId), r => r.Rating);
 
         return entries
             .Select(e => new LibraryEntryResponse

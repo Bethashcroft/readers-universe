@@ -52,7 +52,11 @@ public class UsersController : ControllerBase
         if (user.Id != requesterId)
         {
             query = query.Where(e =>
-                (e.Shelf != BookShelf.Tbr && e.Shelf != BookShelf.Dnf)
+                (
+                    e.Shelf != BookShelf.Tbr
+                    && e.Shelf != BookShelf.WantToRead
+                    && e.Shelf != BookShelf.Dnf
+                )
                 || e.Offer != BookOffer.None
             );
         }

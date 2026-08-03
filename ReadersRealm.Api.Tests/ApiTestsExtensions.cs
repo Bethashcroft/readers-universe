@@ -41,11 +41,24 @@ public record BorrowResult(int Id, int BookId, string Status, string FromUserNam
 
 public record ReviewResult(
     int Id,
-    int Rating,
+    int? Rating,
     string Text,
     int BookId,
     string UserId,
     string UserName
+);
+
+public record ImportSummaryResult(
+    string Service,
+    bool Committed,
+    int RowsFound,
+    int Added,
+    int AlreadyOnShelves,
+    int ReviewsAdded,
+    int NewToCatalogue,
+    int SkippedRows,
+    Dictionary<string, int> ByShelf,
+    string[] Sample
 );
 
 public static class ApiTestExtensions

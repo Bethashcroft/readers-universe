@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using ReadersRealm.Api.Configuration;
 using ReadersRealm.Api.Data;
 using ReadersRealm.Api.Hubs;
+using ReadersRealm.Api.Import;
 using ReadersRealm.Api.Models;
 using ReadersRealm.Api.Services;
 
@@ -108,6 +109,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient<IBookLookup, OpenLibraryBookLookup>();
+builder.Services.AddScoped<LibraryImportService>();
+builder.Services.AddScoped<IBookImportParser, GoodreadsCsvParser>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {

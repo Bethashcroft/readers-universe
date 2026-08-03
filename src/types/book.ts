@@ -1,4 +1,9 @@
-export type ShelfType = "currently-reading" | "read" | "tbr" | "dnf";
+export type ShelfType =
+  | "currently-reading"
+  | "read"
+  | "tbr"
+  | "want-to-read"
+  | "dnf";
 
 export type OfferType =
   | "none"
@@ -10,6 +15,7 @@ export const shelfLabels: Record<ShelfType, string> = {
   "currently-reading": "Currently Reading",
   read: "Read",
   tbr: "To Be Read",
+  "want-to-read": "Want to Read",
   dnf: "Did Not Finish",
 };
 

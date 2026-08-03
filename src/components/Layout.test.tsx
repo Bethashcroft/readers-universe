@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import Layout from "./Layout";
 
@@ -65,19 +66,59 @@ describe("Layout", () => {
     expect(navbar().getByText("Login")).toBeInTheDocument();
     expect(navbar().getByText("Register")).toBeInTheDocument();
     expect(navbar().queryByText("My Shelves")).not.toBeInTheDocument();
-    expect(navbar().queryByText("Add Book")).not.toBeInTheDocument();
+    expect(navbar().queryByText("Add Books")).not.toBeInTheDocument();
     expect(navbar().queryByText("Browse")).not.toBeInTheDocument();
   });
 
-  it("shows the app links when logged in", () => {
+  it("shows the two menu triggers when logged in", () => {
     mockUseAuth.mockReturnValue({ user: loggedInUser, logout: vi.fn() });
     renderLayout();
 
-    expect(navbar().getByText("My Shelves")).toBeInTheDocument();
-    expect(navbar().getByText("Add Book")).toBeInTheDocument();
-    expect(navbar().getByText("Browse")).toBeInTheDocument();
-    expect(navbar().getByText("Logout")).toBeInTheDocument();
+    expect(
+      navbar().getByRole("button", { name: /My Shelves/ }),
+    ).toBeInTheDocument();
+    expect(
+      navbar().getByRole("button", { name: /Profile/ }),
+    ).toBeInTheDocument();
     expect(navbar().queryByText("Login")).not.toBeInTheDocument();
+  });
+
+  it("keeps the app links inside the My Shelves menu until it is opened", async () => {
+    mockUseAuth.mockReturnValue({ user: loggedInUser, logout: vi.fn() });
+    renderLayout();
+
+    expect(navbar().queryByRole("link", { name: "Browse" })).toBeNull();
+
+    await userEvent.click(navbar().getByRole("button", { name: /My Shelves/ }));
+
+    expect(navbar().getByRole("link", { name: "My Shelves" })).toBeInTheDocument();
+    expect(navbar().getByRole("link", { name: "Add Books" })).toBeInTheDocument();
+    expect(navbar().getByRole("link", { name: "Browse" })).toBeInTheDocument();
+    expect(navbar().getByRole("link", { name: "Requests" })).toBeInTheDocument();
+  });
+
+  it("puts Profile and Log Out inside the Profile menu", async () => {
+    mockUseAuth.mockReturnValue({ user: loggedInUser, logout: vi.fn() });
+    renderLayout();
+
+    await userEvent.click(navbar().getByRole("button", { name: /Profile/ }));
+
+    expect(navbar().getByRole("link", { name: "Profile" })).toHaveAttribute(
+      "href",
+      "/profile/me",
+    );
+    expect(navbar().getByRole("button", { name: "Log Out" })).toBeInTheDocument();
+  });
+
+  it("closes an open menu when Escape is pressed", async () => {
+    mockUseAuth.mockReturnValue({ user: loggedInUser, logout: vi.fn() });
+    renderLayout();
+
+    await userEvent.click(navbar().getByRole("button", { name: /My Shelves/ }));
+    expect(navbar().getByRole("link", { name: "Browse" })).toBeInTheDocument();
+
+    await userEvent.keyboard("{Escape}");
+    expect(navbar().queryByRole("link", { name: "Browse" })).toBeNull();
   });
 
   it("shows a badge with the count of incoming pending requests", async () => {

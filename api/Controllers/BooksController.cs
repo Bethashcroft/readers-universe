@@ -70,8 +70,8 @@ public class BooksController : ControllerBase
         }
 
         var ratings = await _context
-            .Reviews.Where(r => r.BookId == id)
-            .Select(r => r.Rating)
+            .Reviews.Where(r => r.BookId == id && r.Rating != null)
+            .Select(r => r.Rating!.Value)
             .ToListAsync();
 
         var myEntry = await _context

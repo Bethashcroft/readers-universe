@@ -48,9 +48,11 @@ public class ReviewsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if (request.Rating < 1 || request.Rating > 5)
+        var problem = ValidateReview(request.Rating, request.Text);
+
+        if (problem != null)
         {
-            return BadRequest(new { message = "Rating must be between 1 and 5" });
+            return BadRequest(new { message = problem });
         }
 
         var book = await _context.Books.FindAsync(request.BookId);
@@ -104,9 +106,11 @@ public class ReviewsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if (request.Rating < 1 || request.Rating > 5)
+        var problem = ValidateReview(request.Rating, request.Text);
+
+        if (problem != null)
         {
-            return BadRequest(new { message = "Rating must be between 1 and 5" });
+            return BadRequest(new { message = problem });
         }
 
         var review = await _context.Reviews.FindAsync(id);
@@ -156,11 +160,26 @@ public class ReviewsController : ControllerBase
 
         return Ok();
     }
+
+    private static string? ValidateReview(int? rating, string text)
+    {
+        if (rating is < 1 or > 5)
+        {
+            return "Rating must be between 1 and 5";
+        }
+
+        if (rating == null && string.IsNullOrWhiteSpace(text))
+        {
+            return "Add a rating or write a review";
+        }
+
+        return null;
+    }
 }
 
 public class AddReviewRequest
 {
-    public int Rating { get; set; }
+    public int? Rating { get; set; }
     public string Text { get; set; } = string.Empty;
     public bool ContainsSpoiler { get; set; }
     public int BookId { get; set; }
@@ -168,7 +187,7 @@ public class AddReviewRequest
 
 public class UpdateReviewRequest
 {
-    public int Rating { get; set; }
+    public int? Rating { get; set; }
     public string Text { get; set; } = string.Empty;
     public bool ContainsSpoiler { get; set; }
 }
@@ -176,7 +195,7 @@ public class UpdateReviewRequest
 public class ReviewResponse
 {
     public int Id { get; set; }
-    public int Rating { get; set; }
+    public int? Rating { get; set; }
     public string Text { get; set; } = string.Empty;
     public bool ContainsSpoiler { get; set; }
     public DateTime Date { get; set; }
