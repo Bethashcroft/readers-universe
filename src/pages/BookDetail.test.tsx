@@ -44,6 +44,7 @@ vi.mock("../context/useAuth", () => ({
 const myEntry: LibraryEntryResponse = {
   id: 9,
   bookId: 1,
+  alreadyOnShelves: false,
   title: "Gone Girl",
   author: "Gillian Flynn",
   coverUrl: "x",

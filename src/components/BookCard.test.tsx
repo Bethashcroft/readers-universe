@@ -6,6 +6,7 @@ import type { LibraryEntryResponse } from "../api/books";
 const book: LibraryEntryResponse = {
   id: 1,
   bookId: 77,
+  alreadyOnShelves: false,
   title: "The Hobbit",
   author: "J.R.R. Tolkien",
   coverUrl: "x",
