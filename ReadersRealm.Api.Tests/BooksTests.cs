@@ -85,7 +85,7 @@ public class BooksTests : IDisposable
         var deleteResponse = await _client.DeleteAsync($"/api/library/{entry.Id}");
         Assert.Equal(HttpStatusCode.Forbidden, deleteResponse.StatusCode);
 
-        var stillThere = await ownerClient.GetFromJsonAsync<BookResult[]>("/api/library");
+        var stillThere = await ownerClient.GetLibraryAsync();
         Assert.Contains(stillThere!, e => e.Id == entry.Id);
     }
 
@@ -150,7 +150,7 @@ public class BooksTests : IDisposable
         await _client.AddBookAsync("Unread and Lending", "tbr", "available-to-borrow");
         await _client.AddBookAsync("Just Read", "read");
 
-        var browse = await _client.GetFromJsonAsync<BookResult[]>("/api/books/browse");
+        var browse = await _client.GetBrowseAsync();
         var titles = browse!.Select(b => b.Title).ToArray();
 
         Assert.Contains("Read and Selling", titles);
@@ -172,10 +172,10 @@ public class BooksTests : IDisposable
         );
         response.EnsureSuccessStatusCode();
 
-        var browse = await _client.GetFromJsonAsync<BookResult[]>("/api/books/browse");
+        var browse = await _client.GetBrowseAsync();
         Assert.DoesNotContain(browse!, b => b.Title == "Sold on Vinted");
 
-        var mine = await _client.GetFromJsonAsync<BookResult[]>("/api/library");
+        var mine = await _client.GetLibraryAsync();
         var after = mine!.Single(e => e.Id == entry.Id);
         Assert.Equal("read", after.Shelf);
         Assert.Equal("none", after.Offer);

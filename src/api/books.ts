@@ -3,6 +3,7 @@ import { request, requestVoid } from "./client";
 export interface LibraryEntryResponse {
   id: number;
   bookId: number;
+  alreadyOnShelves: boolean;
   title: string;
   author: string;
   coverUrl: string;
@@ -54,19 +55,58 @@ export interface UpdateLibraryEntryRequest {
   offer: string;
 }
 
-export function getMyBooks(): Promise<LibraryEntryResponse[]> {
-  return request("/library", "Failed to fetch books");
+export interface PagedResult<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
 }
 
-export function browseBooks(): Promise<LibraryEntryResponse[]> {
-  return request("/books/browse", "Failed to fetch books");
+export function getMyBooks(options?: {
+  shelf?: string;
+  page?: number;
+}): Promise<PagedResult<LibraryEntryResponse>> {
+  const params = new URLSearchParams();
+  if (options?.shelf) params.set("shelf", options.shelf);
+  if (options?.page) params.set("page", String(options.page));
+  const query = params.toString();
+
+  return request(
+    `/library${query ? `?${query}` : ""}`,
+    "Failed to fetch books",
+  );
+}
+
+export function getShelfCounts(): Promise<Record<string, number>> {
+  return request("/library/shelf-counts", "Failed to fetch shelf counts");
+}
+
+export function browseBooks(options?: {
+  page?: number;
+  search?: string;
+  offer?: string;
+}): Promise<PagedResult<LibraryEntryResponse>> {
+  const params = new URLSearchParams();
+  if (options?.page) params.set("page", String(options.page));
+  if (options?.search) params.set("search", options.search);
+  if (options?.offer && options.offer !== "all")
+    params.set("offer", options.offer);
+  const query = params.toString();
+
+  return request(
+    `/books/browse${query ? `?${query}` : ""}`,
+    "Failed to fetch books",
+  );
 }
 
 export function getBook(id: number): Promise<BookDetailResponse> {
   return request(`/books/${id}`, "Failed to fetch book");
 }
 
-export function getUserBooks(username: string): Promise<LibraryEntryResponse[]> {
+export function getUserBooks(
+  username: string,
+): Promise<LibraryEntryResponse[]> {
   return request(`/users/${username}/books`, "Failed to fetch books");
 }
 

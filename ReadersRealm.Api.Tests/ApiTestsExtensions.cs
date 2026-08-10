@@ -61,8 +61,30 @@ public record ImportSummaryResult(
     string[] Sample
 );
 
+public record Paged<T>(T[] Items, int Page, int PageSize, int Total, int TotalPages);
+
 public static class ApiTestExtensions
 {
+    public static async Task<Paged<BookResult>> GetLibraryPageAsync(
+        this HttpClient client,
+        string query = ""
+    ) => (await client.GetFromJsonAsync<Paged<BookResult>>($"/api/library{query}"))!;
+
+    public static async Task<BookResult[]> GetLibraryAsync(
+        this HttpClient client,
+        string query = ""
+    ) => (await client.GetLibraryPageAsync(query)).Items;
+
+    public static async Task<Paged<BookResult>> GetBrowsePageAsync(
+        this HttpClient client,
+        string query = ""
+    ) => (await client.GetFromJsonAsync<Paged<BookResult>>($"/api/books/browse{query}"))!;
+
+    public static async Task<BookResult[]> GetBrowseAsync(
+        this HttpClient client,
+        string query = ""
+    ) => (await client.GetBrowsePageAsync(query)).Items;
+
     public static async Task<AuthResult> RegisterAsync(this HttpClient client, string userName)
     {
         var response = await client.PostAsJsonAsync(

@@ -135,7 +135,7 @@ public class BorrowTests : IDisposable
         Assert.Equal("accepted", aliceAfter.Status);
         Assert.Equal("declined", bobAfter.Status);
 
-        var ownerLibrary = await ownerClient.GetFromJsonAsync<BookResult[]>("/api/library");
+        var ownerLibrary = await ownerClient.GetLibraryAsync();
         var entryAfter = ownerLibrary!.Single(e => e.Id == book.Id);
         Assert.Equal("lent-out", entryAfter.Offer);
         Assert.Equal("read", entryAfter.Shelf);

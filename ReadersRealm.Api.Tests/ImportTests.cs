@@ -126,7 +126,7 @@ public class ImportTests : IDisposable
         Assert.Equal(5, preview.Added);
         Assert.Equal(4, preview.ReviewsAdded);
 
-        var shelves = await _client.GetFromJsonAsync<BookResult[]>("/api/library");
+        var shelves = await _client.GetLibraryAsync();
         Assert.Empty(shelves!);
     }
 
@@ -145,7 +145,7 @@ public class ImportTests : IDisposable
         Assert.Equal(4, summary.ByShelf["read"]);
         Assert.Equal(1, summary.ByShelf["want-to-read"]);
 
-        var shelves = await _client.GetFromJsonAsync<BookResult[]>("/api/library");
+        var shelves = await _client.GetLibraryAsync();
         Assert.Equal(5, shelves!.Length);
 
         var stand = shelves.Single(b => b.Title == "The One Night Stand");
@@ -164,7 +164,7 @@ public class ImportTests : IDisposable
         _client.Authenticate(beth.Token);
         await ImportAsync(_client);
 
-        var shelves = await _client.GetFromJsonAsync<BookResult[]>("/api/library");
+        var shelves = await _client.GetLibraryAsync();
         var noStars = shelves!.Single(b => b.Title == "What You Did");
 
         Assert.Null(noStars.Rating);
@@ -196,7 +196,7 @@ public class ImportTests : IDisposable
         Assert.Equal(5, second.AlreadyOnShelves);
         Assert.Equal(0, second.NewToCatalogue);
 
-        var shelves = await _client.GetFromJsonAsync<BookResult[]>("/api/library");
+        var shelves = await _client.GetLibraryAsync();
         Assert.Equal(5, shelves!.Length);
     }
 
@@ -228,6 +228,65 @@ public class ImportTests : IDisposable
         var response = await _client.PostAsync("/api/library/import", content);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task LibraryPagesResultsAndFiltersByShelfAcrossTheWholeLibrary()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+        await ImportAsync(_client);
+
+        var firstPage = await _client.GetLibraryPageAsync("?pageSize=2");
+
+        Assert.Equal(2, firstPage.Items.Length);
+        Assert.Equal(5, firstPage.Total);
+        Assert.Equal(3, firstPage.TotalPages);
+
+        var lastPage = await _client.GetLibraryPageAsync("?pageSize=2&page=3");
+        Assert.Single(lastPage.Items);
+
+        var allTitles = new List<string>();
+        for (var p = 1; p <= firstPage.TotalPages; p++)
+        {
+            allTitles.AddRange(
+                (await _client.GetLibraryPageAsync($"?pageSize=2&page={p}")).Items.Select(b =>
+                    b.Title
+                )
+            );
+        }
+        Assert.Equal(5, allTitles.Distinct().Count());
+
+        // The shelf filter must run over the whole library, not just one page.
+        var wishlist = await _client.GetLibraryPageAsync("?shelf=want-to-read&pageSize=2");
+        Assert.Equal(1, wishlist.Total);
+        Assert.Equal("I Who Have Never Known Men", wishlist.Items.Single().Title);
+    }
+
+    [Fact]
+    public async Task LibraryRejectsAShelfThatDoesNotExist()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+
+        var response = await _client.GetAsync("/api/library?shelf=made-up");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ShelfCountsCoverTheWholeLibrary()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+        await ImportAsync(_client);
+
+        var counts = await _client.GetFromJsonAsync<Dictionary<string, int>>(
+            "/api/library/shelf-counts"
+        );
+
+        Assert.Equal(4, counts!["read"]);
+        Assert.Equal(1, counts["want-to-read"]);
     }
 
     [Fact]

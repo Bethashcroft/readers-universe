@@ -4,9 +4,9 @@ import { browseBooks } from "../api/books";
 import type { LibraryEntryResponse } from "../api/books";
 import { createBorrowRequest } from "../api/borrow";
 import { useAuth } from "../context/useAuth";
-import { useBooks } from "../context/useBooks";
 import VintedButton from "../components/VintedButton";
 import BookCover from "../components/BookCover";
+import Pager from "../components/Pager";
 import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
 import "./Browse.css";
@@ -14,8 +14,11 @@ import "./Browse.css";
 function Browse() {
   usePageTitle("Browse Nearby");
   const { user } = useAuth();
-  const { books: myBooks } = useBooks();
   const [books, setBooks] = useState<LibraryEntryResponse[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [requestingBookId, setRequestingBookId] = useState<number | null>(null);
@@ -32,19 +35,34 @@ function Browse() {
     setLoading(true);
     setLoadError(false);
     try {
-      const data = await browseBooks();
-      setBooks(data);
+      const result = await browseBooks({
+        page,
+        search: debouncedSearch,
+        offer: filter,
+      });
+      setBooks(result.items);
+      setTotalPages(result.totalPages);
+      setTotal(result.total);
     } catch (err) {
       console.error("Failed to load browse books:", err);
       setLoadError(true);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, debouncedSearch, filter]);
 
   useEffect(() => {
     loadBooks();
   }, [loadBooks]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const handleRequest = async (bookId: number) => {
     setError("");
@@ -62,20 +80,15 @@ function Browse() {
     }
   };
 
-  const myBookIds = new Set(myBooks.map((b) => b.bookId));
+  const chooseFilter = (next: typeof filter) => {
+    setFilter(next);
+    setPage(1);
+  };
 
-  const filteredBooks = books.filter((book) => {
-    const query = search.toLowerCase();
-    const matchesSearch =
-      book.title.toLowerCase().includes(query) ||
-      book.author.toLowerCase().includes(query);
-    const matchesFilter = filter === "all" || book.offer === filter;
-    return matchesSearch && matchesFilter;
-  });
-
-  if (loading) {
-    return <p>Loading books...</p>;
-  }
+  const changePage = (next: number) => {
+    setPage(next);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   if (loadError) {
     return (
@@ -108,7 +121,7 @@ function Browse() {
         <div className="browse-filters">
           <button
             className={`browse-filter ${filter === "all" ? "active" : ""}`}
-            onClick={() => setFilter("all")}
+            onClick={() => chooseFilter("all")}
           >
             All
           </button>
@@ -116,28 +129,31 @@ function Browse() {
             className={`browse-filter ${
               filter === "available-to-borrow" ? "active" : ""
             }`}
-            onClick={() => setFilter("available-to-borrow")}
+            onClick={() => chooseFilter("available-to-borrow")}
           >
             To Borrow
           </button>
           <button
             className={`browse-filter ${filter === "for-sale" ? "active" : ""}`}
-            onClick={() => setFilter("for-sale")}
+            onClick={() => chooseFilter("for-sale")}
           >
             For Sale
           </button>
         </div>
       </div>
 
-      {books.length === 0 ? (
-        <p className="empty-browse">No books available nearby right now.</p>
-      ) : (
-        filteredBooks.length === 0 && (
-          <p className="empty-browse">No books match your search.</p>
-        )
+      {loading && <p>Loading books...</p>}
+
+      {!loading && total === 0 && (
+        <p className="empty-browse">
+          {debouncedSearch || filter !== "all"
+            ? "No books match your search."
+            : "No books available nearby right now."}
+        </p>
       )}
+
       <div className="browse-list">
-        {filteredBooks.map((book) => (
+        {books.map((book) => (
           <div key={book.id} className="browse-card">
             <Link to={`/book/${book.bookId}`}>
               <BookCover
@@ -185,7 +201,7 @@ function Browse() {
                 </div>
               ) : book.userId === user?.userId ? (
                 <p className="own-book-label">Your book</p>
-              ) : myBookIds.has(book.bookId) ? (
+              ) : book.alreadyOnShelves ? (
                 <p className="own-book-label">Already on your shelves</p>
               ) : sentRequests.has(book.id) ? (
                 <p className="request-sent">Request sent!</p>
@@ -233,6 +249,14 @@ function Browse() {
           </div>
         ))}
       </div>
+
+      <Pager
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        noun="book"
+        onChange={changePage}
+      />
     </div>
   );
 }

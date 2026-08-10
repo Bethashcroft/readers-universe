@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { useBooks } from "../context/useBooks";
 import { importLibrary } from "../api/import";
 import type { ImportSummary } from "../api/import";
 import { shelfLabels } from "../types/book";
@@ -10,7 +9,6 @@ import "./ImportLibrary.css";
 type Stage = "idle" | "checking" | "ready" | "importing" | "done";
 
 function ImportLibrary() {
-  const { refresh } = useBooks();
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
@@ -63,7 +61,6 @@ function ImportLibrary() {
       setResult(done);
       setPreview(null);
       setStage("done");
-      refresh();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "The import did not finish.",

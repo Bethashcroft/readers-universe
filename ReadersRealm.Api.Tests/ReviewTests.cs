@@ -69,7 +69,7 @@ public class ReviewTests : IDisposable
 
         response.EnsureSuccessStatusCode();
 
-        var mine = await _client.GetFromJsonAsync<BookResult[]>("/api/library");
+        var mine = await _client.GetLibraryAsync();
         Assert.Equal(5, mine!.Single().Rating);
     }
 
@@ -102,7 +102,7 @@ public class ReviewTests : IDisposable
 
         (await _client.DeleteAsync($"/api/reviews/{review.Id}")).EnsureSuccessStatusCode();
 
-        var mine = await _client.GetFromJsonAsync<BookResult[]>("/api/library");
+        var mine = await _client.GetLibraryAsync();
         Assert.Null(mine!.Single().Rating);
     }
 
@@ -190,7 +190,7 @@ public class ReviewTests : IDisposable
         Assert.Equal(5, updated!.Single().Rating);
         Assert.Equal("Came back to add my thoughts", updated!.Single().Text);
 
-        var library = await _client.GetFromJsonAsync<BookResult[]>("/api/library");
+        var library = await _client.GetLibraryAsync();
         Assert.Equal(5, library!.Single().Rating);
     }
 

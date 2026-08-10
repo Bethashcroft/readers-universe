@@ -20,18 +20,60 @@ public class LibraryController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetMyLibrary()
+    public async Task<IActionResult> GetMyLibrary(
+        [FromQuery] string? shelf,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize
+    )
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        var entries = await _context
-            .LibraryEntries.Where(e => e.UserId == userId)
+        if (!string.IsNullOrEmpty(shelf) && !BookShelf.All.Contains(shelf))
+        {
+            return BadRequest(new { message = "That is not a shelf." });
+        }
+
+        var (currentPage, size) = PagedResult<LibraryEntryResponse>.Normalise(page, pageSize);
+
+        var query = _context.LibraryEntries.Where(e => e.UserId == userId);
+
+        if (!string.IsNullOrEmpty(shelf))
+        {
+            query = query.Where(e => e.Shelf == shelf);
+        }
+
+        var total = await query.CountAsync();
+
+        var entries = await query
             .Include(e => e.Book)
             .Include(e => e.User)
             .OrderByDescending(e => e.Id)
+            .Skip((currentPage - 1) * size)
+            .Take(size)
             .ToListAsync();
 
-        return Ok(await ToResponsesAsync(entries, userId!));
+        return Ok(
+            PagedResult<LibraryEntryResponse>.From(
+                await ToResponsesAsync(entries, userId!),
+                currentPage,
+                size,
+                total
+            )
+        );
+    }
+
+    [HttpGet("shelf-counts")]
+    public async Task<IActionResult> GetShelfCounts()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var counts = await _context
+            .LibraryEntries.Where(e => e.UserId == userId)
+            .GroupBy(e => e.Shelf)
+            .Select(g => new { Shelf = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        return Ok(counts.ToDictionary(c => c.Shelf, c => c.Count));
     }
 
     [HttpPost]
@@ -266,4 +308,5 @@ public class LibraryEntryResponse
     public string OwnerName { get; set; } = string.Empty;
     public string OwnerUserName { get; set; } = string.Empty;
     public string SellerVintedUrl { get; set; } = string.Empty;
+    public bool AlreadyOnShelves { get; set; }
 }

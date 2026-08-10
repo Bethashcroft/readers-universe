@@ -43,18 +43,63 @@ public class BooksController : ControllerBase
     }
 
     [HttpGet("browse")]
-    public async Task<IActionResult> Browse()
+    public async Task<IActionResult> Browse(
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
+        [FromQuery] string? search,
+        [FromQuery] string? offer
+    )
     {
-        var entries = await _context
-            .LibraryEntries.Where(e =>
-                e.Offer == BookOffer.AvailableToBorrow || e.Offer == BookOffer.ForSale
-            )
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var (currentPage, size) = PagedResult<LibraryEntryResponse>.Normalise(page, pageSize);
+
+        var query = _context.LibraryEntries.Where(e =>
+            e.Offer == BookOffer.AvailableToBorrow || e.Offer == BookOffer.ForSale
+        );
+
+        if (offer == BookOffer.AvailableToBorrow || offer == BookOffer.ForSale)
+        {
+            query = query.Where(e => e.Offer == offer);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(e =>
+                e.Book.Title.ToLower().Contains(term) || e.Book.Author.ToLower().Contains(term)
+            );
+        }
+
+        var total = await query.CountAsync();
+
+        var entries = await query
             .Include(e => e.Book)
             .Include(e => e.User)
             .OrderByDescending(e => e.Id)
+            .Skip((currentPage - 1) * size)
+            .Take(size)
             .ToListAsync();
 
-        return Ok(await LibraryEntryMapper.MapAsync(_context, entries, e => e.UserId));
+        var responses = await LibraryEntryMapper.MapAsync(_context, entries, e => e.UserId);
+
+        if (userId != null)
+        {
+            var bookIds = entries.Select(e => e.BookId).Distinct().ToList();
+
+            var mine = (
+                await _context
+                    .LibraryEntries.Where(e => e.UserId == userId && bookIds.Contains(e.BookId))
+                    .Select(e => e.BookId)
+                    .ToListAsync()
+            ).ToHashSet();
+
+            foreach (var response in responses)
+            {
+                response.AlreadyOnShelves = mine.Contains(response.BookId);
+            }
+        }
+
+        return Ok(PagedResult<LibraryEntryResponse>.From(responses, currentPage, size, total));
     }
 
     [HttpGet("{id}")]

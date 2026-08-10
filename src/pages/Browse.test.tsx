@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import Browse from "./Browse";
@@ -28,10 +28,21 @@ vi.mock("../context/useAuth", () => ({
   }),
 }));
 
+function paged(items: LibraryEntryResponse[]) {
+  return {
+    items,
+    page: 1,
+    pageSize: 24,
+    total: items.length,
+    totalPages: items.length === 0 ? 0 : 1,
+  };
+}
+
 const books: LibraryEntryResponse[] = [
   {
     id: 1,
     bookId: 101,
+    alreadyOnShelves: false,
     title: "The Hobbit",
     author: "J.R.R. Tolkien",
     coverUrl: "x",
@@ -47,6 +58,7 @@ const books: LibraryEntryResponse[] = [
   {
     id: 2,
     bookId: 102,
+    alreadyOnShelves: false,
     title: "Dune",
     author: "Frank Herbert",
     coverUrl: "x",
@@ -65,12 +77,16 @@ describe("Browse", () => {
   beforeEach(() => {
     mockBrowseBooks.mockReset();
     mockUseBooks.mockReset();
-    mockUseBooks.mockReturnValue({ books: [] });
+    mockUseBooks.mockReturnValue({ version: 0 });
   });
 
   it("shows a loading message, then the fetched books", async () => {
-    mockBrowseBooks.mockResolvedValue(books);
-    render(<MemoryRouter><Browse /></MemoryRouter>);
+    mockBrowseBooks.mockResolvedValue(paged(books));
+    render(
+      <MemoryRouter>
+        <Browse />
+      </MemoryRouter>,
+    );
 
     expect(screen.getByText("Loading books...")).toBeInTheDocument();
 
@@ -80,45 +96,68 @@ describe("Browse", () => {
   });
 
   it("shows an empty-state message when no books are available", async () => {
-    mockBrowseBooks.mockResolvedValue([]);
-    render(<MemoryRouter><Browse /></MemoryRouter>);
+    mockBrowseBooks.mockResolvedValue(paged([]));
+    render(
+      <MemoryRouter>
+        <Browse />
+      </MemoryRouter>,
+    );
 
     expect(
       await screen.findByText("No books available nearby right now."),
     ).toBeInTheDocument();
   });
 
-  it("filters the list by search text", async () => {
-    mockBrowseBooks.mockResolvedValue(books);
+  it("asks the server to search, rather than filtering one page", async () => {
+    mockBrowseBooks.mockResolvedValue(paged(books));
     const user = userEvent.setup();
-    render(<MemoryRouter><Browse /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <Browse />
+      </MemoryRouter>,
+    );
 
     await screen.findByText("The Hobbit");
+    mockBrowseBooks.mockResolvedValue(paged([books[1]]));
 
     await user.type(
       screen.getByPlaceholderText("Search by title or author"),
       "dune",
     );
 
-    expect(screen.getByText("Dune")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(mockBrowseBooks).toHaveBeenLastCalledWith(
+        expect.objectContaining({ search: "dune", page: 1 }),
+      ),
+    );
+    expect(await screen.findByText("Dune")).toBeInTheDocument();
     expect(screen.queryByText("The Hobbit")).not.toBeInTheDocument();
   });
 
-  it("filters the list by the For Sale tab", async () => {
-    mockBrowseBooks.mockResolvedValue(books);
+  it("asks the server for the For Sale filter", async () => {
+    mockBrowseBooks.mockResolvedValue(paged(books));
     const user = userEvent.setup();
-    render(<MemoryRouter><Browse /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <Browse />
+      </MemoryRouter>,
+    );
 
     await screen.findByText("The Hobbit");
+    mockBrowseBooks.mockResolvedValue(paged([books[1]]));
 
     await user.click(screen.getByRole("button", { name: "For Sale" }));
 
-    expect(screen.getByText("Dune")).toBeInTheDocument();
-    expect(screen.queryByText("The Hobbit")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(mockBrowseBooks).toHaveBeenLastCalledWith(
+        expect.objectContaining({ offer: "for-sale", page: 1 }),
+      ),
+    );
+    expect(await screen.findByText("Dune")).toBeInTheDocument();
   });
 
   it("links each book to its book page", async () => {
-    mockBrowseBooks.mockResolvedValue(books);
+    mockBrowseBooks.mockResolvedValue(paged(books));
     render(
       <MemoryRouter>
         <Browse />
@@ -130,8 +169,9 @@ describe("Browse", () => {
   });
 
   it("won't offer to borrow a book already on your shelves", async () => {
-    mockBrowseBooks.mockResolvedValue([books[0]]);
-    mockUseBooks.mockReturnValue({ books: [{ ...books[0], id: 99 }] });
+    mockBrowseBooks.mockResolvedValue(
+      paged([{ ...books[0], alreadyOnShelves: true }]),
+    );
     render(
       <MemoryRouter>
         <Browse />
@@ -146,19 +186,63 @@ describe("Browse", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("shows a no-match message when nothing matches the search", async () => {
-    mockBrowseBooks.mockResolvedValue(books);
+  it("shows a no-match message when the search returns nothing", async () => {
+    mockBrowseBooks.mockResolvedValue(paged(books));
     const user = userEvent.setup();
-    render(<MemoryRouter><Browse /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <Browse />
+      </MemoryRouter>,
+    );
 
     await screen.findByText("The Hobbit");
+    mockBrowseBooks.mockResolvedValue(paged([]));
 
     await user.type(
       screen.getByPlaceholderText("Search by title or author"),
       "zzznomatch",
     );
 
-    expect(screen.getByText("No books match your search.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("No books match your search."),
+    ).toBeInTheDocument();
     expect(screen.queryByText("The Hobbit")).not.toBeInTheDocument();
+  });
+
+  it("pages through results and shows the pager only when needed", async () => {
+    mockBrowseBooks.mockResolvedValue({
+      items: [books[0]],
+      page: 1,
+      pageSize: 1,
+      total: 2,
+      totalPages: 2,
+    });
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <Browse />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("The Hobbit");
+    expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back" })).toBeDisabled();
+
+    mockBrowseBooks.mockResolvedValue({
+      items: [books[1]],
+      page: 2,
+      pageSize: 1,
+      total: 2,
+      totalPages: 2,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Next" }));
+
+    await waitFor(() =>
+      expect(mockBrowseBooks).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 2 }),
+      ),
+    );
+    expect(await screen.findByText("Dune")).toBeInTheDocument();
   });
 });
