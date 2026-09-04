@@ -266,6 +266,65 @@ public class ImportTests : IDisposable
     }
 
     [Fact]
+    public async Task SearchingYourShelvesLooksAtEveryPageNotJustTheCurrentOne()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+        await ImportAsync(_client);
+
+        var byTitle = await _client.GetLibraryPageAsync("?search=profiler&pageSize=2");
+        Assert.Equal(1, byTitle.Total);
+        Assert.Equal("The Profiler", byTitle.Items.Single().Title);
+
+        var byAuthor = await _client.GetLibraryPageAsync("?search=mcgowan");
+        Assert.Equal("What You Did", byAuthor.Items.Single().Title);
+
+        var caseInsensitive = await _client.GetLibraryPageAsync("?search=PROFILER");
+        Assert.Equal(1, caseInsensitive.Total);
+
+        var withShelf = await _client.GetLibraryPageAsync("?search=a&shelf=want-to-read");
+        Assert.All(withShelf.Items, b => Assert.Equal("want-to-read", b.Shelf));
+    }
+
+    [Fact]
+    public async Task SortingOrdersTheWholeLibraryNotJustThePage()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+        await ImportAsync(_client);
+
+        var byTitle = await _client.GetLibraryPageAsync("?sort=title");
+        Assert.Equal(
+            byTitle.Items.Select(b => b.Title).OrderBy(t => t, StringComparer.Ordinal),
+            byTitle.Items.Select(b => b.Title)
+        );
+
+        var byAuthor = await _client.GetLibraryPageAsync("?sort=author");
+        Assert.Equal("Claire McGowan", byAuthor.Items.First().Author);
+
+        var byRating = await _client.GetLibraryPageAsync("?sort=rating");
+        Assert.Equal(3, byRating.Items.First().Rating);
+        Assert.Null(byRating.Items.Last().Rating);
+
+        var firstPage = await _client.GetLibraryPageAsync("?sort=title&pageSize=2&page=1");
+        var secondPage = await _client.GetLibraryPageAsync("?sort=title&pageSize=2&page=2");
+        Assert.Empty(
+            firstPage.Items.Select(b => b.Title).Intersect(secondPage.Items.Select(b => b.Title))
+        );
+    }
+
+    [Fact]
+    public async Task LibraryRejectsASortThatDoesNotExist()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+
+        var response = await _client.GetAsync("/api/library?sort=whatever");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task LibraryRejectsAShelfThatDoesNotExist()
     {
         var beth = await _client.RegisterAsync("beth");

@@ -65,10 +65,15 @@ export interface PagedResult<T> {
 
 export function getMyBooks(options?: {
   shelf?: string;
+  search?: string;
+  sort?: string;
   page?: number;
 }): Promise<PagedResult<LibraryEntryResponse>> {
   const params = new URLSearchParams();
   if (options?.shelf) params.set("shelf", options.shelf);
+  if (options?.search) params.set("search", options.search);
+  if (options?.sort && options.sort !== "added")
+    params.set("sort", options.sort);
   if (options?.page) params.set("page", String(options.page));
   const query = params.toString();
 

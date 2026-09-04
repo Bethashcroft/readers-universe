@@ -27,3 +27,13 @@ public static class BorrowStatus
     public const string Accepted = "accepted";
     public const string Declined = "declined";
 }
+
+public static class LibrarySort
+{
+    public const string Added = "added";
+    public const string Title = "title";
+    public const string Author = "author";
+    public const string Rating = "rating";
+
+    public static readonly string[] All = [Added, Title, Author, Rating];
+}

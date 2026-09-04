@@ -23,6 +23,8 @@ public class LibraryController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetMyLibrary(
         [FromQuery] string? shelf,
+        [FromQuery] string? search,
+        [FromQuery] string? sort,
         [FromQuery] int? page,
         [FromQuery] int? pageSize
     )
@@ -34,6 +36,11 @@ public class LibraryController : ControllerBase
             return BadRequest(new { message = "That is not a shelf." });
         }
 
+        if (!string.IsNullOrEmpty(sort) && !LibrarySort.All.Contains(sort))
+        {
+            return BadRequest(new { message = "That is not a way to sort your shelves." });
+        }
+
         var (currentPage, size) = PagedResult<LibraryEntryResponse>.Normalise(page, pageSize);
 
         var query = _context.LibraryEntries.Where(e => e.UserId == userId);
@@ -43,12 +50,38 @@ public class LibraryController : ControllerBase
             query = query.Where(e => e.Shelf == shelf);
         }
 
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(e =>
+                e.Book.Title.ToLower().Contains(term) || e.Book.Author.ToLower().Contains(term)
+            );
+        }
+
         var total = await query.CountAsync();
 
-        var entries = await query
+        var myRatings = _context.Reviews.Where(r => r.UserId == userId);
+
+        var ordered = sort switch
+        {
+            LibrarySort.Title => query.OrderBy(e => e.Book.Title).ThenBy(e => e.Id),
+            LibrarySort.Author => query
+                .OrderBy(e => e.Book.Author)
+                .ThenBy(e => e.Book.Title)
+                .ThenBy(e => e.Id),
+            LibrarySort.Rating => query
+                .OrderByDescending(e =>
+                    myRatings.Where(r => r.BookId == e.BookId).Select(r => r.Rating).FirstOrDefault()
+                        ?? 0
+                )
+                .ThenBy(e => e.Book.Title)
+                .ThenBy(e => e.Id),
+            _ => query.OrderByDescending(e => e.Id),
+        };
+
+        var entries = await ordered
             .Include(e => e.Book)
             .Include(e => e.User)
-            .OrderByDescending(e => e.Id)
             .Skip((currentPage - 1) * size)
             .Take(size)
             .ToListAsync();

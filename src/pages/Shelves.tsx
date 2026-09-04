@@ -4,6 +4,7 @@ import type { LibraryEntryResponse } from "../api/books";
 import BookCard from "../components/BookCard";
 import CoverBackfill from "../components/CoverBackfill";
 import Pager from "../components/Pager";
+import SelectMenu from "../components/SelectMenu";
 import ErrorState from "../components/ErrorState";
 import { shelfLabels } from "../types/book";
 import type { ShelfType } from "../types/book";
@@ -14,6 +15,9 @@ function Shelves() {
   usePageTitle("My Shelves");
 
   const [activeShelf, setActiveShelf] = useState<ShelfType | "all">("all");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [sort, setSort] = useState("added");
   const [page, setPage] = useState(1);
   const [books, setBooks] = useState<LibraryEntryResponse[]>([]);
   const [totalPages, setTotalPages] = useState(0);
@@ -29,6 +33,8 @@ function Shelves() {
     try {
       const result = await getMyBooks({
         shelf: activeShelf === "all" ? undefined : activeShelf,
+        search: debouncedSearch,
+        sort,
         page,
       });
       setBooks(result.items);
@@ -41,14 +47,28 @@ function Shelves() {
     } finally {
       setLoading(false);
     }
-  }, [activeShelf, page]);
+  }, [activeShelf, debouncedSearch, sort, page]);
 
   useEffect(() => {
     load();
   }, [load]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const chooseShelf = (shelf: ShelfType | "all") => {
     setActiveShelf(shelf);
+    setPage(1);
+  };
+
+  const chooseSort = (next: string) => {
+    setSort(next);
     setPage(1);
   };
 
@@ -94,6 +114,29 @@ function Shelves() {
         ))}
       </div>
 
+      {allCount > 0 && (
+        <div className="shelf-controls">
+          <input
+            type="text"
+            className="shelf-search"
+            placeholder="Search your shelves by title or author"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <SelectMenu
+            label="Sort by"
+            value={sort}
+            onChange={chooseSort}
+            options={[
+              { value: "added", label: "Recently added" },
+              { value: "title", label: "Title" },
+              { value: "author", label: "Author" },
+              { value: "rating", label: "My rating" },
+            ]}
+          />
+        </div>
+      )}
+
       {allCount > 0 && <CoverBackfill onFinished={load} />}
 
       {loading ? (
@@ -107,7 +150,11 @@ function Shelves() {
           </div>
 
           {total === 0 && (
-            <p className="empty-shelf">No books on this shelf yet.</p>
+            <p className="empty-shelf">
+              {debouncedSearch
+                ? `Nothing on this shelf matches "${debouncedSearch}".`
+                : "No books on this shelf yet."}
+            </p>
           )}
 
           <Pager

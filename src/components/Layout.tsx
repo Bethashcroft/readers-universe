@@ -209,7 +209,7 @@ function Layout() {
           {user ? (
             <>
               <NavMenu
-                label="My Shelves"
+                label="Library"
                 badgeCount={pendingCount + unreadCount}
               >
                 <NavLink to="/shelves">My Shelves</NavLink>

@@ -76,7 +76,7 @@ describe("Layout", () => {
     renderLayout();
 
     expect(
-      navbar().getByRole("button", { name: /My Shelves/ }),
+      navbar().getByRole("button", { name: /Library/ }),
     ).toBeInTheDocument();
     expect(
       navbar().getByRole("button", { name: /Profile/ }),
@@ -84,13 +84,13 @@ describe("Layout", () => {
     expect(navbar().queryByText("Login")).not.toBeInTheDocument();
   });
 
-  it("keeps the app links inside the My Shelves menu until it is opened", async () => {
+  it("keeps the app links inside the Library menu until it is opened", async () => {
     mockUseAuth.mockReturnValue({ user: loggedInUser, logout: vi.fn() });
     renderLayout();
 
     expect(navbar().queryByRole("link", { name: "Browse" })).toBeNull();
 
-    await userEvent.click(navbar().getByRole("button", { name: /My Shelves/ }));
+    await userEvent.click(navbar().getByRole("button", { name: /Library/ }));
 
     expect(navbar().getByRole("link", { name: "My Shelves" })).toBeInTheDocument();
     expect(navbar().getByRole("link", { name: "Add Books" })).toBeInTheDocument();
@@ -115,7 +115,7 @@ describe("Layout", () => {
     mockUseAuth.mockReturnValue({ user: loggedInUser, logout: vi.fn() });
     renderLayout();
 
-    await userEvent.click(navbar().getByRole("button", { name: /My Shelves/ }));
+    await userEvent.click(navbar().getByRole("button", { name: /Library/ }));
     expect(navbar().getByRole("link", { name: "Browse" })).toBeInTheDocument();
 
     await userEvent.keyboard("{Escape}");
