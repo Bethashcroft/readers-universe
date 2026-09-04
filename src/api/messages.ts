@@ -27,6 +27,20 @@ export function getUnreadCount(): Promise<{ count: number }> {
   return request("/messages/unread-count", "Failed to load unread count");
 }
 
+export const messagesReadEvent = "readers:messages-read";
+
+export function announceMessagesRead(): void {
+  window.dispatchEvent(new CustomEvent(messagesReadEvent));
+}
+
+export function markConversationRead(
+  requestId: number,
+): Promise<{ marked: number }> {
+  return request(`/messages/${requestId}/read`, "Failed to mark as read", {
+    method: "POST",
+  });
+}
+
 export function sendMessage(
   requestId: number,
   text: string,

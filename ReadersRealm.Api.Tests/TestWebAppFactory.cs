@@ -12,6 +12,8 @@ public class TestWebAppFactory : WebApplicationFactory<Program>
 {
     private readonly SqliteConnection _connection;
 
+    public StubCoverHandler Handler { get; } = new();
+
     public TestWebAppFactory()
     {
         Environment.SetEnvironmentVariable("Jwt__Key", "TestSignKeyThatIsAtLeast32CharsLong!");
@@ -51,6 +53,27 @@ public class TestWebAppFactory : WebApplicationFactory<Program>
                 services.Remove(lookupDescriptor);
             }
             services.AddSingleton<ReadersRealm.Api.Services.IBookLookup, FakeBookLookup>();
+
+            var coverDescriptors = services
+                .Where(d => d.ServiceType == typeof(ReadersRealm.Api.Services.ICoverSource))
+                .ToList();
+            foreach (var coverDescriptor in coverDescriptors)
+            {
+                services.Remove(coverDescriptor);
+            }
+            services.AddSingleton<ReadersRealm.Api.Services.ICoverSource, FakeCoverSource>();
+
+            var coverServiceDescriptors = services
+                .Where(d => d.ServiceType == typeof(ReadersRealm.Api.Services.CoverService))
+                .ToList();
+            foreach (var coverServiceDescriptor in coverServiceDescriptors)
+            {
+                services.Remove(coverServiceDescriptor);
+            }
+
+            services
+                .AddHttpClient<ReadersRealm.Api.Services.CoverService>()
+                .ConfigurePrimaryHttpMessageHandler(() => Handler);
 
             using var scope = services.BuildServiceProvider().CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

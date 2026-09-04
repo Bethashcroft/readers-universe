@@ -1,13 +1,10 @@
 import { useState } from "react";
+import { placeholderCover } from "../types/covers";
 
 interface BookCoverProps {
   src: string;
   title: string;
   className?: string;
-}
-
-function placeholderCover(title: string): string {
-  return `https://placehold.co/200x300/1a1430/a9a3cc?text=${encodeURIComponent(title)}`;
 }
 
 function BookCover({ src, title, className }: BookCoverProps) {

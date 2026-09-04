@@ -4,9 +4,15 @@ import { MemoryRouter, Routes, Route } from "react-router-dom";
 import Conversation from "./Conversation";
 import type { ConversationResponse } from "../api/messages";
 
-const { mockGetConversation, mockSendMessage, mockConn } = vi.hoisted(() => ({
+const {
+  mockGetConversation,
+  mockSendMessage,
+  mockMarkConversationRead,
+  mockConn,
+} = vi.hoisted(() => ({
   mockGetConversation: vi.fn(),
   mockSendMessage: vi.fn(),
+  mockMarkConversationRead: vi.fn().mockResolvedValue({ marked: 1 }),
   mockConn: {
     on: vi.fn(),
     off: vi.fn(),
@@ -17,6 +23,8 @@ const { mockGetConversation, mockSendMessage, mockConn } = vi.hoisted(() => ({
 vi.mock("../api/messages", () => ({
   getConversation: mockGetConversation,
   sendMessage: mockSendMessage,
+  markConversationRead: mockMarkConversationRead,
+  announceMessagesRead: vi.fn(),
 }));
 
 vi.mock("../realtime/connection", () => ({
@@ -71,6 +79,7 @@ describe("Conversation", () => {
   beforeEach(() => {
     mockGetConversation.mockReset();
     mockSendMessage.mockReset();
+    mockMarkConversationRead.mockClear();
     mockConn.on.mockClear();
     mockConn.off.mockClear();
     mockConn.invoke.mockClear();
@@ -135,12 +144,109 @@ describe("Conversation", () => {
     expect(screen.getByText("Just arrived live!")).toBeInTheDocument();
   });
 
+  it("marks a live message from them as read, but not your own echo", async () => {
+    mockGetConversation.mockResolvedValue(conversation);
+    renderConversation();
+
+    await screen.findByText("The Hobbit");
+    await waitFor(() => expect(mockConn.on).toHaveBeenCalled());
+
+    const handler = mockConn.on.mock.calls.find(
+      ([event]) => event === "NewMessage",
+    )?.[1];
+
+    await act(async () => {
+      handler({
+        id: 21,
+        senderId: "other",
+        senderName: "Rebel",
+        text: "Theirs",
+        date: "2026-07-14T10:15:00Z",
+      });
+    });
+
+    expect(mockMarkConversationRead).toHaveBeenCalledWith(5);
+    mockMarkConversationRead.mockClear();
+
+    await act(async () => {
+      handler({
+        id: 22,
+        senderId: "me",
+        senderName: "Me",
+        text: "Mine",
+        date: "2026-07-14T10:16:00Z",
+      });
+    });
+
+    expect(mockMarkConversationRead).not.toHaveBeenCalled();
+  });
+
+  it("coalesces a burst of live messages instead of one call each", async () => {
+    mockGetConversation.mockResolvedValue(conversation);
+    renderConversation();
+
+    await screen.findByText("The Hobbit");
+    await waitFor(() => expect(mockConn.on).toHaveBeenCalled());
+
+    const handler = mockConn.on.mock.calls.find(
+      ([event]) => event === "NewMessage",
+    )?.[1];
+
+    const message = (id: number) => ({
+      id,
+      senderId: "other",
+      senderName: "Rebel",
+      text: `Message ${id}`,
+      date: "2026-07-14T10:15:00Z",
+    });
+
+    await act(async () => {
+      handler(message(31));
+      handler(message(32));
+      handler(message(33));
+    });
+
+    // One in flight, one follow-up covering everything that arrived meanwhile.
+    expect(mockMarkConversationRead).toHaveBeenCalledTimes(2);
+  });
+
+  it("leaves messages unread while the tab is in the background", async () => {
+    const hidden = vi
+      .spyOn(document, "visibilityState", "get")
+      .mockReturnValue("hidden");
+
+    mockGetConversation.mockResolvedValue(conversation);
+    renderConversation();
+
+    await screen.findByText("The Hobbit");
+    await waitFor(() => expect(mockConn.on).toHaveBeenCalled());
+
+    const handler = mockConn.on.mock.calls.find(
+      ([event]) => event === "NewMessage",
+    )?.[1];
+
+    await act(async () => {
+      handler({
+        id: 44,
+        senderId: "other",
+        senderName: "Rebel",
+        text: "While you were away",
+        date: "2026-07-14T10:15:00Z",
+      });
+    });
+
+    expect(mockMarkConversationRead).not.toHaveBeenCalled();
+    hidden.mockRestore();
+  });
+
   it("shows an empty state when there are no messages yet", async () => {
     mockGetConversation.mockResolvedValue({ ...conversation, messages: [] });
     renderConversation();
 
     expect(
-      await screen.findByText("No messages yet. Say hi and sort out the details!"),
+      await screen.findByText(
+        "No messages yet. Say hi and sort out the details!",
+      ),
     ).toBeInTheDocument();
   });
 });

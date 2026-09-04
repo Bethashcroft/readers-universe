@@ -1,0 +1,12 @@
+.cover-backfill {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.cover-backfill-status {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}

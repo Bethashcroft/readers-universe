@@ -22,22 +22,30 @@ public class OpenLibraryBookLookup : IBookLookup
         var url =
             $"https://openlibrary.org/api/books?bibkeys=ISBN:{clean}&format=json&jscmd=data";
 
-        HttpResponseMessage response;
+        JsonDocument doc;
         try
         {
-            response = await _http.GetAsync(url);
+            using var response = await _http.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         }
-        catch (HttpRequestException)
+        catch (Exception ex)
+            when (ex
+                    is HttpRequestException
+                        or OperationCanceledException
+                        or IOException
+                        or JsonException
+            )
         {
             return null;
         }
 
-        if (!response.IsSuccessStatusCode)
-        {
-            return null;
-        }
-
-        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        using var _ = doc;
 
         if (!doc.RootElement.TryGetProperty($"ISBN:{clean}", out var book))
         {

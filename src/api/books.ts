@@ -78,6 +78,31 @@ export function getMyBooks(options?: {
   );
 }
 
+export interface CoverBackfillResult {
+  checked: number;
+  fixed: number;
+  alreadyFine: number;
+  notFound: number;
+  unverifiable: number;
+  unreachable: number;
+  nextAfterId: number;
+  total: number;
+  done: boolean;
+  throttled: boolean;
+}
+
+export function refreshCovers(
+  afterId: number,
+  withTotal: boolean,
+  signal?: AbortSignal,
+): Promise<CoverBackfillResult> {
+  return request(
+    `/library/refresh-covers?afterId=${afterId}&withTotal=${withTotal}`,
+    "Failed to look up covers",
+    { method: "POST", signal },
+  );
+}
+
 export function getShelfCounts(): Promise<Record<string, number>> {
   return request("/library/shelf-counts", "Failed to fetch shelf counts");
 }

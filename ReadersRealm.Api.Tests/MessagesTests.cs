@@ -98,6 +98,45 @@ public class MessagesTests : IDisposable
 
         var read = await intruderClient.GetAsync($"/api/messages/request/{request.Id}");
         Assert.Equal(HttpStatusCode.Forbidden, read.StatusCode);
+
+        var markRead = await intruderClient.PostAsync(
+            $"/api/messages/{request.Id}/read",
+            null
+        );
+        Assert.Equal(HttpStatusCode.Forbidden, markRead.StatusCode);
+    }
+
+    [Fact]
+    public async Task MarkingRead_ClearsOnlyTheOtherPersonsMessages()
+    {
+        var (ownerClient, borrowerClient, request) = await SetUpRequestAsync();
+
+        await borrowerClient.PostAsJsonAsync(
+            "/api/messages",
+            new { borrowRequestId = request.Id, text = "Can I collect Friday?" }
+        );
+        await ownerClient.PostAsJsonAsync(
+            "/api/messages",
+            new { borrowRequestId = request.Id, text = "Friday suits me" }
+        );
+
+        var borrowerBefore = await borrowerClient.GetFromJsonAsync<UnreadResult>(
+            "/api/messages/unread-count"
+        );
+        Assert.Equal(1, borrowerBefore!.Count);
+
+        var marked = await borrowerClient.PostAsync($"/api/messages/{request.Id}/read", null);
+        marked.EnsureSuccessStatusCode();
+
+        var borrowerAfter = await borrowerClient.GetFromJsonAsync<UnreadResult>(
+            "/api/messages/unread-count"
+        );
+        Assert.Equal(0, borrowerAfter!.Count);
+
+        var ownerAfter = await ownerClient.GetFromJsonAsync<UnreadResult>(
+            "/api/messages/unread-count"
+        );
+        Assert.Equal(1, ownerAfter!.Count);
     }
 
     [Fact]

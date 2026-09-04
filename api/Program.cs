@@ -108,7 +108,18 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
-builder.Services.AddHttpClient<IBookLookup, OpenLibraryBookLookup>();
+void ConfigureOpenLibraryClient(HttpClient client)
+{
+    client.Timeout = TimeSpan.FromSeconds(10);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd(
+        "TheReadersUniverse/1.0 (+https://thereadersuniverse.netlify.app)"
+    );
+}
+
+builder.Services.AddHttpClient<IBookLookup, OpenLibraryBookLookup>(ConfigureOpenLibraryClient);
+builder.Services.AddHttpClient<ICoverSource, OpenLibraryCoverSource>(ConfigureOpenLibraryClient);
+builder.Services.AddHttpClient<CoverService>(ConfigureOpenLibraryClient);
+builder.Services.AddSingleton<CoverBackfillLimiter>();
 builder.Services.AddScoped<LibraryImportService>();
 builder.Services.AddScoped<IBookImportParser, GoodreadsCsvParser>();
 builder.Services.AddEndpointsApiExplorer();

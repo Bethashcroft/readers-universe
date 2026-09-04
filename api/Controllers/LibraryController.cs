@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ReadersRealm.Api.Data;
 using ReadersRealm.Api.Models;
+using ReadersRealm.Api.Services;
 
 namespace ReadersRealm.Api.Controllers;
 
@@ -60,6 +61,40 @@ public class LibraryController : ControllerBase
                 total
             )
         );
+    }
+
+    [HttpPost("refresh-covers")]
+    public async Task<IActionResult> RefreshCovers(
+        [FromServices] CoverService covers,
+        [FromServices] CoverBackfillLimiter limiter,
+        [FromQuery] int afterId = 0,
+        [FromQuery] int max = 25,
+        [FromQuery] bool withTotal = false,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var result = await limiter.RunAsync(
+            userId!,
+            () =>
+                covers.BackfillAsync(
+                    userId!,
+                    Math.Max(afterId, 0),
+                    Math.Clamp(max, 1, 25),
+                    withTotal,
+                    cancellationToken
+                )
+        );
+
+        if (result == null)
+        {
+            return Conflict(
+                new { message = "A cover search is already running. Let that one finish first." }
+            );
+        }
+
+        return Ok(result);
     }
 
     [HttpGet("shelf-counts")]
@@ -244,9 +279,9 @@ public class LibraryController : ControllerBase
             book.Isbn = isbn;
         }
 
-        if (!string.IsNullOrEmpty(request.CoverUrl) && book.CoverUrl.Contains("placehold.co"))
+        if (CoverPolicy.ShouldReplaceCover(book, request.CoverUrl, speculative: false))
         {
-            book.CoverUrl = request.CoverUrl;
+            CoverPolicy.ApplyCover(book, request.CoverUrl);
         }
 
         return book;

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getMyBooks, getShelfCounts } from "../api/books";
 import type { LibraryEntryResponse } from "../api/books";
 import BookCard from "../components/BookCard";
+import CoverBackfill from "../components/CoverBackfill";
 import Pager from "../components/Pager";
 import ErrorState from "../components/ErrorState";
 import { shelfLabels } from "../types/book";
@@ -92,6 +93,8 @@ function Shelves() {
           </button>
         ))}
       </div>
+
+      {allCount > 0 && <CoverBackfill onFinished={load} />}
 
       {loading ? (
         <p>Loading your shelves...</p>

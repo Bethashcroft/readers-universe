@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ReadersRealm.Api.Data;
 using ReadersRealm.Api.Models;
+using ReadersRealm.Api.Services;
 
 namespace ReadersRealm.Api.Import;
 
@@ -108,9 +109,11 @@ public class LibraryImportService(AppDbContext context)
                     book.Isbn = isbn;
                 }
 
-                if (book.CoverUrl.Contains("placehold.co") && isbn.Length > 0)
+                var candidate = CoverUrlFor(source.Title, isbn);
+
+                if (CoverPolicy.ShouldReplaceCover(book, candidate, speculative: true))
                 {
-                    book.CoverUrl = CoverUrlFor(source.Title, isbn);
+                    CoverPolicy.ApplyCover(book, candidate);
                 }
             }
 
@@ -171,5 +174,5 @@ public class LibraryImportService(AppDbContext context)
     private static string CoverUrlFor(string title, string isbn) =>
         isbn.Length > 0
             ? $"https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg?default=false"
-            : $"https://placehold.co/200x300/1a1430/a9a3cc?text={Uri.EscapeDataString(title)}";
+            : CoverPolicy.PlaceholderFor(title);
 }

@@ -1,7 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 using ReadersRealm.Api.Import;
+using ReadersRealm.Api.Services;
 
 namespace ReadersRealm.Api.Tests;
 
@@ -287,6 +289,161 @@ public class ImportTests : IDisposable
 
         Assert.Equal(4, counts!["read"]);
         Assert.Equal(1, counts["want-to-read"]);
+    }
+
+    [Fact]
+    public async Task CoverBackfillSettlesAndDoesNotRepeatWorkOnASecondRun()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+        await ImportAsync(_client);
+
+        var firstRunChecked = 0;
+        var afterId = 0;
+
+        for (var batch = 0; batch < 20; batch++)
+        {
+            var response = await _client.PostAsync(
+                $"/api/library/refresh-covers?afterId={afterId}&max=2&withTotal=true",
+                null
+            );
+            response.EnsureSuccessStatusCode();
+            var result = (await response.Content.ReadFromJsonAsync<CoverBackfillResult>())!;
+
+            firstRunChecked += result.Checked;
+            afterId = result.NextAfterId;
+
+            if (result.Done || result.Checked == 0)
+            {
+                break;
+            }
+        }
+
+        Assert.Equal(5, firstRunChecked);
+
+        var second = await _client.PostAsync("/api/library/refresh-covers?afterId=0&withTotal=true", null);
+        second.EnsureSuccessStatusCode();
+        var settled = (await second.Content.ReadFromJsonAsync<CoverBackfillResult>())!;
+
+        Assert.Equal(0, settled.Total);
+        Assert.Equal(0, settled.Checked);
+        Assert.True(settled.Done);
+    }
+
+    [Fact]
+    public async Task AFoundCoverIsConfirmedAndAppliedToTheBook()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+        await ImportAsync(_client);
+
+        var source = (FakeCoverSource)_factory.Services.GetRequiredService<ICoverSource>();
+        source.Result = CoverResult.Found("https://covers.openlibrary.org/b/id/42-L.jpg");
+        _factory.Handler.Status = System.Net.HttpStatusCode.OK;
+        _factory.Handler.ContentLength = 5000;
+
+        var run = await _client.PostAsync(
+            "/api/library/refresh-covers?afterId=0&withTotal=true",
+            null
+        );
+        run.EnsureSuccessStatusCode();
+        var result = (await run.Content.ReadFromJsonAsync<CoverBackfillResult>())!;
+
+        Assert.Equal(1, result.Fixed);
+        Assert.Equal(4, result.AlreadyFine);
+
+        var shelves = await _client.GetLibraryAsync();
+        var noIsbn = shelves.Single(b => b.Title == "The Profiler");
+        Assert.Equal("https://covers.openlibrary.org/b/id/42-L.jpg", noIsbn.CoverUrl);
+    }
+
+    [Fact]
+    public async Task AThrottledSourceStopsTheRunInsteadOfHammeringOn()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+        await ImportAsync(_client);
+
+        var source = (FakeCoverSource)_factory.Services.GetRequiredService<ICoverSource>();
+        source.Result = CoverResult.Throttled;
+
+        var run = await _client.PostAsync(
+            "/api/library/refresh-covers?afterId=0&withTotal=true",
+            null
+        );
+        var result = (await run.Content.ReadFromJsonAsync<CoverBackfillResult>())!;
+
+        Assert.True(result.Throttled);
+        Assert.True(result.Done);
+        Assert.Equal(0, result.NotFound);
+    }
+
+    [Fact]
+    public async Task AnUnreachableCoverSourceLeavesBooksAloneRatherThanGivingUpOnThem()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+        await ImportAsync(_client);
+
+        var source = (FakeCoverSource)
+            _factory.Services.GetRequiredService<ReadersRealm.Api.Services.ICoverSource>();
+        source.Result = ReadersRealm.Api.Services.CoverResult.Unavailable;
+
+        var run = await _client.PostAsync(
+            "/api/library/refresh-covers?afterId=0&withTotal=true",
+            null
+        );
+        run.EnsureSuccessStatusCode();
+        var result = (await run.Content.ReadFromJsonAsync<CoverBackfillResult>())!;
+
+        Assert.Equal(0, result.NotFound);
+        Assert.True(result.Unreachable > 0);
+
+        source.Result = ReadersRealm.Api.Services.CoverResult.NothingThere;
+
+        var retry = await _client.PostAsync(
+            "/api/library/refresh-covers?afterId=0&withTotal=true",
+            null
+        );
+        var second = (await retry.Content.ReadFromJsonAsync<CoverBackfillResult>())!;
+
+        Assert.True(
+            second.Total > 0,
+            "Books skipped because the source was unreachable must still be candidates."
+        );
+    }
+
+    [Fact]
+    public async Task ReimportingDoesNotUndoASettledCoverDecision()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+        await ImportAsync(_client);
+
+        var first = await _client.PostAsync(
+            "/api/library/refresh-covers?afterId=0&withTotal=true",
+            null
+        );
+        first.EnsureSuccessStatusCode();
+
+        var settled = await _client.PostAsync(
+            "/api/library/refresh-covers?afterId=0&withTotal=true",
+            null
+        );
+        Assert.Equal(
+            0,
+            (await settled.Content.ReadFromJsonAsync<CoverBackfillResult>())!.Total
+        );
+
+        await ImportAsync(_client);
+
+        var afterReimport = await _client.PostAsync(
+            "/api/library/refresh-covers?afterId=0&withTotal=true",
+            null
+        );
+        var again = (await afterReimport.Content.ReadFromJsonAsync<CoverBackfillResult>())!;
+
+        Assert.Equal(0, again.Total);
     }
 
     [Fact]

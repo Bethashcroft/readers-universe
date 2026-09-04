@@ -24,6 +24,7 @@ vi.mock("../api/borrow", () => ({
 
 vi.mock("../api/messages", () => ({
   getUnreadCount: mockGetUnreadCount,
+  messagesReadEvent: "readers:messages-read",
 }));
 
 vi.mock("../realtime/connection", () => {

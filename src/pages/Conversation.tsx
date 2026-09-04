@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-import { getConversation, sendMessage } from "../api/messages";
-import type { ConversationResponse, MessageResponse } from "../api/messages";
 import {
-  getChatConnection,
-  startChatConnection,
-} from "../realtime/connection";
+  getConversation,
+  sendMessage,
+  markConversationRead,
+  announceMessagesRead,
+} from "../api/messages";
+import type { ConversationResponse, MessageResponse } from "../api/messages";
+import { getChatConnection, startChatConnection } from "../realtime/connection";
 import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
 import "./Conversation.css";
@@ -14,8 +16,9 @@ import "./Conversation.css";
 function Conversation() {
   const { requestId } = useParams();
   const { user } = useAuth();
-  const [conversation, setConversation] =
-    useState<ConversationResponse | null>(null);
+  const [conversation, setConversation] = useState<ConversationResponse | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [text, setText] = useState("");
@@ -32,6 +35,7 @@ function Conversation() {
     setLoadError(false);
     try {
       setConversation(await getConversation(Number(requestId)));
+      announceMessagesRead();
     } catch (err) {
       console.error("Failed to load conversation:", err);
       setLoadError(true);
@@ -46,6 +50,31 @@ function Conversation() {
 
   useEffect(() => {
     let active = true;
+    let inFlight = false;
+    let pending = false;
+
+    const markRead = () => {
+      if (inFlight) {
+        pending = true;
+        return;
+      }
+
+      inFlight = true;
+
+      markConversationRead(Number(requestId))
+        .then(announceMessagesRead)
+        .catch((err) => {
+          console.error("Failed to mark the conversation read:", err);
+        })
+        .finally(() => {
+          inFlight = false;
+
+          if (pending && active) {
+            pending = false;
+            markRead();
+          }
+        });
+    };
 
     const handleNewMessage = (message: MessageResponse) => {
       setConversation((prev) => {
@@ -54,6 +83,13 @@ function Conversation() {
         }
         return { ...prev, messages: [...prev.messages, message] };
       });
+
+      if (
+        message.senderId !== user?.userId &&
+        document.visibilityState === "visible"
+      ) {
+        markRead();
+      }
     };
 
     const join = async () => {
@@ -75,7 +111,7 @@ function Conversation() {
       conn.off("NewMessage", handleNewMessage);
       conn.invoke("LeaveConversation", Number(requestId)).catch(() => {});
     };
-  }, [requestId]);
+  }, [requestId, user?.userId]);
 
   useEffect(() => {
     threadEndRef.current?.scrollIntoView?.({ behavior: "smooth" });

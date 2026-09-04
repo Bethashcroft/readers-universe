@@ -4,6 +4,7 @@ import { useBooks } from "../context/useBooks";
 import { lookupBook } from "../api/books";
 import { shelfLabels, offerLabels } from "../types/book";
 import type { ShelfType, OfferType } from "../types/book";
+import { placeholderCover } from "../types/covers";
 import { usePageTitle } from "../hooks/usePageTitle";
 import ImportLibrary from "../components/ImportLibrary";
 import "../styles/forms.css";
@@ -52,9 +53,7 @@ function AddBook() {
       await addBook({
         title,
         author,
-        coverUrl:
-          coverUrl ||
-          `https://placehold.co/200x300/1a1430/a9a3cc?text=${encodeURIComponent(title)}`,
+        coverUrl: coverUrl || placeholderCover(title),
         isbn,
         shelf,
         offer,

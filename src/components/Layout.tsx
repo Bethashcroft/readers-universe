@@ -1,8 +1,20 @@
-import { useState, useEffect, useRef, type ReactNode } from "react";
-import { Outlet, Link, NavLink, useNavigate, useLocation } from "react-router-dom";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  type ReactNode,
+} from "react";
+import {
+  Outlet,
+  Link,
+  NavLink,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { getMyRequests } from "../api/borrow";
-import { getUnreadCount } from "../api/messages";
+import { getUnreadCount, messagesReadEvent } from "../api/messages";
 import {
   getChatConnection,
   startChatConnection,
@@ -76,6 +88,21 @@ function Layout() {
   const location = useLocation();
   const [pendingCount, setPendingCount] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
+  const unreadRequest = useRef(0);
+
+  const refreshUnreadCount = useCallback(async () => {
+    const ticket = ++unreadRequest.current;
+
+    try {
+      const { count } = await getUnreadCount();
+
+      if (ticket === unreadRequest.current) {
+        setUnreadCount(count);
+      }
+    } catch (err) {
+      console.error("Failed to refresh unread count:", err);
+    }
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -89,14 +116,14 @@ function Layout() {
           (r) => r.toUserId === user.userId && r.status === "pending",
         );
         setPendingCount(incomingPending.length);
-        setUnreadCount((await getUnreadCount()).count);
+        await refreshUnreadCount();
       } catch (err) {
         console.error("Failed to load nav counts:", err);
       }
     };
 
     fetchCounts();
-  }, [user, location.pathname]);
+  }, [user, location.pathname, refreshUnreadCount]);
 
   useEffect(() => {
     if (!user) {
@@ -107,8 +134,15 @@ function Layout() {
     let active = true;
 
     const handleMessageReceived = () => {
+      unreadRequest.current++;
       setUnreadCount((count) => count + 1);
     };
+
+    const handleMessagesRead = () => {
+      refreshUnreadCount();
+    };
+
+    window.addEventListener(messagesReadEvent, handleMessagesRead);
 
     const connect = async () => {
       try {
@@ -124,9 +158,10 @@ function Layout() {
 
     return () => {
       active = false;
+      window.removeEventListener(messagesReadEvent, handleMessagesRead);
       getChatConnection().off("MessageReceived", handleMessageReceived);
     };
-  }, [user]);
+  }, [user, refreshUnreadCount]);
 
   const handleLogout = () => {
     logout();
@@ -143,7 +178,13 @@ function Layout() {
           aria-hidden="true"
         >
           <circle cx="65" cy="58" r="32" />
-          <ellipse cx="65" cy="64" rx="56" ry="17" transform="rotate(-18 65 64)" />
+          <ellipse
+            cx="65"
+            cy="64"
+            rx="56"
+            ry="17"
+            transform="rotate(-18 65 64)"
+          />
         </svg>
         <svg
           className="nav-decor nav-decor-star nav-decor-star-1"

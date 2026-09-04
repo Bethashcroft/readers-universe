@@ -22,6 +22,8 @@ public class Book
     [MaxLength(500)]
     public string MatchKey { get; set; } = string.Empty;
 
+    public DateTime? CoverCheckedAt { get; set; }
+
     public static string BuildMatchKey(string title, string author)
     {
         var builder = new StringBuilder();

@@ -76,6 +76,54 @@ public class MessagesController : ControllerBase
         return Ok(response);
     }
 
+    [HttpPost("{borrowRequestId}/read")]
+    public async Task<IActionResult> MarkRead(int borrowRequestId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var borrowRequest = await _context.BorrowRequests.FirstOrDefaultAsync(r =>
+            r.Id == borrowRequestId
+        );
+
+        if (borrowRequest == null)
+        {
+            return NotFound(new { message = "Request not found" });
+        }
+
+        if (borrowRequest.FromUserId != userId && borrowRequest.ToUserId != userId)
+        {
+            return Forbid();
+        }
+
+        var marked = await MarkTheirMessagesReadAsync(borrowRequestId, userId!);
+
+        return Ok(new { marked });
+    }
+
+    private Task<int> MarkTheirMessagesReadAsync(int borrowRequestId, string userId) =>
+        _context
+            .Messages.Where(m =>
+                m.BorrowRequestId == borrowRequestId && m.SenderId != userId && !m.IsRead
+            )
+            .ExecuteUpdateAsync(s => s.SetProperty(m => m.IsRead, true));
+
+    private async Task<int> MarkAsReadAsync(List<Message> unread)
+    {
+        if (unread.Count == 0)
+        {
+            return 0;
+        }
+
+        foreach (var message in unread)
+        {
+            message.IsRead = true;
+        }
+
+        await _context.SaveChangesAsync();
+
+        return unread.Count;
+    }
+
     [HttpGet("unread-count")]
     public async Task<IActionResult> GetUnreadCount()
     {
@@ -121,15 +169,7 @@ public class MessagesController : ControllerBase
             .ThenBy(m => m.Id)
             .ToListAsync();
 
-        var unread = messages.Where(m => m.SenderId != userId && !m.IsRead).ToList();
-        if (unread.Count > 0)
-        {
-            foreach (var message in unread)
-            {
-                message.IsRead = true;
-            }
-            await _context.SaveChangesAsync();
-        }
+        await MarkAsReadAsync(messages.Where(m => m.SenderId != userId && !m.IsRead).ToList());
 
         var otherUser =
             borrowRequest.FromUserId == userId ? borrowRequest.ToUser : borrowRequest.FromUser;
