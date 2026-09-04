@@ -44,15 +44,21 @@ public class CoverService(
     private readonly HttpClient _http = http;
     private readonly ILogger<CoverService> _logger = logger;
 
-    private IQueryable<Models.Book> Candidates(string userId, DateTime cutoff, int afterId) =>
-        _context
+    private IQueryable<Models.Book> Candidates(string userId, DateTime cutoff, int afterId)
+    {
+        var bookIds = _context
             .LibraryEntries.Where(e => e.UserId == userId)
-            .Select(e => e.Book)
-            .Distinct()
-            .Where(b =>
-                b.Id > afterId && (b.CoverCheckedAt == null || b.CoverCheckedAt < cutoff)
+            .Select(e => e.BookId)
+            .Distinct();
+
+        return _context
+            .Books.Where(b =>
+                bookIds.Contains(b.Id)
+                && b.Id > afterId
+                && (b.CoverCheckedAt == null || b.CoverCheckedAt < cutoff)
             )
             .OrderBy(b => b.Id);
+    }
 
     public async Task<CoverBackfillResult> BackfillAsync(
         string userId,
@@ -80,7 +86,14 @@ public class CoverService(
         var lookups = await Task.WhenAll(
             batch.Select(async book =>
             {
-                await gate.WaitAsync(cancellationToken);
+                try
+                {
+                    await gate.WaitAsync(cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    return (book, found: (string?)null, state: CoverCheck.Unknown);
+                }
 
                 try
                 {
@@ -117,16 +130,20 @@ public class CoverService(
 
                     return confirmed switch
                     {
-                        CoverCheck.Good or CoverCheck.Unverifiable => (
+                        CoverCheck.Good => (book, found: lookup.Url, state),
+                        CoverCheck.Missing or CoverCheck.Unverifiable => (
                             book,
-                            found: lookup.Url,
+                            found: (string?)null,
                             state
                         ),
-                        CoverCheck.Missing => (book, found: (string?)null, state),
                         _ => (book, found: (string?)null, state: confirmed),
                     };
                 }
-                catch (Exception ex) when (ex is not OperationCanceledException)
+                catch (OperationCanceledException)
+                {
+                    return (book, found: (string?)null, state: CoverCheck.Unknown);
+                }
+                catch (Exception ex)
                 {
                     _logger.LogWarning(
                         ex,

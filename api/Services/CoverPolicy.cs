@@ -6,18 +6,27 @@ public static class CoverPolicy
 {
     public const string PlaceholderHost = "placehold.co";
 
-    private const int MaxCoverUrlLength = 2000;
     private const int MaxTitleInPlaceholder = 120;
 
     public static string PlaceholderFor(string title)
     {
-        var trimmed =
-            title.Length > MaxTitleInPlaceholder ? title[..MaxTitleInPlaceholder] : title;
+        var cut = MaxTitleInPlaceholder;
 
-        var url =
-            $"https://{PlaceholderHost}/200x300/1a1430/a9a3cc?text={Uri.EscapeDataString(trimmed)}";
+        if (title.Length > cut)
+        {
+            if (char.IsHighSurrogate(title[cut - 1]))
+            {
+                cut--;
+            }
+        }
+        else
+        {
+            cut = title.Length;
+        }
 
-        return url.Length > MaxCoverUrlLength ? url[..MaxCoverUrlLength] : url;
+        var trimmed = title[..cut];
+
+        return $"https://{PlaceholderHost}/200x300/1a1430/a9a3cc?text={Uri.EscapeDataString(trimmed)}";
     }
 
     public static bool IsPlaceholder(string coverUrl) =>

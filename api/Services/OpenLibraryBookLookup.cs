@@ -1,4 +1,5 @@
 using System.Text.Json;
+using ReadersRealm.Api.Models;
 
 namespace ReadersRealm.Api.Services;
 
@@ -13,7 +14,7 @@ public class OpenLibraryBookLookup : IBookLookup
 
     public async Task<BookLookupResult?> LookupAsync(string isbn)
     {
-        var clean = new string(isbn.Where(char.IsLetterOrDigit).ToArray());
+        var clean = Book.CleanIsbn(isbn);
         if (string.IsNullOrEmpty(clean))
         {
             return null;
@@ -84,7 +85,7 @@ public class OpenLibraryBookLookup : IBookLookup
         }
         if (string.IsNullOrEmpty(cover))
         {
-            cover = $"https://covers.openlibrary.org/b/isbn/{clean}-L.jpg";
+            cover = $"https://covers.openlibrary.org/b/isbn/{clean}-L.jpg?default=false";
         }
 
         return new BookLookupResult(title, author, cover);

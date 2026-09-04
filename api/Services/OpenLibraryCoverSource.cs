@@ -36,7 +36,7 @@ public partial class OpenLibraryCoverSource(HttpClient http) : ICoverSource
                 return CoverResult.Throttled;
             }
 
-            worst = Worse(worst, byIsbn.Outcome);
+            worst = CoverResult.Worse(worst, byIsbn.Outcome);
         }
 
         var bySearch = await CoverBySearchAsync(title, author, cancellationToken);
@@ -46,7 +46,7 @@ public partial class OpenLibraryCoverSource(HttpClient http) : ICoverSource
             return bySearch;
         }
 
-        return Worse(worst, bySearch.Outcome) switch
+        return CoverResult.Worse(worst, bySearch.Outcome) switch
         {
             CoverLookup.Throttled => CoverResult.Throttled,
             CoverLookup.Unavailable => CoverResult.Unavailable,
@@ -186,9 +186,6 @@ public partial class OpenLibraryCoverSource(HttpClient http) : ICoverSource
 
         return false;
     }
-
-    private static CoverLookup Worse(CoverLookup current, CoverLookup next) =>
-        (CoverLookup)Math.Max((int)current, (int)next);
 
     private static string Normalise(string value)
     {

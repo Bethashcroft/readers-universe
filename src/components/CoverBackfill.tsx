@@ -17,6 +17,7 @@ type Outcome = {
 };
 
 const maxBatches = 500;
+const batchPauseMs = 400;
 
 function CoverBackfill({ onFinished }: CoverBackfillProps) {
   const [running, setRunning] = useState(false);
@@ -97,6 +98,8 @@ function CoverBackfill({ onFinished }: CoverBackfillProps) {
           tally.stoppedEarly = false;
           break;
         }
+
+        await new Promise((resolve) => setTimeout(resolve, batchPauseMs));
       }
 
       if (!active.current) return;

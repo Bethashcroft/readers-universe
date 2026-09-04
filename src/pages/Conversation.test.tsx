@@ -206,11 +206,10 @@ describe("Conversation", () => {
       handler(message(33));
     });
 
-    // One in flight, one follow-up covering everything that arrived meanwhile.
     expect(mockMarkConversationRead).toHaveBeenCalledTimes(2);
   });
 
-  it("leaves messages unread while the tab is in the background", async () => {
+  it("holds messages unread while the tab is hidden, then marks them read on return", async () => {
     const hidden = vi
       .spyOn(document, "visibilityState", "get")
       .mockReturnValue("hidden");
@@ -236,6 +235,13 @@ describe("Conversation", () => {
     });
 
     expect(mockMarkConversationRead).not.toHaveBeenCalled();
+
+    hidden.mockReturnValue("visible");
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(mockMarkConversationRead).toHaveBeenCalledWith(5);
     hidden.mockRestore();
   });
 

@@ -52,6 +52,7 @@ function Conversation() {
     let active = true;
     let inFlight = false;
     let pending = false;
+    let arrivedWhileHidden = false;
 
     const markRead = () => {
       if (inFlight) {
@@ -84,13 +85,23 @@ function Conversation() {
         return { ...prev, messages: [...prev.messages, message] };
       });
 
-      if (
-        message.senderId !== user?.userId &&
-        document.visibilityState === "visible"
-      ) {
+      if (message.senderId !== user?.userId) {
+        if (document.visibilityState === "visible") {
+          markRead();
+        } else {
+          arrivedWhileHidden = true;
+        }
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && arrivedWhileHidden) {
+        arrivedWhileHidden = false;
         markRead();
       }
     };
+
+    document.addEventListener("visibilitychange", handleVisibility);
 
     const join = async () => {
       try {
@@ -107,6 +118,7 @@ function Conversation() {
 
     return () => {
       active = false;
+      document.removeEventListener("visibilitychange", handleVisibility);
       const conn = getChatConnection();
       conn.off("NewMessage", handleNewMessage);
       conn.invoke("LeaveConversation", Number(requestId)).catch(() => {});

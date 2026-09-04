@@ -107,23 +107,6 @@ public class MessagesController : ControllerBase
             )
             .ExecuteUpdateAsync(s => s.SetProperty(m => m.IsRead, true));
 
-    private async Task<int> MarkAsReadAsync(List<Message> unread)
-    {
-        if (unread.Count == 0)
-        {
-            return 0;
-        }
-
-        foreach (var message in unread)
-        {
-            message.IsRead = true;
-        }
-
-        await _context.SaveChangesAsync();
-
-        return unread.Count;
-    }
-
     [HttpGet("unread-count")]
     public async Task<IActionResult> GetUnreadCount()
     {
@@ -169,7 +152,7 @@ public class MessagesController : ControllerBase
             .ThenBy(m => m.Id)
             .ToListAsync();
 
-        await MarkAsReadAsync(messages.Where(m => m.SenderId != userId && !m.IsRead).ToList());
+        await MarkTheirMessagesReadAsync(borrowRequestId, userId!);
 
         var otherUser =
             borrowRequest.FromUserId == userId ? borrowRequest.ToUser : borrowRequest.FromUser;

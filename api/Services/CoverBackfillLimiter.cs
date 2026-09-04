@@ -6,10 +6,10 @@ public class CoverBackfillLimiter
 {
     private readonly ConcurrentDictionary<string, byte> _running = new();
 
-    public async Task<T?> RunAsync<T>(string userId, Func<Task<T>> work)
+    public async Task<T?> RunAsync<T>(string? userId, Func<Task<T>> work)
         where T : class
     {
-        if (!_running.TryAdd(userId, 0))
+        if (string.IsNullOrEmpty(userId) || !_running.TryAdd(userId, 0))
         {
             return null;
         }
