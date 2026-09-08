@@ -20,6 +20,7 @@ import {
   startChatConnection,
   stopChatConnection,
 } from "../realtime/connection";
+import ReaderSearchBar from "./ReaderSearchBar";
 import "./Layout.css";
 
 type NavMenuProps = {
@@ -205,16 +206,15 @@ function Layout() {
         <Link to="/" className="navbar-brand">
           The Readers Universe
         </Link>
+        {user && <ReaderSearchBar />}
         <ul className="navbar-links">
           {user ? (
             <>
-              <NavMenu
-                label="Library"
-                badgeCount={pendingCount + unreadCount}
-              >
+              <NavMenu label="Library" badgeCount={pendingCount + unreadCount}>
                 <NavLink to="/shelves">My Shelves</NavLink>
                 <NavLink to="/add-book">Add Books</NavLink>
                 <NavLink to="/browse">Browse</NavLink>
+                <NavLink to="/readers">Find Readers</NavLink>
                 <NavLink to="/requests">
                   Requests
                   {pendingCount > 0 && (

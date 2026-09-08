@@ -10,6 +10,7 @@ import Shelves from "./pages/Shelves";
 import AddBook from "./pages/AddBook";
 import BookDetail from "./pages/BookDetail";
 import Browse from "./pages/Browse";
+import Readers from "./pages/Readers";
 import Requests from "./pages/Requests";
 import Conversation from "./pages/Conversation";
 import NotFound from "./pages/NotFound";
@@ -62,6 +63,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Browse />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/readers"
+                element={
+                  <ProtectedRoute>
+                    <Readers />
                   </ProtectedRoute>
                 }
               />
