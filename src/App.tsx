@@ -6,6 +6,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
+import FollowList from "./pages/FollowList";
 import Shelves from "./pages/Shelves";
 import AddBook from "./pages/AddBook";
 import BookDetail from "./pages/BookDetail";
@@ -31,6 +32,22 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile/:username/followers"
+                element={
+                  <ProtectedRoute>
+                    <FollowList mode="followers" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile/:username/following"
+                element={
+                  <ProtectedRoute>
+                    <FollowList mode="following" />
                   </ProtectedRoute>
                 }
               />

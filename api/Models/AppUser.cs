@@ -25,4 +25,6 @@ public class AppUser : IdentityUser
     public DateTime JoinedDate { get; set; } = DateTime.UtcNow;
 
     public DateTime? UsernameLastChangedAt { get; set; }
+
+    public bool IsPrivate { get; set; }
 }

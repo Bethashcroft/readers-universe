@@ -6,13 +6,27 @@ import Layout from "./Layout";
 const navbar = () =>
   within(screen.getByRole("navigation", { name: "Primary" }));
 
-const { mockUseAuth, mockGetMyRequests, mockGetUnreadCount } = vi.hoisted(
-  () => ({
-    mockUseAuth: vi.fn(),
-    mockGetMyRequests: vi.fn(),
-    mockGetUnreadCount: vi.fn(),
-  }),
-);
+const {
+  mockUseAuth,
+  mockGetMyRequests,
+  mockGetUnreadCount,
+  mockGetFollowRequests,
+  mockGetNotifications,
+  mockGetNotificationCount,
+} = vi.hoisted(() => ({
+  mockUseAuth: vi.fn(),
+  mockGetMyRequests: vi.fn(),
+  mockGetUnreadCount: vi.fn(),
+  mockGetFollowRequests: vi.fn(),
+  mockGetNotifications: vi.fn(),
+  mockGetNotificationCount: vi.fn(),
+}));
+
+vi.mock("../api/notifications", () => ({
+  getNotifications: mockGetNotifications,
+  getNotificationCount: mockGetNotificationCount,
+  markNotificationsRead: vi.fn(),
+}));
 
 vi.mock("../context/useAuth", () => ({
   useAuth: mockUseAuth,
@@ -20,6 +34,10 @@ vi.mock("../context/useAuth", () => ({
 
 vi.mock("../api/borrow", () => ({
   getMyRequests: mockGetMyRequests,
+}));
+
+vi.mock("../api/follows", () => ({
+  getFollowRequests: mockGetFollowRequests,
 }));
 
 vi.mock("../api/messages", () => ({
@@ -58,6 +76,12 @@ describe("Layout", () => {
     mockGetMyRequests.mockResolvedValue([]);
     mockGetUnreadCount.mockReset();
     mockGetUnreadCount.mockResolvedValue({ count: 0 });
+    mockGetFollowRequests.mockReset();
+    mockGetFollowRequests.mockResolvedValue([]);
+    mockGetNotifications.mockReset();
+    mockGetNotifications.mockResolvedValue([]);
+    mockGetNotificationCount.mockReset();
+    mockGetNotificationCount.mockResolvedValue({ count: 0 });
   });
 
   it("shows only Login and Register when logged out", () => {
@@ -79,7 +103,7 @@ describe("Layout", () => {
       navbar().getByRole("button", { name: /Library/ }),
     ).toBeInTheDocument();
     expect(
-      navbar().getByRole("button", { name: /Profile/ }),
+      navbar().getByRole("button", { name: /Account/ }),
     ).toBeInTheDocument();
     expect(navbar().queryByText("Login")).not.toBeInTheDocument();
   });
@@ -98,11 +122,11 @@ describe("Layout", () => {
     expect(navbar().getByRole("link", { name: "Requests" })).toBeInTheDocument();
   });
 
-  it("puts Profile and Log Out inside the Profile menu", async () => {
+  it("puts Profile and Log Out inside the Account menu", async () => {
     mockUseAuth.mockReturnValue({ user: loggedInUser, logout: vi.fn() });
     renderLayout();
 
-    await userEvent.click(navbar().getByRole("button", { name: /Profile/ }));
+    await userEvent.click(navbar().getByRole("button", { name: /Account/ }));
 
     expect(navbar().getByRole("link", { name: "Profile" })).toHaveAttribute(
       "href",

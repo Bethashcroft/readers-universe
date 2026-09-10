@@ -26,10 +26,13 @@ public class DashboardController : ControllerBase
 
         var myBooks = await _context.LibraryEntries.CountAsync(e => e.UserId == userId);
 
-        var nearby = await _context.LibraryEntries.CountAsync(e =>
-            e.UserId != userId
-            && (e.Offer == BookOffer.AvailableToBorrow || e.Offer == BookOffer.ForSale)
-        );
+        var nearby = await _context
+            .LibraryEntries.Where(e =>
+                e.UserId != userId
+                && (e.Offer == BookOffer.AvailableToBorrow || e.Offer == BookOffer.ForSale)
+            )
+            .VisibleTo(_context, userId)
+            .CountAsync();
 
         var pendingRequests = await _context.BorrowRequests.CountAsync(r =>
             r.ToUserId == userId && r.Status == BorrowStatus.Pending

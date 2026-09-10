@@ -14,6 +14,7 @@ import {
 } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { getMyRequests } from "../api/borrow";
+import { getFollowRequests } from "../api/follows";
 import { getUnreadCount, messagesReadEvent } from "../api/messages";
 import {
   getChatConnection,
@@ -21,6 +22,7 @@ import {
   stopChatConnection,
 } from "../realtime/connection";
 import ReaderSearchBar from "./ReaderSearchBar";
+import NotificationBell from "./NotificationBell";
 import "./Layout.css";
 
 type NavMenuProps = {
@@ -112,11 +114,14 @@ function Layout() {
 
     const fetchCounts = async () => {
       try {
-        const requests = await getMyRequests();
+        const [requests, follows] = await Promise.all([
+          getMyRequests(),
+          getFollowRequests(),
+        ]);
         const incomingPending = requests.filter(
           (r) => r.toUserId === user.userId && r.status === "pending",
         );
-        setPendingCount(incomingPending.length);
+        setPendingCount(incomingPending.length + follows.length);
         await refreshUnreadCount();
       } catch (err) {
         console.error("Failed to load nav counts:", err);
@@ -210,6 +215,7 @@ function Layout() {
         <ul className="navbar-links">
           {user ? (
             <>
+              <NotificationBell />
               <NavMenu label="Library" badgeCount={pendingCount + unreadCount}>
                 <NavLink to="/shelves">My Shelves</NavLink>
                 <NavLink to="/add-book">Add Books</NavLink>
@@ -227,7 +233,7 @@ function Layout() {
                   )}
                 </NavLink>
               </NavMenu>
-              <NavMenu label="Profile">
+              <NavMenu label="Account">
                 <NavLink to={`/profile/${user.userName}`}>Profile</NavLink>
                 <button className="nav-logout" onClick={handleLogout}>
                   Log Out

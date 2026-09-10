@@ -97,6 +97,23 @@
   backdrop-filter: blur(8px);
 }
 
+.profile-detail-link {
+  cursor: pointer;
+  color: inherit;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.profile-detail-link:hover {
+  border-color: rgba(167, 139, 250, 0.6);
+  background-color: rgba(167, 139, 250, 0.1);
+}
+
+.profile-detail-link:hover p {
+  color: var(--color-primary);
+}
+
 .profile-detail-card h2 {
   font-family: var(--font-sans);
   font-size: 11px;
@@ -110,6 +127,38 @@
 .profile-detail-card p {
   font-size: 14px;
   font-weight: 600;
+}
+
+.profile-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 56px 24px;
+  text-align: center;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(8px);
+}
+
+.profile-locked-icon {
+  width: 40px;
+  height: 40px;
+  fill: none;
+  stroke: var(--color-text-muted);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.profile-locked h2 {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.profile-locked p {
+  color: var(--color-text-muted);
+  font-size: 14px;
 }
 
 .genre-tags {

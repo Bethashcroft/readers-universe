@@ -7,6 +7,13 @@ import {
   withdrawBorrowRequest,
 } from "../api/borrow";
 import type { BorrowRequestResponse, BorrowStatus } from "../api/borrow";
+import {
+  getFollowRequests,
+  approveFollow,
+  declineFollow,
+} from "../api/follows";
+import type { FollowRequestResponse } from "../api/follows";
+import { API_ORIGIN } from "../api/client";
 import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
 import "./Requests.css";
@@ -15,17 +22,25 @@ function Requests() {
   usePageTitle("Requests");
   const { user } = useAuth();
   const [requests, setRequests] = useState<BorrowRequestResponse[]>([]);
+  const [followRequests, setFollowRequests] = useState<FollowRequestResponse[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [error, setError] = useState("");
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [updatingUser, setUpdatingUser] = useState("");
 
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     setLoadError(false);
     try {
-      const data = await getMyRequests();
-      setRequests(data);
+      const [borrows, follows] = await Promise.all([
+        getMyRequests(),
+        getFollowRequests(),
+      ]);
+      setRequests(borrows);
+      setFollowRequests(follows);
     } catch (err) {
       console.error("Failed to fetch requests:", err);
       setLoadError(true);
@@ -71,6 +86,29 @@ function Requests() {
     }
   };
 
+  const handleFollowDecision = async (username: string, approve: boolean) => {
+    setError("");
+    setUpdatingUser(username);
+
+    try {
+      if (approve) {
+        await approveFollow(username);
+      } else {
+        await declineFollow(username);
+      }
+
+      setFollowRequests((current) =>
+        current.filter((r) => r.userName !== username),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to update follow request",
+      );
+    } finally {
+      setUpdatingUser("");
+    }
+  };
+
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString("en-GB", {
       day: "numeric",
@@ -93,11 +131,55 @@ function Requests() {
 
   return (
     <div className="requests">
-      <h1>Borrow Requests</h1>
+      <h1>Requests</h1>
       {error && <p className="form-error">{error}</p>}
 
+      {followRequests.length > 0 && (
+        <section className="requests-section">
+          <h2>Follow Requests ({followRequests.length})</h2>
+          {followRequests.map((req) => (
+            <div key={req.userName} className="request-card">
+              <div className="follow-request-reader">
+                <span className="follow-request-avatar">
+                  {req.avatarUrl ? (
+                    <img src={`${API_ORIGIN}${req.avatarUrl}`} alt="" />
+                  ) : (
+                    req.displayName.charAt(0)
+                  )}
+                </span>
+                <div className="request-details">
+                  <h3>
+                    <Link to={`/profile/${req.userName}`}>
+                      {req.displayName}
+                    </Link>
+                  </h3>
+                  <p className="request-from">@{req.userName}</p>
+                  <p className="request-date">{formatDate(req.requestedDate)}</p>
+                </div>
+              </div>
+              <div className="request-actions">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => handleFollowDecision(req.userName, true)}
+                  disabled={updatingUser === req.userName}
+                >
+                  Approve
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => handleFollowDecision(req.userName, false)}
+                  disabled={updatingUser === req.userName}
+                >
+                  Decline
+                </button>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
       <section className="requests-section">
-        <h2>Incoming ({incoming.length})</h2>
+        <h2>Incoming Book Requests ({incoming.length})</h2>
         {incoming.length === 0 && (
           <p className="empty-requests">No one has requested your books yet.</p>
         )}
@@ -141,7 +223,7 @@ function Requests() {
       </section>
 
       <section className="requests-section">
-        <h2>Outgoing ({outgoing.length})</h2>
+        <h2>Outgoing Book Requests ({outgoing.length})</h2>
         {outgoing.length === 0 && (
           <p className="empty-requests">You haven't requested any books yet.</p>
         )}

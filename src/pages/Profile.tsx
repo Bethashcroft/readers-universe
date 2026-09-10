@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { API_ORIGIN } from "../api/client";
 import { getUserProfile, updateProfile, uploadAvatar } from "../api/profile";
 import type { ProfileResponse } from "../api/profile";
 import { getUserBooks } from "../api/books";
 import type { LibraryEntryResponse } from "../api/books";
+import type { FollowState } from "../api/follows";
 import BookCard from "../components/BookCard";
+import FollowButton from "../components/FollowButton";
+import Toggle from "../components/Toggle";
 import AvatarCropModal from "../components/AvatarCropModal";
 import VintedButton from "../components/VintedButton";
 import ErrorState from "../components/ErrorState";
@@ -26,6 +29,7 @@ function Profile() {
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [vintedUrl, setVintedUrl] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
   const [error, setError] = useState("");
   const [loadError, setLoadError] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -47,8 +51,8 @@ function Profile() {
       setDisplayName(data.displayName);
       setBio(data.bio);
       setVintedUrl(data.vintedUrl);
-      const userBooks = await getUserBooks(username);
-      setBooks(userBooks);
+      setIsPrivate(data.isPrivate);
+      setBooks(data.canView ? await getUserBooks(username) : []);
     } catch (err) {
       console.error("Failed to fetch profile:", err);
       setLoadError(true);
@@ -61,8 +65,43 @@ function Profile() {
     loadProfile();
   }, [loadProfile]);
 
+  const handleFollowChange = (state: FollowState) => {
+    setProfile((current) => {
+      if (!current) return current;
+
+      const wasFollowing = current.followState === "following";
+      const nowFollowing = state === "following";
+      const change = Number(nowFollowing) - Number(wasFollowing);
+
+      return {
+        ...current,
+        followState: state,
+        followerCount: current.followerCount + change,
+      };
+    });
+
+    if (profile?.isPrivate) {
+      loadProfile();
+    }
+  };
+
+  const applyOwnProfile = (updated: ProfileResponse) => {
+    setProfile((current) =>
+      current
+        ? {
+            ...updated,
+            followState: current.followState,
+            followerCount: current.followerCount,
+            followingCount: current.followingCount,
+          }
+        : updated,
+    );
+  };
+
   const handleSave = async () => {
     setError("");
+
+    if (!profile) return;
 
     try {
       const updated = await updateProfile({
@@ -70,8 +109,9 @@ function Profile() {
         displayName,
         bio,
         vintedUrl,
+        isPrivate,
       });
-      setProfile(updated);
+      applyOwnProfile(updated);
       setEditing(false);
       if (user && updated.userName !== user.userName) {
         updateUser({ userName: updated.userName });
@@ -96,7 +136,7 @@ function Profile() {
 
     try {
       const updated = await uploadAvatar(cropped);
-      setProfile(updated);
+      applyOwnProfile(updated);
       setPendingAvatarFile(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to upload photo");
@@ -204,6 +244,13 @@ function Profile() {
                 value={vintedUrl}
                 onChange={(e) => setVintedUrl(e.target.value)}
               />
+              <Toggle
+                id="isPrivate"
+                label="Private account"
+                hint="Only approved followers can see your shelves."
+                checked={isPrivate}
+                onChange={setIsPrivate}
+              />
               {error && <p className="form-error">{error}</p>}
               <div className="edit-profile-actions">
                 <button className="btn btn-primary" onClick={handleSave}>
@@ -217,6 +264,7 @@ function Profile() {
                     setDisplayName(profile.displayName);
                     setBio(profile.bio);
                     setVintedUrl(profile.vintedUrl);
+                    setIsPrivate(profile.isPrivate);
                   }}
                 >
                   Cancel
@@ -236,14 +284,34 @@ function Profile() {
                 />
               )}
               <div className="profile-meta">
-                {isOwnProfile && (
+                {isOwnProfile ? (
                   <button
                     className="btn btn-secondary"
                     onClick={() => setEditing(true)}
                   >
                     Edit Profile
                   </button>
+                ) : (
+                  <FollowButton
+                    username={profile.userName}
+                    state={profile.followState}
+                    onChange={handleFollowChange}
+                  />
                 )}
+                <Link
+                  className="profile-detail-card profile-detail-link"
+                  to={`/profile/${profile.userName}/followers`}
+                >
+                  <h2>Followers</h2>
+                  <p>{profile.followerCount}</p>
+                </Link>
+                <Link
+                  className="profile-detail-card profile-detail-link"
+                  to={`/profile/${profile.userName}/following`}
+                >
+                  <h2>Following</h2>
+                  <p>{profile.followingCount}</p>
+                </Link>
                 <div className="profile-detail-card">
                   <h2>Member Since</h2>
                   <p>
@@ -260,16 +328,33 @@ function Profile() {
       </div>
 
       <section className="profile-books">
-        <h2>
-          {isOwnProfile ? "My Books" : `${profile.displayName}'s Books`} (
-          {books.length})
-        </h2>
-        <div className="book-grid">
-          {books.map((book) => (
-            <BookCard key={book.id} book={book} />
-          ))}
-        </div>
-        {books.length === 0 && <p>No books added yet.</p>}
+        {profile.canView ? (
+          <>
+            <h2>
+              {isOwnProfile ? "My Books" : `${profile.displayName}'s Books`} (
+              {books.length})
+            </h2>
+            <div className="book-grid">
+              {books.map((book) => (
+                <BookCard key={book.id} book={book} />
+              ))}
+            </div>
+            {books.length === 0 && <p>No books added yet.</p>}
+          </>
+        ) : (
+          <div className="profile-locked">
+            <svg
+              className="profile-locked-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <rect x="5" y="10" width="14" height="10" rx="2" />
+              <path d="M8 10 V7 a4 4 0 0 1 8 0 v3" />
+            </svg>
+            <h2>This account is private</h2>
+            <p>Follow {profile.displayName} to see their shelves.</p>
+          </div>
+        )}
       </section>
 
       {pendingAvatarFile && (

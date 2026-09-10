@@ -121,6 +121,7 @@ builder.Services.AddHttpClient<ICoverSource, OpenLibraryCoverSource>(ConfigureOp
 builder.Services.AddHttpClient<CoverService>(ConfigureOpenLibraryClient);
 builder.Services.AddSingleton<CoverBackfillLimiter>();
 builder.Services.AddScoped<LibraryImportService>();
+builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<IBookImportParser, GoodreadsCsvParser>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>

@@ -70,6 +70,21 @@ public class ReaderSearchTests : IDisposable
     }
 
     [Fact]
+    public async Task SearchIgnoresAnAtSignInFrontOfAUsername()
+    {
+        var otherClient = _factory.CreateClient();
+        var other = await otherClient.RegisterAsync("bookdragon");
+        otherClient.Authenticate(other.Token);
+
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+
+        Assert.Equal(1, (await SearchAsync("?q=@bookdragon")).Total);
+        Assert.Equal(1, (await SearchAsync("?q=@BOOKDRAG")).Total);
+        Assert.Equal(0, (await SearchAsync("?q=@nobodyhere")).Total);
+    }
+
+    [Fact]
     public async Task ReaderBookCountHidesPrivateShelvesJustLikeTheProfileDoes()
     {
         var otherClient = _factory.CreateClient();

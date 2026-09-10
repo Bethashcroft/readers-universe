@@ -14,6 +14,8 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<Review> Reviews { get; set; }
     public DbSet<BorrowRequest> BorrowRequests { get; set; }
     public DbSet<Message> Messages { get; set; }
+    public DbSet<Follow> Follows { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -28,6 +30,38 @@ public class AppDbContext : IdentityDbContext<AppUser>
 
         builder.Entity<Book>().HasIndex(b => b.MatchKey);
         builder.Entity<Book>().HasIndex(b => b.Isbn);
+
+        builder
+            .Entity<Follow>()
+            .HasOne(f => f.Follower)
+            .WithMany()
+            .HasForeignKey(f => f.FollowerId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder
+            .Entity<Follow>()
+            .HasOne(f => f.Following)
+            .WithMany()
+            .HasForeignKey(f => f.FollowingId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<Follow>().HasIndex(f => new { f.FollowerId, f.FollowingId }).IsUnique();
+
+        builder
+            .Entity<Notification>()
+            .HasOne(n => n.User)
+            .WithMany()
+            .HasForeignKey(n => n.UserId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder
+            .Entity<Notification>()
+            .HasOne(n => n.Actor)
+            .WithMany()
+            .HasForeignKey(n => n.ActorId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<Notification>().HasIndex(n => new { n.UserId, n.IsRead });
 
         builder
             .Entity<LibraryEntry>()

@@ -37,3 +37,18 @@ public static class LibrarySort
 
     public static readonly string[] All = [Added, Title, Author, Rating];
 }
+
+public static class FollowStates
+{
+    public const string None = "none";
+    public const string Requested = "requested";
+    public const string Following = "following";
+    public const string Self = "self";
+}
+
+public static class NotificationTypes
+{
+    public const string FollowRequested = "follow-requested";
+    public const string FollowApproved = "follow-approved";
+    public const string NewFollower = "new-follower";
+}

@@ -1,4 +1,5 @@
 import { getAuthHeaders, request } from "./client";
+import type { FollowState } from "./follows";
 
 export interface ProfileResponse {
   userName: string;
@@ -8,6 +9,11 @@ export interface ProfileResponse {
   avatarUrl: string;
   joinedDate: string;
   usernameChangeableOn: string | null;
+  isPrivate: boolean;
+  followState: FollowState;
+  followerCount: number;
+  followingCount: number;
+  canView: boolean;
 }
 
 export interface UpdateProfileRequest {
@@ -15,6 +21,7 @@ export interface UpdateProfileRequest {
   displayName: string;
   bio: string;
   vintedUrl: string;
+  isPrivate: boolean;
 }
 
 export function getUserProfile(username: string): Promise<ProfileResponse> {

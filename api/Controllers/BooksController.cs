@@ -53,9 +53,11 @@ public class BooksController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var (currentPage, size) = PagedResult<LibraryEntryResponse>.Normalise(page, pageSize);
 
-        var query = _context.LibraryEntries.Where(e =>
-            e.Offer == BookOffer.AvailableToBorrow || e.Offer == BookOffer.ForSale
-        );
+        var query = _context
+            .LibraryEntries.Where(e =>
+                e.Offer == BookOffer.AvailableToBorrow || e.Offer == BookOffer.ForSale
+            )
+            .VisibleTo(_context, userId);
 
         if (offer == BookOffer.AvailableToBorrow || offer == BookOffer.ForSale)
         {
@@ -130,6 +132,7 @@ public class BooksController : ControllerBase
                 && e.UserId != userId
                 && (e.Offer == BookOffer.AvailableToBorrow || e.Offer == BookOffer.ForSale)
             )
+            .VisibleTo(_context, userId)
             .Include(e => e.User)
             .Select(e => new BookOwnerResponse
             {

@@ -155,6 +155,7 @@ public class AuthController : ControllerBase
         user.DisplayName = request.DisplayName;
         user.Bio = request.Bio;
         user.VintedUrl = request.VintedUrl;
+        user.IsPrivate = request.IsPrivate;
 
         var result = await _userManager.UpdateAsync(user);
         if (!result.Succeeded)
@@ -312,6 +313,11 @@ public class ProfileResponse
     public string AvatarUrl { get; set; } = string.Empty;
     public DateTime JoinedDate { get; set; }
     public DateTime? UsernameChangeableOn { get; set; }
+    public bool IsPrivate { get; set; }
+    public int FollowerCount { get; set; }
+    public int FollowingCount { get; set; }
+    public string FollowState { get; set; } = FollowStates.None;
+    public bool CanView { get; set; } = true;
 
     public static ProfileResponse FromUser(AppUser user) =>
         new()
@@ -323,6 +329,7 @@ public class ProfileResponse
             AvatarUrl = user.AvatarUrl,
             JoinedDate = user.JoinedDate,
             UsernameChangeableOn = user.UsernameLastChangedAt?.AddDays(30),
+            IsPrivate = user.IsPrivate,
         };
 }
 
@@ -332,4 +339,5 @@ public class UpdateProfileRequest
     public string DisplayName { get; set; } = string.Empty;
     public string Bio { get; set; } = string.Empty;
     public string VintedUrl { get; set; } = string.Empty;
+    public bool IsPrivate { get; set; }
 }
