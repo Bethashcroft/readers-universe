@@ -16,6 +16,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<Message> Messages { get; set; }
     public DbSet<Follow> Follows { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<Trust> Trusts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -62,6 +63,22 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .OnDelete(DeleteBehavior.NoAction);
 
         builder.Entity<Notification>().HasIndex(n => new { n.UserId, n.IsRead });
+
+        builder
+            .Entity<Trust>()
+            .HasOne(t => t.Truster)
+            .WithMany()
+            .HasForeignKey(t => t.TrusterId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder
+            .Entity<Trust>()
+            .HasOne(t => t.Trusted)
+            .WithMany()
+            .HasForeignKey(t => t.TrustedId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<Trust>().HasIndex(t => new { t.TrusterId, t.TrustedId }).IsUnique();
 
         builder
             .Entity<LibraryEntry>()

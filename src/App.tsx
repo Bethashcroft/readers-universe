@@ -7,6 +7,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import FollowList from "./pages/FollowList";
+import TrustedBookClub from "./pages/TrustedBookClub";
 import Shelves from "./pages/Shelves";
 import AddBook from "./pages/AddBook";
 import BookDetail from "./pages/BookDetail";
@@ -48,6 +49,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <FollowList mode="following" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/trusted-book-club"
+                element={
+                  <ProtectedRoute>
+                    <TrustedBookClub />
                   </ProtectedRoute>
                 }
               />

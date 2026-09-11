@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { searchReaders } from "../api/readers";
 import type { ReaderResponse } from "../api/readers";
-import { API_ORIGIN } from "../api/client";
+import Avatar from "../components/Avatar";
 import Pager from "../components/Pager";
 import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
@@ -12,16 +12,22 @@ function Readers() {
   usePageTitle("Find Readers");
 
   const [params] = useSearchParams();
-  const initial = params.get("q") ?? "";
+  const urlQuery = params.get("q") ?? "";
 
-  const [search, setSearch] = useState(initial);
-  const [debouncedSearch, setDebouncedSearch] = useState(initial);
+  const [search, setSearch] = useState(urlQuery);
+  const [debouncedSearch, setDebouncedSearch] = useState(urlQuery);
+  const [syncedQuery, setSyncedQuery] = useState(urlQuery);
   const [page, setPage] = useState(1);
   const [readers, setReaders] = useState<ReaderResponse[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+
+  if (urlQuery !== syncedQuery) {
+    setSyncedQuery(urlQuery);
+    setSearch(urlQuery);
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -99,13 +105,11 @@ function Readers() {
             to={`/profile/${reader.userName}`}
             className="reader-card"
           >
-            <div className="reader-avatar">
-              {reader.avatarUrl ? (
-                <img src={`${API_ORIGIN}${reader.avatarUrl}`} alt="" />
-              ) : (
-                reader.displayName.charAt(0)
-              )}
-            </div>
+            <Avatar
+              url={reader.avatarUrl}
+              name={reader.displayName}
+              size={52}
+            />
             <div className="reader-details">
               <span className="reader-name">{reader.displayName}</span>
               <span className="reader-username">@{reader.userName}</span>

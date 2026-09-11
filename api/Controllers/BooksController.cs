@@ -95,9 +95,17 @@ public class BooksController : ControllerBase
                     .ToListAsync()
             ).ToHashSet();
 
+            var trustsMe = (
+                await _context
+                    .Trusts.Where(t => t.TrustedId == userId)
+                    .Select(t => t.TrusterId)
+                    .ToListAsync()
+            ).ToHashSet();
+
             foreach (var response in responses)
             {
                 response.AlreadyOnShelves = mine.Contains(response.BookId);
+                response.CanRequest = trustsMe.Contains(response.UserId);
             }
         }
 
@@ -141,6 +149,9 @@ public class BooksController : ControllerBase
                 DisplayName = e.User.DisplayName,
                 Offer = e.Offer,
                 SellerVintedUrl = e.User.VintedUrl,
+                CanRequest = _context.Trusts.Any(t =>
+                    t.TrusterId == e.UserId && t.TrustedId == userId
+                ),
             })
             .ToListAsync();
 
@@ -186,4 +197,5 @@ public class BookOwnerResponse
     public string DisplayName { get; set; } = string.Empty;
     public string Offer { get; set; } = BookOffer.None;
     public string SellerVintedUrl { get; set; } = string.Empty;
+    public bool CanRequest { get; set; }
 }

@@ -14,6 +14,8 @@ export interface ProfileResponse {
   followerCount: number;
   followingCount: number;
   canView: boolean;
+  trusted: boolean;
+  trustsMe: boolean;
 }
 
 export interface UpdateProfileRequest {

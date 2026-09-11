@@ -54,6 +54,7 @@ public class BorrowTests : IDisposable
 
         var reader = await _client.RegisterAsync("reader");
         _client.Authenticate(reader.Token);
+        await lenderClient.TrustAsync("reader");
         await _client.AddReviewAsync(theirs.BookId, 5, "Read it years ago");
 
         var response = await _client.PostAsJsonAsync(
@@ -82,6 +83,7 @@ public class BorrowTests : IDisposable
 
         var reader = await _client.RegisterAsync("reader");
         _client.Authenticate(reader.Token);
+        await lenderClient.TrustAsync("reader");
         await _client.PostAsJsonAsync(
             "/api/library",
             new
@@ -108,16 +110,18 @@ public class BorrowTests : IDisposable
         var ownerClient = _factory.CreateClient();
         var owner = await ownerClient.RegisterAsync("owner");
         ownerClient.Authenticate(owner.Token);
-        var book = await ownerClient.AddBookAsync("Shared Book");
+        var book = await ownerClient.AddBookAsync("Shared Book", offer: "available-to-borrow");
 
         var aliceClient = _factory.CreateClient();
         var alice = await aliceClient.RegisterAsync("alice");
         aliceClient.Authenticate(alice.Token);
+        await ownerClient.TrustAsync("alice");
         var aliceReq = await aliceClient.RequestBookAsync(book.Id);
 
         var bobClient = _factory.CreateClient();
         var bob = await bobClient.RegisterAsync("bob");
         bobClient.Authenticate(bob.Token);
+        await ownerClient.TrustAsync("bob");
         var bobReq = await bobClient.RequestBookAsync(book.Id);
 
         var accept = await ownerClient.PutAsJsonAsync(
@@ -147,11 +151,12 @@ public class BorrowTests : IDisposable
         var ownerClient = _factory.CreateClient();
         var owner = await ownerClient.RegisterAsync("owner");
         ownerClient.Authenticate(owner.Token);
-        var book = await ownerClient.AddBookAsync("Popular Book");
+        var book = await ownerClient.AddBookAsync("Popular Book", offer: "available-to-borrow");
 
         var borrowerClient = _factory.CreateClient();
         var borrower = await borrowerClient.RegisterAsync("borrower");
         borrowerClient.Authenticate(borrower.Token);
+        await ownerClient.TrustAsync("borrower");
 
         await borrowerClient.RequestBookAsync(book.Id);
 
@@ -171,11 +176,12 @@ public class BorrowTests : IDisposable
         var ownerClient = _factory.CreateClient();
         var owner = await ownerClient.RegisterAsync("owner");
         ownerClient.Authenticate(owner.Token);
-        var book = await ownerClient.AddBookAsync("Some Book");
+        var book = await ownerClient.AddBookAsync("Some Book", offer: "available-to-borrow");
 
         var borrowerClient = _factory.CreateClient();
         var borrower = await borrowerClient.RegisterAsync("borrower");
         borrowerClient.Authenticate(borrower.Token);
+        await ownerClient.TrustAsync("borrower");
         var req = await borrowerClient.RequestBookAsync(book.Id);
 
         var response = await ownerClient.PutAsJsonAsync(
@@ -194,11 +200,12 @@ public class BorrowTests : IDisposable
         var ownerClient = _factory.CreateClient();
         var owner = await ownerClient.RegisterAsync("owner");
         ownerClient.Authenticate(owner.Token);
-        var book = await ownerClient.AddBookAsync("Wanted Book");
+        var book = await ownerClient.AddBookAsync("Wanted Book", offer: "available-to-borrow");
 
         var borrowerClient = _factory.CreateClient();
         var borrower = await borrowerClient.RegisterAsync("borrower");
         borrowerClient.Authenticate(borrower.Token);
+        await ownerClient.TrustAsync("borrower");
         var req = await borrowerClient.RequestBookAsync(book.Id);
 
         var deleteResponse = await borrowerClient.DeleteAsync(
@@ -218,11 +225,12 @@ public class BorrowTests : IDisposable
         var ownerClient = _factory.CreateClient();
         var owner = await ownerClient.RegisterAsync("owner");
         ownerClient.Authenticate(owner.Token);
-        var book = await ownerClient.AddBookAsync("Wanted Book");
+        var book = await ownerClient.AddBookAsync("Wanted Book", offer: "available-to-borrow");
 
         var borrowerClient = _factory.CreateClient();
         var borrower = await borrowerClient.RegisterAsync("borrower");
         borrowerClient.Authenticate(borrower.Token);
+        await ownerClient.TrustAsync("borrower");
         var req = await borrowerClient.RequestBookAsync(book.Id);
 
         var deleteResponse = await ownerClient.DeleteAsync(
@@ -237,11 +245,12 @@ public class BorrowTests : IDisposable
         var ownerClient = _factory.CreateClient();
         var owner = await ownerClient.RegisterAsync("owner");
         ownerClient.Authenticate(owner.Token);
-        var book = await ownerClient.AddBookAsync("Wanted Book");
+        var book = await ownerClient.AddBookAsync("Wanted Book", offer: "available-to-borrow");
 
         var borrowerClient = _factory.CreateClient();
         var borrower = await borrowerClient.RegisterAsync("borrower");
         borrowerClient.Authenticate(borrower.Token);
+        await ownerClient.TrustAsync("borrower");
         var req = await borrowerClient.RequestBookAsync(book.Id);
 
         var accept = await ownerClient.PutAsJsonAsync(

@@ -8,7 +8,8 @@ interface BookCoverProps {
 }
 
 function BookCover({ src, title, className }: BookCoverProps) {
-  const [failed, setFailed] = useState(false);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const failed = failedSrc === src;
 
   return (
     <img
@@ -16,7 +17,7 @@ function BookCover({ src, title, className }: BookCoverProps) {
       src={failed || !src ? placeholderCover(title) : src}
       alt={`Cover of ${title}`}
       loading="lazy"
-      onError={() => setFailed(true)}
+      onError={() => setFailedSrc(src)}
     />
   );
 }

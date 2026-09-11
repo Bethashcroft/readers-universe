@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBooks } from "../context/useBooks";
 import { lookupBook } from "../api/books";
+import type { BookLookupResult } from "../api/books";
 import { shelfLabels, offerLabels } from "../types/book";
 import type { ShelfType, OfferType } from "../types/book";
 import { placeholderCover } from "../types/covers";
@@ -28,6 +29,7 @@ function AddBook() {
   const [reviewText, setReviewText] = useState("");
   const [containsSpoiler, setContainsSpoiler] = useState(false);
   const [error, setError] = useState("");
+  const [lastLookup, setLastLookup] = useState<BookLookupResult | null>(null);
 
   const handleLookup = async () => {
     if (!isbn.trim()) return;
@@ -39,8 +41,21 @@ function AddBook() {
       setTitle(result.title);
       setAuthor(result.author);
       setCoverUrl(result.coverUrl);
+      setLastLookup(result);
       setLookupStatus("found");
     } catch {
+      const untouched =
+        lastLookup &&
+        title === lastLookup.title &&
+        author === lastLookup.author;
+
+      if (untouched) {
+        setTitle("");
+        setAuthor("");
+        setCoverUrl("");
+      }
+
+      setLastLookup(null);
       setLookupStatus("notfound");
     }
   };

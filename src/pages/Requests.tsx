@@ -13,8 +13,8 @@ import {
   declineFollow,
 } from "../api/follows";
 import type { FollowRequestResponse } from "../api/follows";
-import { API_ORIGIN } from "../api/client";
 import ErrorState from "../components/ErrorState";
+import ReaderRow from "../components/ReaderRow";
 import { usePageTitle } from "../hooks/usePageTitle";
 import "./Requests.css";
 
@@ -137,44 +137,35 @@ function Requests() {
       {followRequests.length > 0 && (
         <section className="requests-section">
           <h2>Follow Requests ({followRequests.length})</h2>
-          {followRequests.map((req) => (
-            <div key={req.userName} className="request-card">
-              <div className="follow-request-reader">
-                <span className="follow-request-avatar">
-                  {req.avatarUrl ? (
-                    <img src={`${API_ORIGIN}${req.avatarUrl}`} alt="" />
-                  ) : (
-                    req.displayName.charAt(0)
-                  )}
-                </span>
-                <div className="request-details">
-                  <h3>
-                    <Link to={`/profile/${req.userName}`}>
-                      {req.displayName}
-                    </Link>
-                  </h3>
-                  <p className="request-from">@{req.userName}</p>
-                  <p className="request-date">{formatDate(req.requestedDate)}</p>
-                </div>
-              </div>
-              <div className="request-actions">
-                <button
-                  className="btn btn-primary"
-                  onClick={() => handleFollowDecision(req.userName, true)}
-                  disabled={updatingUser === req.userName}
-                >
-                  Approve
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => handleFollowDecision(req.userName, false)}
-                  disabled={updatingUser === req.userName}
-                >
-                  Decline
-                </button>
-              </div>
-            </div>
-          ))}
+          <div className="reader-rows">
+            {followRequests.map((req) => (
+              <ReaderRow
+                key={req.userName}
+                userName={req.userName}
+                displayName={req.displayName}
+                avatarUrl={req.avatarUrl}
+                meta={formatDate(req.requestedDate)}
+                action={
+                  <>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => handleFollowDecision(req.userName, true)}
+                      disabled={updatingUser === req.userName}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => handleFollowDecision(req.userName, false)}
+                      disabled={updatingUser === req.userName}
+                    >
+                      Decline
+                    </button>
+                  </>
+                }
+              />
+            ))}
+          </div>
         </section>
       )}
 

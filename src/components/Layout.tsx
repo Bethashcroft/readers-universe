@@ -23,6 +23,7 @@ import {
 } from "../realtime/connection";
 import ReaderSearchBar from "./ReaderSearchBar";
 import NotificationBell from "./NotificationBell";
+import { useClickOutside } from "../hooks/useClickOutside";
 import "./Layout.css";
 
 type NavMenuProps = {
@@ -34,32 +35,9 @@ type NavMenuProps = {
 function NavMenu({ label, badgeCount = 0, children }: NavMenuProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLLIElement>(null);
+  const close = useCallback(() => setOpen(false), []);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const handlePointerDown = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
+  useClickOutside(containerRef, open, close);
 
   return (
     <li className="nav-menu" ref={containerRef}>
@@ -92,6 +70,7 @@ function Layout() {
   const [pendingCount, setPendingCount] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
   const unreadRequest = useRef(0);
+  const countsRequest = useRef(0);
 
   const refreshUnreadCount = useCallback(async () => {
     const ticket = ++unreadRequest.current;
@@ -113,11 +92,14 @@ function Layout() {
     }
 
     const fetchCounts = async () => {
+      const ticket = ++countsRequest.current;
+
       try {
         const [requests, follows] = await Promise.all([
           getMyRequests(),
           getFollowRequests(),
         ]);
+        if (ticket !== countsRequest.current) return;
         const incomingPending = requests.filter(
           (r) => r.toUserId === user.userId && r.status === "pending",
         );
@@ -235,6 +217,7 @@ function Layout() {
               </NavMenu>
               <NavMenu label="Account">
                 <NavLink to={`/profile/${user.userName}`}>Profile</NavLink>
+                <NavLink to="/trusted-book-club">Trusted Book Club</NavLink>
                 <button className="nav-logout" onClick={handleLogout}>
                   Log Out
                 </button>

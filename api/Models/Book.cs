@@ -26,11 +26,18 @@ public class Book
 
     public static string BuildMatchKey(string title, string author)
     {
+        var key = $"{Squash(title)}|{Squash(author)}";
+
+        return key.Length <= 500 ? key : key[..500];
+    }
+
+    private static string Squash(string text)
+    {
         var builder = new StringBuilder();
 
-        foreach (var c in $"{title}|{author}")
+        foreach (var c in text)
         {
-            if (char.IsLetterOrDigit(c) || c == '|')
+            if (char.IsLetterOrDigit(c))
             {
                 builder.Append(char.ToLowerInvariant(c));
             }

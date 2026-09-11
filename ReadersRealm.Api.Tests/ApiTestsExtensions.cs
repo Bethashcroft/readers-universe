@@ -16,7 +16,8 @@ public record BookResult(
     string Offer,
     int? Rating,
     string UserId,
-    string OwnerName
+    string OwnerName,
+    bool CanRequest
 );
 
 public record BookOwnerResult(
@@ -136,6 +137,12 @@ public static class ApiTestExtensions
 
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<BookResult>())!;
+    }
+
+    public static async Task TrustAsync(this HttpClient client, string username)
+    {
+        var response = await client.PostAsync($"/api/users/{username}/trust", null);
+        response.EnsureSuccessStatusCode();
     }
 
     public static async Task<BorrowResult> RequestBookAsync(

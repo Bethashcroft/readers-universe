@@ -188,22 +188,64 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Image must be 2MB or smaller" });
         }
 
-        var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp" };
-        if (!allowedTypes.Contains(file.ContentType))
+        using var memory = new MemoryStream();
+        await file.CopyToAsync(memory);
+        var bytes = memory.ToArray();
+
+        var imageType = DetectImageType(bytes);
+        if (imageType == null)
         {
             return BadRequest(new { message = "Only JPG, PNG, or WebP images are allowed" });
         }
 
-        using var memory = new MemoryStream();
-        await file.CopyToAsync(memory);
-
-        user.AvatarData = memory.ToArray();
-        user.AvatarContentType = file.ContentType;
+        user.AvatarData = bytes;
+        user.AvatarContentType = imageType;
         var version = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         user.AvatarUrl = $"/api/avatars/{user.Id}?v={version}";
         await _userManager.UpdateAsync(user);
 
         return Ok(ProfileResponse.FromUser(user));
+    }
+
+    private static readonly byte[] JpegSignature = [0xFF, 0xD8, 0xFF];
+    private static readonly byte[] PngSignature =
+    [
+        0x89,
+        0x50,
+        0x4E,
+        0x47,
+        0x0D,
+        0x0A,
+        0x1A,
+        0x0A,
+    ];
+    private static readonly byte[] RiffSignature = "RIFF"u8.ToArray();
+    private static readonly byte[] WebpSignature = "WEBP"u8.ToArray();
+
+    private static string? DetectImageType(byte[] bytes)
+    {
+        var span = bytes.AsSpan();
+
+        if (span.StartsWith(JpegSignature))
+        {
+            return "image/jpeg";
+        }
+
+        if (span.StartsWith(PngSignature))
+        {
+            return "image/png";
+        }
+
+        if (
+            span.Length >= 12
+            && span.StartsWith(RiffSignature)
+            && span[8..12].SequenceEqual(WebpSignature)
+        )
+        {
+            return "image/webp";
+        }
+
+        return null;
     }
 
     private static readonly Regex UsernameRegex = new("^[a-zA-Z0-9._]{5,20}$");
@@ -318,6 +360,8 @@ public class ProfileResponse
     public int FollowingCount { get; set; }
     public string FollowState { get; set; } = FollowStates.None;
     public bool CanView { get; set; } = true;
+    public bool Trusted { get; set; }
+    public bool TrustsMe { get; set; }
 
     public static ProfileResponse FromUser(AppUser user) =>
         new()

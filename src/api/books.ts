@@ -4,6 +4,7 @@ export interface LibraryEntryResponse {
   id: number;
   bookId: number;
   alreadyOnShelves: boolean;
+  canRequest: boolean;
   title: string;
   author: string;
   coverUrl: string;
@@ -23,6 +24,7 @@ export interface BookOwnerResponse {
   displayName: string;
   offer: string;
   sellerVintedUrl: string;
+  canRequest: boolean;
 }
 
 export interface BookDetailResponse {

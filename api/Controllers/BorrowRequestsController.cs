@@ -38,6 +38,26 @@ public class BorrowRequestsController : ControllerBase
             return BadRequest(new { message = "You cannot request your own book" });
         }
 
+        if (entry.Offer != BookOffer.AvailableToBorrow)
+        {
+            return BadRequest(new { message = "This book isn't available to borrow." });
+        }
+
+        var trusted = await _context.Trusts.AnyAsync(t =>
+            t.TrusterId == entry.UserId && t.TrustedId == fromUserId
+        );
+
+        if (!trusted)
+        {
+            return StatusCode(
+                403,
+                new
+                {
+                    message = "Only readers in this owner's Trusted Book Club can borrow their books.",
+                }
+            );
+        }
+
         var alreadyOnMyShelves = await _context.LibraryEntries.AnyAsync(e =>
             e.BookId == entry.BookId && e.UserId == fromUserId
         );
@@ -175,6 +195,21 @@ public class BorrowRequestsController : ControllerBase
         if (borrowRequest.ToUserId != userId)
         {
             return Forbid();
+        }
+
+        if (request.Status == BorrowStatus.Accepted)
+        {
+            var stillTrusted = await _context.Trusts.AnyAsync(t =>
+                t.TrusterId == userId && t.TrustedId == borrowRequest.FromUserId
+            );
+
+            if (!stillTrusted)
+            {
+                return StatusCode(
+                    403,
+                    new { message = "This reader is no longer in your Trusted Book Club." }
+                );
+            }
         }
 
         borrowRequest.Status = request.Status;

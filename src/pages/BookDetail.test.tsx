@@ -45,6 +45,7 @@ const myEntry: LibraryEntryResponse = {
   id: 9,
   bookId: 1,
   alreadyOnShelves: false,
+  canRequest: true,
   title: "Gone Girl",
   author: "Gillian Flynn",
   coverUrl: "x",
@@ -211,6 +212,7 @@ describe("BookDetail", () => {
           displayName: "Rebel Ashcroft",
           offer: "available-to-borrow",
           sellerVintedUrl: "",
+          canRequest: true,
         },
       ],
     });
@@ -224,6 +226,33 @@ describe("BookDetail", () => {
     expect(
       screen.getByRole("button", { name: "Request to Borrow" }),
     ).toBeInTheDocument();
+  });
+
+  it("only lets Trusted Book Club members request to borrow", async () => {
+    mockGetBook.mockResolvedValue({
+      ...book,
+      owners: [
+        {
+          libraryEntryId: 42,
+          userName: "rebel",
+          displayName: "Rebel Ashcroft",
+          offer: "available-to-borrow",
+          sellerVintedUrl: "",
+          canRequest: false,
+        },
+      ],
+    });
+    mockGetReviews.mockResolvedValue([]);
+    renderBookDetail();
+
+    await screen.findByText("Gone Girl");
+
+    expect(
+      screen.getByText("Only Rebel Ashcroft's Trusted Book Club can borrow this"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Request to Borrow" }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows shelf controls only when the book is on your shelves", async () => {

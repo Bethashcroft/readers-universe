@@ -33,6 +33,7 @@ public class DashboardTests : IDisposable
         var borrowerClient = _factory.CreateClient();
         var borrower = await borrowerClient.RegisterAsync("borrower");
         borrowerClient.Authenticate(borrower.Token);
+        await ownerClient.TrustAsync("borrower");
         await borrowerClient.AddBookAsync("Borrower Book", offer: "available-to-borrow");
         await borrowerClient.RequestBookAsync(book.Id);
 

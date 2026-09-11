@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { searchReaders } from "../api/readers";
 import type { ReaderResponse } from "../api/readers";
-import { API_ORIGIN } from "../api/client";
+import { useClickOutside } from "../hooks/useClickOutside";
+import Avatar from "./Avatar";
 import "./ReaderSearchBar.css";
 
 function ReaderSearchBar() {
@@ -12,6 +13,9 @@ function ReaderSearchBar() {
   const [total, setTotal] = useState(0);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => setOpen(false), []);
+
+  useClickOutside(containerRef, open, close);
 
   useEffect(() => {
     if (!term.trim()) {
@@ -37,32 +41,6 @@ function ReaderSearchBar() {
       clearTimeout(timer);
     };
   }, [term]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const handlePointerDown = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
 
   const visible = term.trim() ? results : [];
 
@@ -109,13 +87,11 @@ function ReaderSearchBar() {
                 className="reader-search-result"
                 onClick={() => goTo(`/profile/${reader.userName}`)}
               >
-                <span className="reader-search-avatar">
-                  {reader.avatarUrl ? (
-                    <img src={`${API_ORIGIN}${reader.avatarUrl}`} alt="" />
-                  ) : (
-                    reader.displayName.charAt(0)
-                  )}
-                </span>
+                <Avatar
+                  url={reader.avatarUrl}
+                  name={reader.displayName}
+                  size={32}
+                />
                 <span className="reader-search-names">
                   <span className="reader-search-name">
                     {reader.displayName}

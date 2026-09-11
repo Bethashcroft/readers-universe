@@ -1,20 +1,19 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-import { API_ORIGIN } from "../api/client";
-import { getUserProfile, updateProfile, uploadAvatar } from "../api/profile";
+import { getUserProfile } from "../api/profile";
 import type { ProfileResponse } from "../api/profile";
 import { getUserBooks } from "../api/books";
 import type { LibraryEntryResponse } from "../api/books";
 import type { FollowState } from "../api/follows";
+import Avatar from "../components/Avatar";
 import BookCard from "../components/BookCard";
 import FollowButton from "../components/FollowButton";
-import Toggle from "../components/Toggle";
-import AvatarCropModal from "../components/AvatarCropModal";
+import TrustButton from "../components/TrustButton";
+import EditProfileForm from "../components/EditProfileForm";
 import VintedButton from "../components/VintedButton";
 import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
-import "../styles/forms.css";
 import "./Profile.css";
 
 function Profile() {
@@ -25,18 +24,7 @@ function Profile() {
   const [books, setBooks] = useState<LibraryEntryResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [userName, setUserName] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [bio, setBio] = useState("");
-  const [vintedUrl, setVintedUrl] = useState("");
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [error, setError] = useState("");
   const [loadError, setLoadError] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(
-    null,
-  );
-  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   usePageTitle(profile ? profile.displayName : "Profile");
 
@@ -44,14 +32,10 @@ function Profile() {
     if (!username) return;
     setLoading(true);
     setLoadError(false);
+    setEditing(false);
     try {
       const data = await getUserProfile(username);
       setProfile(data);
-      setUserName(data.userName);
-      setDisplayName(data.displayName);
-      setBio(data.bio);
-      setVintedUrl(data.vintedUrl);
-      setIsPrivate(data.isPrivate);
       setBooks(data.canView ? await getUserBooks(username) : []);
     } catch (err) {
       console.error("Failed to fetch profile:", err);
@@ -98,51 +82,13 @@ function Profile() {
     );
   };
 
-  const handleSave = async () => {
-    setError("");
+  const handleSaved = (updated: ProfileResponse) => {
+    applyOwnProfile(updated);
+    setEditing(false);
 
-    if (!profile) return;
-
-    try {
-      const updated = await updateProfile({
-        userName,
-        displayName,
-        bio,
-        vintedUrl,
-        isPrivate,
-      });
-      applyOwnProfile(updated);
-      setEditing(false);
-      if (user && updated.userName !== user.userName) {
-        updateUser({ userName: updated.userName });
-        navigate(`/profile/${updated.userName}`);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update profile");
-    }
-  };
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setError("");
-    setPendingAvatarFile(file);
-    e.target.value = "";
-  };
-
-  const handleAvatarSave = async (cropped: File) => {
-    setUploadingAvatar(true);
-
-    try {
-      const updated = await uploadAvatar(cropped);
-      applyOwnProfile(updated);
-      setPendingAvatarFile(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to upload photo");
-      setPendingAvatarFile(null);
-    } finally {
-      setUploadingAvatar(false);
+    if (user && updated.userName !== user.userName) {
+      updateUser({ userName: updated.userName });
+      navigate(`/profile/${updated.userName}`);
     }
   };
 
@@ -164,118 +110,30 @@ function Profile() {
   }
 
   const isOwnProfile = user?.userName === profile.userName;
-  const usernameLockedUntil =
-    profile.usernameChangeableOn &&
-    new Date(profile.usernameChangeableOn) > new Date()
-      ? new Date(profile.usernameChangeableOn)
-      : null;
 
   return (
     <div className="profile">
       <div className="profile-header">
-        <div className="profile-avatar">
-          {profile.avatarUrl ? (
-            <img src={`${API_ORIGIN}${profile.avatarUrl}`} alt="" />
-          ) : (
-            profile.displayName.charAt(0)
-          )}
-        </div>
+        <Avatar url={profile.avatarUrl} name={profile.displayName} size={80} />
         <div className="profile-info">
-          {editing ? (
-            <div className="edit-profile-form">
-              <label>Profile Photo</label>
-              <input
-                ref={avatarInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="avatar-input"
-                onChange={handleAvatarChange}
-              />
-              <button
-                type="button"
-                className="btn btn-primary avatar-upload-btn"
-                onClick={() => avatarInputRef.current?.click()}
-                disabled={uploadingAvatar}
-              >
-                {uploadingAvatar ? "Uploading..." : "Upload New Photo"}
-              </button>
-              <label htmlFor="userName">Username</label>
-              <input
-                type="text"
-                id="userName"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                disabled={usernameLockedUntil !== null}
-              />
-              {usernameLockedUntil ? (
-                <p className="username-note">
-                  You can change your username again on{" "}
-                  {usernameLockedUntil.toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                  .
-                </p>
-              ) : (
-                <p className="username-note">
-                  Choose carefully. You can change this once every 30 days.
-                </p>
-              )}
-              <label htmlFor="displayName">Display Name</label>
-              <input
-                type="text"
-                id="displayName"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-              />
-              <label htmlFor="bio">Bio</label>
-              <textarea
-                id="bio"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                rows={3}
-              />
-              <label htmlFor="vintedUrl">Vinted Profile URL</label>
-              <input
-                type="url"
-                id="vintedUrl"
-                placeholder="https://www.vinted.co.uk/member/..."
-                value={vintedUrl}
-                onChange={(e) => setVintedUrl(e.target.value)}
-              />
-              <Toggle
-                id="isPrivate"
-                label="Private account"
-                hint="Only approved followers can see your shelves."
-                checked={isPrivate}
-                onChange={setIsPrivate}
-              />
-              {error && <p className="form-error">{error}</p>}
-              <div className="edit-profile-actions">
-                <button className="btn btn-primary" onClick={handleSave}>
-                  Save
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    setEditing(false);
-                    setUserName(profile.userName);
-                    setDisplayName(profile.displayName);
-                    setBio(profile.bio);
-                    setVintedUrl(profile.vintedUrl);
-                    setIsPrivate(profile.isPrivate);
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+          {editing && isOwnProfile ? (
+            <EditProfileForm
+              profile={profile}
+              onSave={handleSaved}
+              onAvatarChange={applyOwnProfile}
+              onCancel={() => setEditing(false)}
+            />
           ) : (
             <>
               <h1>{profile.displayName}</h1>
               <p className="profile-username">@{profile.userName}</p>
               <p className="profile-bio">{profile.bio || "No bio yet"}</p>
+              {profile.trustsMe && (
+                <p className="profile-trusts-me">
+                  You're in {profile.displayName}'s Trusted Book Club, so you
+                  can borrow their books.
+                </p>
+              )}
               {profile.vintedUrl && (
                 <VintedButton
                   href={profile.vintedUrl}
@@ -292,11 +150,23 @@ function Profile() {
                     Edit Profile
                   </button>
                 ) : (
-                  <FollowButton
-                    username={profile.userName}
-                    state={profile.followState}
-                    onChange={handleFollowChange}
-                  />
+                  <>
+                    <FollowButton
+                      username={profile.userName}
+                      state={profile.followState}
+                      onChange={handleFollowChange}
+                    />
+                    <TrustButton
+                      username={profile.userName}
+                      displayName={profile.displayName}
+                      trusted={profile.trusted}
+                      onChange={(trusted) =>
+                        setProfile(
+                          (current) => current && { ...current, trusted },
+                        )
+                      }
+                    />
+                  </>
                 )}
                 <Link
                   className="profile-detail-card profile-detail-link"
@@ -356,15 +226,6 @@ function Profile() {
           </div>
         )}
       </section>
-
-      {pendingAvatarFile && (
-        <AvatarCropModal
-          file={pendingAvatarFile}
-          saving={uploadingAvatar}
-          onCancel={() => setPendingAvatarFile(null)}
-          onSave={handleAvatarSave}
-        />
-      )}
     </div>
   );
 }

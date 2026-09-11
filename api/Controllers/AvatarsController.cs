@@ -28,6 +28,7 @@ public class AvatarsController : ControllerBase
         }
 
         Response.Headers.CacheControl = "public, max-age=86400";
+        Response.Headers["X-Content-Type-Options"] = "nosniff";
         return File(user.AvatarData, user.AvatarContentType);
     }
 }

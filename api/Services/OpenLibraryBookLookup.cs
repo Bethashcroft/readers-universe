@@ -53,7 +53,7 @@ public class OpenLibraryBookLookup : IBookLookup
             return null;
         }
 
-        var title = book.TryGetProperty("title", out var t) ? t.GetString() ?? "" : "";
+        var title = GetString(book, "title") ?? "";
         if (string.IsNullOrWhiteSpace(title))
         {
             return null;
@@ -69,7 +69,7 @@ public class OpenLibraryBookLookup : IBookLookup
                 ", ",
                 authors
                     .EnumerateArray()
-                    .Select(a => a.TryGetProperty("name", out var n) ? n.GetString() : null)
+                    .Select(a => GetString(a, "name"))
                     .Where(n => !string.IsNullOrWhiteSpace(n))
             );
         }
@@ -92,5 +92,8 @@ public class OpenLibraryBookLookup : IBookLookup
     }
 
     private static string? GetString(JsonElement element, string property) =>
-        element.TryGetProperty(property, out var value) ? value.GetString() : null;
+        element.TryGetProperty(property, out var value)
+        && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
 }

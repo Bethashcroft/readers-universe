@@ -25,6 +25,21 @@ public class AvatarTests : IDisposable
 
     private record MessageResult(string Message);
 
+    private static readonly byte[] PngBytes =
+    [
+        0x89,
+        0x50,
+        0x4E,
+        0x47,
+        0x0D,
+        0x0A,
+        0x1A,
+        0x0A,
+        1,
+        2,
+        3,
+    ];
+
     private static MultipartFormDataContent BuildUpload(
         byte[] bytes,
         string contentType,
@@ -44,7 +59,7 @@ public class AvatarTests : IDisposable
 
         var response = await _client.PostAsync(
             "/api/auth/profile/avatar",
-            BuildUpload(new byte[] { 1, 2, 3 }, "image/png", "photo.png")
+            BuildUpload(PngBytes, "image/png", "photo.png")
         );
 
         response.EnsureSuccessStatusCode();
@@ -54,7 +69,24 @@ public class AvatarTests : IDisposable
         var image = await _client.GetAsync(profile.AvatarUrl);
         image.EnsureSuccessStatusCode();
         Assert.Equal("image/png", image.Content.Headers.ContentType!.MediaType);
-        Assert.Equal(new byte[] { 1, 2, 3 }, await image.Content.ReadAsByteArrayAsync());
+        Assert.Equal(PngBytes, await image.Content.ReadAsByteArrayAsync());
+        Assert.Equal("nosniff", image.Headers.GetValues("X-Content-Type-Options").Single());
+    }
+
+    [Fact]
+    public async Task UploadingNonImageBytesLabelledAsAnImage_ReturnsBadRequest()
+    {
+        var user = await _client.RegisterAsync("avataruser");
+        _client.Authenticate(user.Token);
+
+        var response = await _client.PostAsync(
+            "/api/auth/profile/avatar",
+            BuildUpload(new byte[] { 1, 2, 3 }, "image/png", "photo.png")
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<MessageResult>();
+        Assert.Equal("Only JPG, PNG, or WebP images are allowed", body!.Message);
     }
 
     [Fact]

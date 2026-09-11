@@ -371,6 +371,10 @@ function BookDetail() {
                 <p className="rating-meta">Already on your shelves</p>
               ) : myReview ? (
                 <p className="rating-meta">You've already rated this book</p>
+              ) : !owner.canRequest ? (
+                <p className="rating-meta">
+                  Only {owner.displayName}'s Trusted Book Club can borrow this
+                </p>
               ) : sentRequests.has(owner.libraryEntryId) ? (
                 <p className="request-sent">Request sent!</p>
               ) : requestingEntryId === owner.libraryEntryId ? (

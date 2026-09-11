@@ -51,4 +51,5 @@ public static class NotificationTypes
     public const string FollowRequested = "follow-requested";
     public const string FollowApproved = "follow-approved";
     public const string NewFollower = "new-follower";
+    public const string Trusted = "trusted";
 }

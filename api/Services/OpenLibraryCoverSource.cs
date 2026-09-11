@@ -242,13 +242,14 @@ public partial class OpenLibraryCoverSource(HttpClient http) : ICoverSource
             );
         }
         catch (Exception ex)
-            when (ex is HttpRequestException or OperationCanceledException or IOException)
+            when (ex
+                    is HttpRequestException
+                        or OperationCanceledException
+                        or IOException
+                        or JsonException
+            )
         {
             return (null, Reach.Unavailable);
-        }
-        catch (JsonException)
-        {
-            return (null, Reach.Answered);
         }
     }
 }

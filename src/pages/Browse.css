@@ -154,6 +154,10 @@
   font-size: 0.9rem;
 }
 
+.club-only-label {
+  font-size: 0.85rem;
+}
+
 .for-sale-actions {
   display: flex;
   flex-direction: column;

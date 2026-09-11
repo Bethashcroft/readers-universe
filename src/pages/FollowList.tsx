@@ -2,11 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getFollowers, getFollowing } from "../api/follows";
 import type { FollowListResponse, FollowState } from "../api/follows";
-import { API_ORIGIN } from "../api/client";
 import FollowButton from "../components/FollowButton";
+import ReaderRow from "../components/ReaderRow";
 import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
-import "./Readers.css";
 import "./FollowList.css";
 
 type FollowListProps = {
@@ -69,45 +68,37 @@ function FollowList({ mode }: FollowListProps) {
   }
 
   return (
-    <div className="readers follow-list">
+    <div className="follow-list">
       <Link className="follow-list-back" to={`/profile/${username}`}>
         Back to @{username}
       </Link>
       <h1>{title}</h1>
 
       {readers.length === 0 ? (
-        <p className="readers-empty">
+        <p className="follow-list-empty">
           {mode === "followers"
             ? "No followers yet."
             : "Not following anyone yet."}
         </p>
       ) : (
-        <div className="readers-list">
+        <div className="reader-rows">
           {readers.map((reader) => (
-            <div key={reader.userName} className="reader-card follow-list-card">
-              <Link
-                className="follow-list-reader"
-                to={`/profile/${reader.userName}`}
-              >
-                <span className="reader-avatar">
-                  {reader.avatarUrl ? (
-                    <img src={`${API_ORIGIN}${reader.avatarUrl}`} alt="" />
-                  ) : (
-                    reader.displayName.charAt(0)
-                  )}
-                </span>
-                <span className="reader-details">
-                  <span className="reader-name">{reader.displayName}</span>
-                  <span className="reader-username">@{reader.userName}</span>
-                  {reader.bio && <span className="reader-bio">{reader.bio}</span>}
-                </span>
-              </Link>
-              <FollowButton
-                username={reader.userName}
-                state={reader.followState}
-                onChange={(state) => handleFollowChange(reader.userName, state)}
-              />
-            </div>
+            <ReaderRow
+              key={reader.userName}
+              userName={reader.userName}
+              displayName={reader.displayName}
+              avatarUrl={reader.avatarUrl}
+              bio={reader.bio}
+              action={
+                <FollowButton
+                  username={reader.userName}
+                  state={reader.followState}
+                  onChange={(state) =>
+                    handleFollowChange(reader.userName, state)
+                  }
+                />
+              }
+            />
           ))}
         </div>
       )}

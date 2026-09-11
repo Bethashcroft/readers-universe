@@ -3,7 +3,8 @@ import { request } from "./client";
 export type NotificationType =
   | "follow-requested"
   | "follow-approved"
-  | "new-follower";
+  | "new-follower"
+  | "trusted";
 
 export interface NotificationResponse {
   id: number;

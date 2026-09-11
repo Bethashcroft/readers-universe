@@ -46,6 +46,10 @@ export async function parseError(
   if (!data) return fallback;
   if (typeof data.message === "string") return data.message;
   if (Array.isArray(data) && data[0]?.description) return data[0].description;
+  if (data.errors && typeof data.errors === "object") {
+    const first = Object.values(data.errors).flat()[0];
+    if (typeof first === "string") return first;
+  }
   return fallback;
 }
 

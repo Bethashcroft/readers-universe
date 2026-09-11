@@ -1,3 +1,14 @@
+.follow-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.follow-list h1 {
+  font-size: 32px;
+  font-weight: 700;
+}
+
 .follow-list-back {
   width: fit-content;
   font-size: 13px;
@@ -9,19 +20,6 @@
   color: var(--color-primary);
 }
 
-.follow-list-card {
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.follow-list-reader {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 0;
-  color: inherit;
-}
-
-.follow-list-reader:hover .reader-name {
-  color: var(--color-primary);
+.follow-list-empty {
+  color: var(--color-text-muted);
 }

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -344,9 +345,17 @@ public class LibraryController : ControllerBase
 public class AddToLibraryRequest
 {
     public int? BookId { get; set; }
+
+    [MaxLength(300, ErrorMessage = "Title must be 300 characters or fewer.")]
     public string Title { get; set; } = string.Empty;
+
+    [MaxLength(200, ErrorMessage = "Author must be 200 characters or fewer.")]
     public string Author { get; set; } = string.Empty;
+
+    [MaxLength(2000, ErrorMessage = "Cover URL is too long.")]
     public string CoverUrl { get; set; } = string.Empty;
+
+    [MaxLength(20, ErrorMessage = "ISBN is too long.")]
     public string Isbn { get; set; } = string.Empty;
     public string Shelf { get; set; } = string.Empty;
     public string Offer { get; set; } = BookOffer.None;
@@ -377,4 +386,5 @@ public class LibraryEntryResponse
     public string OwnerUserName { get; set; } = string.Empty;
     public string SellerVintedUrl { get; set; } = string.Empty;
     public bool AlreadyOnShelves { get; set; }
+    public bool CanRequest { get; set; }
 }

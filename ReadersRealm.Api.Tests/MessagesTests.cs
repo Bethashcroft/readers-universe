@@ -41,6 +41,7 @@ public class MessagesTests : IDisposable
         var borrowerClient = _factory.CreateClient();
         var borrower = await borrowerClient.RegisterAsync("borrower");
         borrowerClient.Authenticate(borrower.Token);
+        await ownerClient.TrustAsync("borrower");
         var request = await borrowerClient.RequestBookAsync(book.Id, "May I borrow this?");
 
         return (ownerClient, borrowerClient, request);

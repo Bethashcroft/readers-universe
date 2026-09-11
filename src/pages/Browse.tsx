@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { browseBooks } from "../api/books";
 import type { LibraryEntryResponse } from "../api/books";
@@ -31,7 +31,10 @@ function Browse() {
     "all" | "available-to-borrow" | "for-sale"
   >("all");
 
+  const loadRequest = useRef(0);
+
   const loadBooks = useCallback(async () => {
+    const ticket = ++loadRequest.current;
     setLoading(true);
     setLoadError(false);
     try {
@@ -40,14 +43,18 @@ function Browse() {
         search: debouncedSearch,
         offer: filter,
       });
+      if (ticket !== loadRequest.current) return;
       setBooks(result.items);
       setTotalPages(result.totalPages);
       setTotal(result.total);
     } catch (err) {
+      if (ticket !== loadRequest.current) return;
       console.error("Failed to load browse books:", err);
       setLoadError(true);
     } finally {
-      setLoading(false);
+      if (ticket === loadRequest.current) {
+        setLoading(false);
+      }
     }
   }, [page, debouncedSearch, filter]);
 
@@ -203,6 +210,10 @@ function Browse() {
                 <p className="own-book-label">Your book</p>
               ) : book.alreadyOnShelves ? (
                 <p className="own-book-label">Already on your shelves</p>
+              ) : !book.canRequest ? (
+                <p className="own-book-label club-only-label">
+                  Only {book.ownerName}'s Trusted Book Club can borrow this
+                </p>
               ) : sentRequests.has(book.id) ? (
                 <p className="request-sent">Request sent!</p>
               ) : requestingBookId === book.id ? (

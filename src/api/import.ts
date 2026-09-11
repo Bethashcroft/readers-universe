@@ -1,4 +1,4 @@
-import { BASE_URL, getAuthHeaders } from "./client";
+import { getAuthHeaders, request } from "./client";
 
 export interface ImportSummary {
   service: string;
@@ -13,26 +13,20 @@ export interface ImportSummary {
   sample: string[];
 }
 
-export async function importLibrary(
+export function importLibrary(
   file: File,
   preview: boolean,
 ): Promise<ImportSummary> {
   const body = new FormData();
   body.append("file", file);
 
-  const response = await fetch(
-    `${BASE_URL}/library/import?preview=${preview}`,
+  return request(
+    `/library/import?preview=${preview}`,
+    "We could not read that file.",
     {
       method: "POST",
       headers: getAuthHeaders(),
       body,
     },
   );
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => null);
-    throw new Error(data?.message ?? "We could not read that file.");
-  }
-
-  return response.json();
 }

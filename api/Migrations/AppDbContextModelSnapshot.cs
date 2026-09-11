@@ -524,6 +524,35 @@ namespace ReadersRealm.Api.Migrations
                     b.ToTable("Reviews");
                 });
 
+            modelBuilder.Entity("ReadersRealm.Api.Models.Trust", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TrustedId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TrusterId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TrustedId");
+
+                    b.HasIndex("TrusterId", "TrustedId")
+                        .IsUnique();
+
+                    b.ToTable("Trusts");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -695,6 +724,25 @@ namespace ReadersRealm.Api.Migrations
                     b.Navigation("Book");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ReadersRealm.Api.Models.Trust", b =>
+                {
+                    b.HasOne("ReadersRealm.Api.Models.AppUser", "Trusted")
+                        .WithMany()
+                        .HasForeignKey("TrustedId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("ReadersRealm.Api.Models.AppUser", "Truster")
+                        .WithMany()
+                        .HasForeignKey("TrusterId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Trusted");
+
+                    b.Navigation("Truster");
                 });
 #pragma warning restore 612, 618
         }

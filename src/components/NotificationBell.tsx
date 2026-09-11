@@ -8,13 +8,15 @@ import {
 } from "../api/notifications";
 import type { NotificationResponse } from "../api/notifications";
 import { getChatConnection } from "../realtime/connection";
-import { API_ORIGIN } from "../api/client";
+import { useClickOutside } from "../hooks/useClickOutside";
+import Avatar from "./Avatar";
 import "./NotificationBell.css";
 
 const messages: Record<NotificationResponse["type"], string> = {
   "new-follower": "started following you",
   "follow-requested": "asked to follow you",
   "follow-approved": "accepted your follow request",
+  trusted: "added you to their Trusted Book Club",
 };
 
 function timeAgo(date: string) {
@@ -37,6 +39,9 @@ function NotificationBell() {
   const [count, setCount] = useState(0);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLLIElement>(null);
+  const close = useCallback(() => setOpen(false), []);
+
+  useClickOutside(containerRef, open, close);
 
   const refreshCount = useCallback(async () => {
     try {
@@ -64,32 +69,6 @@ function NotificationBell() {
       conn.off("NotificationReceived", handleNotification);
     };
   }, [refreshCount]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const handlePointerDown = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
 
   const handleToggle = async () => {
     const next = !open;
@@ -176,16 +155,11 @@ function NotificationBell() {
                 }`}
                 onClick={() => goTo(notification)}
               >
-                <span className="notification-avatar">
-                  {notification.actorAvatarUrl ? (
-                    <img
-                      src={`${API_ORIGIN}${notification.actorAvatarUrl}`}
-                      alt=""
-                    />
-                  ) : (
-                    notification.actorDisplayName.charAt(0)
-                  )}
-                </span>
+                <Avatar
+                  url={notification.actorAvatarUrl}
+                  name={notification.actorDisplayName}
+                  size={36}
+                />
                 <span className="notification-text">
                   <span>
                     <strong>{notification.actorDisplayName}</strong>{" "}

@@ -1,0 +1,32 @@
+.club {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.club h1 {
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.club-subtitle {
+  color: var(--color-text-muted);
+  margin-top: -8px;
+}
+
+.club-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--color-text-muted);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.club-empty .btn {
+  width: fit-content;
+}

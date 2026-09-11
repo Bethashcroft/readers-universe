@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Modal from "./Modal";
 import "./AvatarCropModal.css";
 
 const VIEWPORT = 280;
@@ -122,62 +123,64 @@ function AvatarCropModal({
   };
 
   return (
-    <div className="crop-backdrop">
-      <div className="crop-modal">
-        <h2>Position your photo</h2>
-        <p className="crop-hint">Drag to choose what shows inside the frame</p>
-        <div
-          className="crop-viewport"
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-        >
-          <img
-            ref={imgRef}
-            src={imageUrl}
-            alt=""
-            draggable={false}
-            onLoad={(e) =>
-              setSize({
-                width: e.currentTarget.naturalWidth,
-                height: e.currentTarget.naturalHeight,
-              })
-            }
-            style={{
-              transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`,
-              width: size ? size.width * scale : undefined,
-            }}
-          />
-        </div>
-        <label className="crop-zoom">
-          Zoom
-          <input
-            type="range"
-            min={1}
-            max={3}
-            step={0.01}
-            value={zoom}
-            onChange={(e) => handleZoom(Number(e.target.value))}
-          />
-        </label>
-        <div className="crop-actions">
-          <button
-            className="btn btn-primary"
-            onClick={handleSave}
-            disabled={!size || saving}
-          >
-            {saving ? "Uploading..." : "Save Photo"}
-          </button>
-          <button
-            className="btn btn-secondary"
-            onClick={onCancel}
-            disabled={saving}
-          >
-            Cancel
-          </button>
-        </div>
+    <Modal
+      title="Position your photo"
+      onClose={onCancel}
+      locked={saving}
+      className="crop-modal"
+    >
+      <p className="crop-hint">Drag to choose what shows inside the frame</p>
+      <div
+        className="crop-viewport"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+      >
+        <img
+          ref={imgRef}
+          src={imageUrl}
+          alt=""
+          draggable={false}
+          onLoad={(e) =>
+            setSize({
+              width: e.currentTarget.naturalWidth,
+              height: e.currentTarget.naturalHeight,
+            })
+          }
+          style={{
+            transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`,
+            width: size ? size.width * scale : undefined,
+          }}
+        />
       </div>
-    </div>
+      <label className="crop-zoom">
+        Zoom
+        <input
+          type="range"
+          min={1}
+          max={3}
+          step={0.01}
+          value={zoom}
+          onChange={(e) => handleZoom(Number(e.target.value))}
+        />
+      </label>
+      <div className="crop-actions">
+        <button
+          className="btn btn-primary"
+          onClick={handleSave}
+          disabled={!size || saving}
+        >
+          {saving ? "Uploading..." : "Save Photo"}
+        </button>
+        <button
+          className="btn btn-secondary"
+          onClick={onCancel}
+          disabled={saving}
+        >
+          Cancel
+        </button>
+      </div>
+    </Modal>
   );
 }
 
