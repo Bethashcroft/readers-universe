@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useBooks } from "../context/useBooks";
 import { lookupBook } from "../api/books";
 import type { BookLookupResult } from "../api/books";
-import { shelfLabels, offerLabels } from "../types/book";
+import { shelfLabels, offerLabels, selectableOffers } from "../types/book";
 import type { ShelfType, OfferType } from "../types/book";
 import { placeholderCover } from "../types/covers";
 import { usePageTitle } from "../hooks/usePageTitle";
 import ImportLibrary from "../components/ImportLibrary";
+import CoverBackfill from "../components/CoverBackfill";
 import "../styles/forms.css";
 import "./AddBook.css";
 
@@ -86,6 +87,7 @@ function AddBook() {
     <div className="auth-page add-book-page">
       <div className="add-book-inner">
         <ImportLibrary />
+        <CoverBackfill />
         <form className="auth-form" onSubmit={handleSubmit}>
           <h1>Add a Book</h1>
           {error && <p className="form-error">{error}</p>}
@@ -160,9 +162,9 @@ function AddBook() {
             value={offer}
             onChange={(e) => setOffer(e.target.value as OfferType)}
           >
-            {Object.entries(offerLabels).map(([value, label]) => (
+            {selectableOffers.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {offerLabels[value]}
               </option>
             ))}
           </select>

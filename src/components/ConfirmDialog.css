@@ -11,15 +11,6 @@
   color: var(--color-text);
 }
 
-.confirm-error {
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  color: #fca5a5;
-  background-color: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
 .confirm-actions {
   display: flex;
   justify-content: flex-end;

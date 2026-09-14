@@ -96,7 +96,7 @@ public class AuthTests : IDisposable
         Assert.Equal(HttpStatusCode.BadRequest, prefixTrick.StatusCode);
     }
 
-    private record MessageResult(string Message);
+    private record ErrorResult(string Message);
 
     private Task<HttpResponseMessage> ChangeUsernameAsync(string newUserName) =>
         _client.PutAsJsonAsync(
@@ -133,7 +133,7 @@ public class AuthTests : IDisposable
 
         var second = await ChangeUsernameAsync("alice.books");
         Assert.Equal(HttpStatusCode.BadRequest, second.StatusCode);
-        var body = await second.Content.ReadFromJsonAsync<MessageResult>();
+        var body = await second.Content.ReadFromJsonAsync<ErrorResult>();
         Assert.Contains("once every 30 days", body!.Message);
     }
 

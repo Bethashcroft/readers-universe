@@ -25,13 +25,6 @@ public class FollowTests : IDisposable
 
     public void Dispose() => _factory.Dispose();
 
-    private async Task<HttpClient> SignInAsync(string name)
-    {
-        var client = _factory.CreateClient();
-        var user = await client.RegisterAsync(name);
-        client.Authenticate(user.Token);
-        return client;
-    }
 
     private static async Task<ProfileResult> ProfileAsync(HttpClient client, string username) =>
         (await client.GetFromJsonAsync<ProfileResult>($"/api/users/{username}"))!;
@@ -52,8 +45,8 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task FollowingAPublicAccountTakesEffectImmediately()
     {
-        var rebel = await SignInAsync("rebel");
-        var beth = await SignInAsync("beth");
+        var rebel = await _factory.SignInAsync("rebel");
+        var beth = await _factory.SignInAsync("beth");
 
         var follow = await beth.PostAsync("/api/users/rebel/follow", null);
         follow.EnsureSuccessStatusCode();
@@ -66,10 +59,10 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task FollowingAPrivateAccountWaitsForApproval()
     {
-        var rebel = await SignInAsync("rebel");
+        var rebel = await _factory.SignInAsync("rebel");
         await GoPrivateAsync(rebel, "rebel");
 
-        var beth = await SignInAsync("beth");
+        var beth = await _factory.SignInAsync("beth");
         await beth.PostAsync("/api/users/rebel/follow", null);
 
         Assert.Equal("requested", (await ProfileAsync(beth, "rebel")).FollowState);
@@ -89,10 +82,10 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task DecliningRemovesTheRequestEntirely()
     {
-        var rebel = await SignInAsync("rebel");
+        var rebel = await _factory.SignInAsync("rebel");
         await GoPrivateAsync(rebel, "rebel");
 
-        var beth = await SignInAsync("beth");
+        var beth = await _factory.SignInAsync("beth");
         await beth.PostAsync("/api/users/rebel/follow", null);
         (await rebel.PostAsync("/api/users/beth/decline-follow", null)).EnsureSuccessStatusCode();
 
@@ -105,8 +98,8 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task UnfollowingDropsTheFollowerCount()
     {
-        var rebel = await SignInAsync("rebel");
-        var beth = await SignInAsync("beth");
+        var rebel = await _factory.SignInAsync("rebel");
+        var beth = await _factory.SignInAsync("beth");
 
         await beth.PostAsync("/api/users/rebel/follow", null);
         await beth.DeleteAsync("/api/users/rebel/follow");
@@ -118,8 +111,8 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task FollowingTwiceDoesNotDuplicate()
     {
-        await SignInAsync("rebel");
-        var beth = await SignInAsync("beth");
+        await _factory.SignInAsync("rebel");
+        var beth = await _factory.SignInAsync("beth");
 
         await beth.PostAsync("/api/users/rebel/follow", null);
         await beth.PostAsync("/api/users/rebel/follow", null);
@@ -130,10 +123,10 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task APrivateLibraryIsHiddenFromStrangers()
     {
-        var rebel = await SignInAsync("rebel");
+        var rebel = await _factory.SignInAsync("rebel");
         await GoPrivateAsync(rebel, "rebel");
 
-        var beth = await SignInAsync("beth");
+        var beth = await _factory.SignInAsync("beth");
 
         Assert.False((await ProfileAsync(beth, "rebel")).CanView);
         Assert.Equal(
@@ -145,10 +138,10 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task APendingRequestDoesNotUnlockAPrivateLibrary()
     {
-        var rebel = await SignInAsync("rebel");
+        var rebel = await _factory.SignInAsync("rebel");
         await GoPrivateAsync(rebel, "rebel");
 
-        var beth = await SignInAsync("beth");
+        var beth = await _factory.SignInAsync("beth");
         await beth.PostAsync("/api/users/rebel/follow", null);
 
         Assert.False((await ProfileAsync(beth, "rebel")).CanView);
@@ -161,10 +154,10 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task AnApprovedFollowerCanSeeAPrivateLibrary()
     {
-        var rebel = await SignInAsync("rebel");
+        var rebel = await _factory.SignInAsync("rebel");
         await GoPrivateAsync(rebel, "rebel");
 
-        var beth = await SignInAsync("beth");
+        var beth = await _factory.SignInAsync("beth");
         await beth.PostAsync("/api/users/rebel/follow", null);
         await rebel.PostAsync("/api/users/beth/approve-follow", null);
 
@@ -175,7 +168,7 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task YouCanAlwaysSeeYourOwnPrivateLibrary()
     {
-        var rebel = await SignInAsync("rebel");
+        var rebel = await _factory.SignInAsync("rebel");
         await GoPrivateAsync(rebel, "rebel");
 
         Assert.True((await ProfileAsync(rebel, "rebel")).CanView);
@@ -185,8 +178,8 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task TheFollowerListShowsWhoFollowsYou()
     {
-        await SignInAsync("rebel");
-        var beth = await SignInAsync("beth");
+        await _factory.SignInAsync("rebel");
+        var beth = await _factory.SignInAsync("beth");
 
         await beth.PostAsync("/api/users/rebel/follow", null);
 
@@ -201,8 +194,8 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task TheFollowingListShowsWhoYouFollow()
     {
-        await SignInAsync("rebel");
-        var beth = await SignInAsync("beth");
+        await _factory.SignInAsync("rebel");
+        var beth = await _factory.SignInAsync("beth");
 
         await beth.PostAsync("/api/users/rebel/follow", null);
 
@@ -217,10 +210,10 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task PendingRequestsAreNotInTheFollowerList()
     {
-        var rebel = await SignInAsync("rebel");
+        var rebel = await _factory.SignInAsync("rebel");
         await GoPrivateAsync(rebel, "rebel");
 
-        var beth = await SignInAsync("beth");
+        var beth = await _factory.SignInAsync("beth");
         await beth.PostAsync("/api/users/rebel/follow", null);
 
         var followers = await rebel.GetFromJsonAsync<FollowListResult[]>(
@@ -233,10 +226,10 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task APrivateReadersFollowerListIsHidden()
     {
-        var rebel = await SignInAsync("rebel");
+        var rebel = await _factory.SignInAsync("rebel");
         await GoPrivateAsync(rebel, "rebel");
 
-        var beth = await SignInAsync("beth");
+        var beth = await _factory.SignInAsync("beth");
 
         Assert.Equal(
             HttpStatusCode.Forbidden,
@@ -247,11 +240,11 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task APrivateReadersBooksAreHiddenFromBrowse()
     {
-        var rebel = await SignInAsync("rebel");
+        var rebel = await _factory.SignInAsync("rebel");
         await rebel.AddBookAsync("Piranesi", offer: "available-to-borrow");
         await GoPrivateAsync(rebel, "rebel");
 
-        var beth = await SignInAsync("beth");
+        var beth = await _factory.SignInAsync("beth");
 
         Assert.Empty(await beth.GetBrowseAsync());
     }
@@ -259,11 +252,11 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task AnApprovedFollowerStillSeesPrivateBooksInBrowse()
     {
-        var rebel = await SignInAsync("rebel");
+        var rebel = await _factory.SignInAsync("rebel");
         await rebel.AddBookAsync("Piranesi", offer: "available-to-borrow");
         await GoPrivateAsync(rebel, "rebel");
 
-        var beth = await SignInAsync("beth");
+        var beth = await _factory.SignInAsync("beth");
         await beth.PostAsync("/api/users/rebel/follow", null);
         await rebel.PostAsync("/api/users/beth/approve-follow", null);
 
@@ -273,11 +266,11 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task APrivateReaderIsNotListedAsABookOwner()
     {
-        var rebel = await SignInAsync("rebel");
+        var rebel = await _factory.SignInAsync("rebel");
         var entry = await rebel.AddBookAsync("Piranesi", offer: "available-to-borrow");
         await GoPrivateAsync(rebel, "rebel");
 
-        var beth = await SignInAsync("beth");
+        var beth = await _factory.SignInAsync("beth");
         var detail = await beth.GetFromJsonAsync<BookDetailResult>(
             $"/api/books/{entry.BookId}"
         );
@@ -288,7 +281,7 @@ public class FollowTests : IDisposable
     [Fact]
     public async Task YouCannotFollowYourself()
     {
-        var beth = await SignInAsync("beth");
+        var beth = await _factory.SignInAsync("beth");
 
         var response = await beth.PostAsync("/api/users/beth/follow", null);
 

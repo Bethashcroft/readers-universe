@@ -35,11 +35,10 @@ public class BorrowTests : IDisposable
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
-        var body = await response.Content.ReadFromJsonAsync<MessageResult>();
+        var body = await response.Content.ReadFromJsonAsync<ErrorResult>();
         Assert.Equal("You cannot request your own book", body!.Message);
     }
 
-    private record MessageResult(string Message);
 
     [Fact]
     public async Task RequestingABookYouHaveAlreadyRated_ReturnsBadRequest()
@@ -63,7 +62,7 @@ public class BorrowTests : IDisposable
         );
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<MessageResult>();
+        var body = await response.Content.ReadFromJsonAsync<ErrorResult>();
         Assert.Equal(
             "You've already rated this book, so you can't request it.",
             body!.Message
@@ -100,7 +99,7 @@ public class BorrowTests : IDisposable
         );
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<MessageResult>();
+        var body = await response.Content.ReadFromJsonAsync<ErrorResult>();
         Assert.Equal("This book is already on your shelves.", body!.Message);
     }
 
@@ -166,7 +165,7 @@ public class BorrowTests : IDisposable
         );
 
         Assert.Equal(HttpStatusCode.BadRequest, second.StatusCode);
-        var body = await second.Content.ReadFromJsonAsync<MessageResult>();
+        var body = await second.Content.ReadFromJsonAsync<ErrorResult>();
         Assert.Equal("You already have a pending request for this book", body!.Message);
     }
 
@@ -190,7 +189,7 @@ public class BorrowTests : IDisposable
         );
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<MessageResult>();
+        var body = await response.Content.ReadFromJsonAsync<ErrorResult>();
         Assert.Equal("Status must be 'accepted' or 'declined'", body!.Message);
     }
 

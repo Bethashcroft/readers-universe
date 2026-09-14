@@ -40,6 +40,26 @@ public record BookDetailResult(
 
 public record BorrowResult(int Id, int BookId, string Status, string FromUserName);
 
+public record BorrowerResult(int RequestId, string DisplayName, string UserName);
+
+public record OfferedBookResult(
+    int LibraryEntryId,
+    string Title,
+    string Offer,
+    BorrowerResult? Borrower
+);
+
+public record BorrowingResult(
+    OfferedBookResult[] Offering,
+    BorrowResult[] Borrowed,
+    BorrowResult[] Incoming,
+    BorrowResult[] Outgoing,
+    BorrowResult[] History,
+    int Limit
+);
+
+public record ErrorResult(string Message);
+
 public record ReviewResult(
     int Id,
     int? Rating,
@@ -67,6 +87,36 @@ public record Paged<T>(T[] Items, int Page, int PageSize, int Total, int TotalPa
 
 public static class ApiTestExtensions
 {
+    public static async Task<HttpClient> SignInAsync(this TestWebAppFactory factory, string name)
+    {
+        var client = factory.CreateClient();
+        var user = await client.RegisterAsync(name);
+        client.Authenticate(user.Token);
+        return client;
+    }
+
+    public static async Task<string> ErrorMessageAsync(this HttpResponseMessage response) =>
+        (await response.Content.ReadFromJsonAsync<ErrorResult>())!.Message;
+
+    public static async Task<BorrowingResult> GetBorrowingAsync(this HttpClient client) =>
+        (await client.GetFromJsonAsync<BorrowingResult>("/api/borrowing"))!;
+
+    public static async Task OfferBookAsync(this HttpClient client, int libraryEntryId)
+    {
+        var response = await client.PostAsync($"/api/library/{libraryEntryId}/offer", null);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public static async Task<BorrowResult> AcceptRequestAsync(this HttpClient client, int requestId)
+    {
+        var response = await client.PutAsJsonAsync(
+            $"/api/borrowrequests/{requestId}",
+            new { status = "accepted" }
+        );
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<BorrowResult>())!;
+    }
+
     public static async Task<Paged<BookResult>> GetLibraryPageAsync(
         this HttpClient client,
         string query = ""

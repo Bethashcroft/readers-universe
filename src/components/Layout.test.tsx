@@ -8,16 +8,14 @@ const navbar = () =>
 
 const {
   mockUseAuth,
-  mockGetMyRequests,
+  mockGetPendingCount,
   mockGetUnreadCount,
-  mockGetFollowRequests,
   mockGetNotifications,
   mockGetNotificationCount,
 } = vi.hoisted(() => ({
   mockUseAuth: vi.fn(),
-  mockGetMyRequests: vi.fn(),
+  mockGetPendingCount: vi.fn(),
   mockGetUnreadCount: vi.fn(),
-  mockGetFollowRequests: vi.fn(),
   mockGetNotifications: vi.fn(),
   mockGetNotificationCount: vi.fn(),
 }));
@@ -33,11 +31,7 @@ vi.mock("../context/useAuth", () => ({
 }));
 
 vi.mock("../api/borrow", () => ({
-  getMyRequests: mockGetMyRequests,
-}));
-
-vi.mock("../api/follows", () => ({
-  getFollowRequests: mockGetFollowRequests,
+  getPendingRequestCount: mockGetPendingCount,
 }));
 
 vi.mock("../api/messages", () => ({
@@ -72,12 +66,10 @@ const loggedInUser = {
 describe("Layout", () => {
   beforeEach(() => {
     mockUseAuth.mockReset();
-    mockGetMyRequests.mockReset();
-    mockGetMyRequests.mockResolvedValue([]);
+    mockGetPendingCount.mockReset();
+    mockGetPendingCount.mockResolvedValue({ count: 0 });
     mockGetUnreadCount.mockReset();
     mockGetUnreadCount.mockResolvedValue({ count: 0 });
-    mockGetFollowRequests.mockReset();
-    mockGetFollowRequests.mockResolvedValue([]);
     mockGetNotifications.mockReset();
     mockGetNotifications.mockResolvedValue([]);
     mockGetNotificationCount.mockReset();
@@ -119,7 +111,7 @@ describe("Layout", () => {
     expect(navbar().getByRole("link", { name: "My Shelves" })).toBeInTheDocument();
     expect(navbar().getByRole("link", { name: "Add Books" })).toBeInTheDocument();
     expect(navbar().getByRole("link", { name: "Browse" })).toBeInTheDocument();
-    expect(navbar().getByRole("link", { name: "Requests" })).toBeInTheDocument();
+    expect(navbar().getByRole("link", { name: "Borrowing" })).toBeInTheDocument();
   });
 
   it("puts Profile and Log Out inside the Account menu", async () => {
@@ -148,12 +140,7 @@ describe("Layout", () => {
 
   it("shows a badge with the count of incoming pending requests", async () => {
     mockUseAuth.mockReturnValue({ user: loggedInUser, logout: vi.fn() });
-    mockGetMyRequests.mockResolvedValue([
-      { id: 1, toUserId: "me", status: "pending" },
-      { id: 2, toUserId: "me", status: "pending" },
-      { id: 3, toUserId: "me", status: "accepted" },
-      { id: 4, fromUserId: "me", toUserId: "other", status: "pending" },
-    ]);
+    mockGetPendingCount.mockResolvedValue({ count: 2 });
     renderLayout();
 
     expect(await screen.findByText("2")).toBeInTheDocument();

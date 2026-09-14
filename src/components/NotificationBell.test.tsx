@@ -19,6 +19,10 @@ vi.mock("../api/notifications", () => ({
   clearNotifications: mockClear,
 }));
 
+vi.mock("../context/useAuth", () => ({
+  useAuth: () => ({ user: { userName: "me" } }),
+}));
+
 vi.mock("../realtime/connection", () => {
   const conn = { on: vi.fn(), off: vi.fn() };
   return { getChatConnection: () => conn };

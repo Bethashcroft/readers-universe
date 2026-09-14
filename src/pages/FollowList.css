@@ -23,3 +23,9 @@
 .follow-list-empty {
   color: var(--color-text-muted);
 }
+
+.follow-list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

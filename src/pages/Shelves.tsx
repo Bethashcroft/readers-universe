@@ -2,13 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { getMyBooks, getShelfCounts } from "../api/books";
 import type { LibraryEntryResponse } from "../api/books";
 import BookCard from "../components/BookCard";
-import CoverBackfill from "../components/CoverBackfill";
 import Pager from "../components/Pager";
 import SelectMenu from "../components/SelectMenu";
 import ErrorState from "../components/ErrorState";
 import { shelfLabels } from "../types/book";
 import type { ShelfType } from "../types/book";
 import { usePageTitle } from "../hooks/usePageTitle";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import "./Shelves.css";
 
 function Shelves() {
@@ -16,9 +16,11 @@ function Shelves() {
 
   const [activeShelf, setActiveShelf] = useState<ShelfType | "all">("all");
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [sort, setSort] = useState("added");
   const [page, setPage] = useState(1);
+  const [pageFor, setPageFor] = useState("");
+  const currentPage = pageFor === debouncedSearch ? page : 1;
   const [books, setBooks] = useState<LibraryEntryResponse[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
@@ -35,32 +37,34 @@ function Shelves() {
         shelf: activeShelf === "all" ? undefined : activeShelf,
         search: debouncedSearch,
         sort,
-        page,
+        page: currentPage,
       });
       setBooks(result.items);
       setTotalPages(result.totalPages);
       setTotal(result.total);
-      setCounts(await getShelfCounts());
     } catch (err) {
       console.error("Failed to fetch books:", err);
       setError(true);
     } finally {
       setLoading(false);
     }
-  }, [activeShelf, debouncedSearch, sort, page]);
+  }, [activeShelf, debouncedSearch, sort, currentPage]);
 
   useEffect(() => {
     load();
   }, [load]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-      setPage(1);
-    }, 300);
+    const loadCounts = async () => {
+      try {
+        setCounts(await getShelfCounts());
+      } catch (err) {
+        console.error("Failed to fetch shelf counts:", err);
+      }
+    };
 
-    return () => clearTimeout(timer);
-  }, [search]);
+    loadCounts();
+  }, []);
 
   const chooseShelf = (shelf: ShelfType | "all") => {
     setActiveShelf(shelf);
@@ -74,6 +78,7 @@ function Shelves() {
 
   const changePage = (next: number) => {
     setPage(next);
+    setPageFor(debouncedSearch);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -118,7 +123,7 @@ function Shelves() {
         <div className="shelf-controls">
           <input
             type="text"
-            className="shelf-search"
+            className="search-input shelf-search"
             placeholder="Search your shelves by title or author"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -136,8 +141,6 @@ function Shelves() {
           />
         </div>
       )}
-
-      {allCount > 0 && <CoverBackfill onFinished={load} />}
 
       {loading ? (
         <p>Loading your shelves...</p>
@@ -158,7 +161,7 @@ function Shelves() {
           )}
 
           <Pager
-            page={page}
+            page={currentPage}
             totalPages={totalPages}
             total={total}
             noun="book"

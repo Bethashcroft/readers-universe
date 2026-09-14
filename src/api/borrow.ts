@@ -1,6 +1,6 @@
 import { request, requestVoid } from "./client";
 
-export type BorrowStatus = "pending" | "accepted" | "declined";
+export type BorrowStatus = "pending" | "accepted" | "declined" | "returned";
 
 export interface BorrowRequestResponse {
   id: number;
@@ -9,14 +9,44 @@ export interface BorrowRequestResponse {
   fromUserId: string;
   fromUserName: string;
   toUserId: string;
+  toUserName: string;
   status: BorrowStatus;
   message: string;
   date: string;
 }
 
+export interface BorrowerResponse {
+  requestId: number;
+  displayName: string;
+  userName: string;
+}
+
+export interface OfferedBookResponse {
+  libraryEntryId: number;
+  bookId: number;
+  title: string;
+  author: string;
+  coverUrl: string;
+  offer: "available-to-borrow" | "lent-out";
+  borrower: BorrowerResponse | null;
+}
+
+export interface BorrowingResponse {
+  offering: OfferedBookResponse[];
+  borrowed: BorrowRequestResponse[];
+  incoming: BorrowRequestResponse[];
+  outgoing: BorrowRequestResponse[];
+  history: BorrowRequestResponse[];
+  limit: number;
+}
+
 export interface CreateBorrowRequest {
   libraryEntryId: number;
   message: string;
+}
+
+export function getBorrowing(): Promise<BorrowingResponse> {
+  return request("/borrowing", "Failed to load your borrowing");
 }
 
 export function createBorrowRequest(
@@ -28,8 +58,11 @@ export function createBorrowRequest(
   });
 }
 
-export function getMyRequests(): Promise<BorrowRequestResponse[]> {
-  return request("/borrowrequests", "Failed to fetch borrow requests");
+export function getPendingRequestCount(): Promise<{ count: number }> {
+  return request(
+    "/borrowrequests/pending-count",
+    "Failed to load pending request count",
+  );
 }
 
 export function updateBorrowStatus(
@@ -39,6 +72,12 @@ export function updateBorrowStatus(
   return request(`/borrowrequests/${id}`, "Failed to update borrow request", {
     method: "PUT",
     body: JSON.stringify({ status }),
+  });
+}
+
+export function markReturned(id: number): Promise<BorrowRequestResponse> {
+  return request(`/borrowrequests/${id}/return`, "Failed to mark as returned", {
+    method: "POST",
   });
 }
 

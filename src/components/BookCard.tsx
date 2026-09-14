@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import type { LibraryEntryResponse } from "../api/books";
-import { offerLabels } from "../types/book";
-import type { OfferType } from "../types/book";
+import { offerLabel, offerBadgeClass } from "../types/book";
 import BookCover from "./BookCover";
 import "./BookCard.css";
 
@@ -27,8 +26,8 @@ function BookCard({ book }: BookCardProps) {
           </p>
         )}
         {book.offer !== "none" && (
-          <span className={`book-offer-badge ${book.offer}`}>
-            {offerLabels[book.offer as OfferType] ?? book.offer}
+          <span className={`book-offer-badge ${offerBadgeClass(book.offer)}`}>
+            {offerLabel(book.offer)}
           </span>
         )}
       </div>

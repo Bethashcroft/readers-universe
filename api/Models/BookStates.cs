@@ -19,6 +19,8 @@ public static class BookOffer
     public const string ForSale = "for-sale";
 
     public static readonly string[] All = [None, AvailableToBorrow, LentOut, ForSale];
+    public static readonly string[] Selectable = [None, AvailableToBorrow, ForSale];
+    public static readonly string[] Lendable = [AvailableToBorrow, LentOut];
 }
 
 public static class BorrowStatus
@@ -26,6 +28,7 @@ public static class BorrowStatus
     public const string Pending = "pending";
     public const string Accepted = "accepted";
     public const string Declined = "declined";
+    public const string Returned = "returned";
 }
 
 public static class LibrarySort

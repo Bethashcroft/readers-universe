@@ -45,9 +45,9 @@ function Dashboard() {
       stat: null,
     },
     {
-      to: "/requests",
-      title: "Requests",
-      text: "See who wants your books and track your own requests.",
+      to: "/borrowing",
+      title: "Borrowing",
+      text: "Offer books to your Trusted Book Club and keep track of loans.",
       stat: summary && `${summary.pendingRequests} pending`,
     },
   ];

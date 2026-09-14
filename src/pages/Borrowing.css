@@ -1,0 +1,158 @@
+.borrowing {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.borrowing h1 {
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.borrowing-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.borrowing-section h2 {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.borrowing-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.borrowing-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.borrowing-hint {
+  margin-top: -6px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.borrowing-section .eyebrow {
+  margin-top: 8px;
+}
+
+.borrowing-empty {
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+.borrowing-history-toggle {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  width: fit-content;
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.borrowing-history-toggle:hover h2 {
+  color: var(--color-primary);
+}
+
+.offer-slots {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.offer-slot {
+  display: flex;
+  gap: 14px;
+  min-height: 150px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  backdrop-filter: blur(8px);
+}
+
+.offer-slot-empty {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-style: dashed;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.offer-slot-empty:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background-color: rgba(167, 139, 250, 0.08);
+}
+
+.offer-slot-plus {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.offer-slot-cover {
+  flex-shrink: 0;
+}
+
+.offer-slot-cover img {
+  width: 72px;
+  height: 108px;
+  border-radius: 6px;
+  object-fit: cover;
+  background-color: var(--color-bg);
+}
+
+.offer-slot-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.offer-slot-title {
+  font-weight: 600;
+  color: var(--color-text);
+  transition: color 0.15s ease;
+}
+
+.offer-slot-title:hover {
+  color: var(--color-primary);
+}
+
+.offer-slot-author {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.offer-slot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .offer-slots {
+    grid-template-columns: 1fr;
+  }
+}

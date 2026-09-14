@@ -2,10 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { refreshCovers } from "../api/books";
 import "./CoverBackfill.css";
 
-interface CoverBackfillProps {
-  onFinished: () => void;
-}
-
 type Outcome = {
   fixed: number;
   alreadyFine: number;
@@ -19,7 +15,7 @@ type Outcome = {
 const maxBatches = 500;
 const batchPauseMs = 400;
 
-function CoverBackfill({ onFinished }: CoverBackfillProps) {
+function CoverBackfill() {
   const [running, setRunning] = useState(false);
   const [processed, setProcessed] = useState(0);
   const [total, setTotal] = useState(0);
@@ -28,11 +24,6 @@ function CoverBackfill({ onFinished }: CoverBackfillProps) {
 
   const active = useRef(true);
   const aborter = useRef<AbortController | null>(null);
-  const finishedRef = useRef(onFinished);
-
-  useEffect(() => {
-    finishedRef.current = onFinished;
-  }, [onFinished]);
 
   useEffect(() => {
     active.current = true;
@@ -56,7 +47,6 @@ function CoverBackfill({ onFinished }: CoverBackfillProps) {
     let afterId = 0;
     let seen = 0;
     let target = 0;
-    let settled = 0;
     const tally: Outcome = {
       fixed: 0,
       alreadyFine: 0,
@@ -88,7 +78,6 @@ function CoverBackfill({ onFinished }: CoverBackfillProps) {
         tally.unverifiable += result.unverifiable;
         tally.unreachable += result.unreachable;
         tally.throttled = tally.throttled || result.throttled;
-        settled += result.fixed + result.notFound;
 
         seen += result.checked;
         afterId = result.nextAfterId;
@@ -112,7 +101,6 @@ function CoverBackfill({ onFinished }: CoverBackfillProps) {
     } finally {
       if (active.current) {
         setRunning(false);
-        if (settled > 0) finishedRef.current();
       }
     }
   };

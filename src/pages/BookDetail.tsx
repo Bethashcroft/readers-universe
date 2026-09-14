@@ -15,10 +15,11 @@ import {
   deleteReview,
 } from "../api/reviews";
 import type { ReviewResponse } from "../api/reviews";
-import { shelfLabels, offerLabels } from "../types/book";
+import { shelfLabels, offerLabels, selectableOffers } from "../types/book";
 import BookCover from "../components/BookCover";
 import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
+import { formatDate } from "../utils/dates";
 import "./BookDetail.css";
 
 function BookDetail() {
@@ -36,6 +37,7 @@ function BookDetail() {
   const [error, setError] = useState("");
   const [shelf, setShelf] = useState("");
   const [offer, setOffer] = useState("");
+  const [offerError, setOfferError] = useState("");
   const [reviewSpoiler, setReviewSpoiler] = useState(false);
   const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
   const [addShelf, setAddShelf] = useState<ShelfType>("tbr");
@@ -114,10 +116,13 @@ function BookDetail() {
 
   const handleOfferChange = async (newOffer: string) => {
     setOffer(newOffer);
+    setOfferError("");
     try {
       await saveEntry({ offer: newOffer });
     } catch (err) {
-      console.error("Failed to update offer:", err);
+      setOfferError(
+        err instanceof Error ? err.message : "Failed to update offer",
+      );
       setOffer(myEntry?.offer ?? "");
     }
   };
@@ -281,19 +286,30 @@ function BookDetail() {
                   ))}
                 </select>
 
-                <label htmlFor="book-offer">Lending &amp; Selling</label>
-                <select
-                  id="book-offer"
-                  value={offer}
-                  onChange={(e) => handleOfferChange(e.target.value)}
-                >
-                  {Object.entries(offerLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                <label htmlFor="book-offer" id="book-offer-label">
+                  Lending &amp; Selling
+                </label>
+                {offer === "lent-out" ? (
+                  <p className="rating-meta" aria-labelledby="book-offer-label">
+                    Out on loan. Mark it returned on{" "}
+                    <Link to="/borrowing">Borrowing</Link> to change this.
+                  </p>
+                ) : (
+                  <select
+                    id="book-offer"
+                    value={offer}
+                    onChange={(e) => handleOfferChange(e.target.value)}
+                  >
+                    {selectableOffers.map((value) => (
+                      <option key={value} value={value}>
+                        {offerLabels[value]}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
+
+              {offerError && <p className="form-error">{offerError}</p>}
 
               {offer === "for-sale" && (
                 <button
@@ -304,12 +320,14 @@ function BookDetail() {
                 </button>
               )}
 
-              <button
-                className="btn btn-secondary remove-entry"
-                onClick={handleRemove}
-              >
-                Remove from My Shelves
-              </button>
+              {offer !== "lent-out" && (
+                <button
+                  className="btn btn-secondary remove-entry"
+                  onClick={handleRemove}
+                >
+                  Remove from My Shelves
+                </button>
+              )}
             </>
           ) : (
             <div className="add-to-shelves">
@@ -437,13 +455,7 @@ function BookDetail() {
                   </>
                 )}
               </span>
-              <span className="review-date">
-                {new Date(review.date).toLocaleDateString("en-GB", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </span>
+              <span className="review-date">{formatDate(review.date)}</span>
             </div>
             {review.containsSpoiler && !revealedReviews.has(review.id) ? (
               <button

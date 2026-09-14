@@ -15,13 +15,6 @@ public class TrustTests : IDisposable
 
     public void Dispose() => _factory.Dispose();
 
-    private async Task<HttpClient> SignInAsync(string name)
-    {
-        var client = _factory.CreateClient();
-        var user = await client.RegisterAsync(name);
-        client.Authenticate(user.Token);
-        return client;
-    }
 
     private static async Task<TrustProfileResult> ProfileAsync(HttpClient client, string username) =>
         (await client.GetFromJsonAsync<TrustProfileResult>($"/api/users/{username}"))!;
@@ -32,10 +25,10 @@ public class TrustTests : IDisposable
     [Fact]
     public async Task OnlyTrustedReadersCanRequestABook()
     {
-        var owner = await SignInAsync("owner");
+        var owner = await _factory.SignInAsync("owner");
         var book = await owner.AddBookAsync("Piranesi", offer: "available-to-borrow");
 
-        var stranger = await SignInAsync("stranger");
+        var stranger = await _factory.SignInAsync("stranger");
 
         var refused = await stranger.PostAsJsonAsync(
             "/api/borrowrequests",
@@ -52,10 +45,10 @@ public class TrustTests : IDisposable
     [Fact]
     public async Task ABookThatIsNotOfferedCannotBeRequested()
     {
-        var owner = await SignInAsync("owner");
+        var owner = await _factory.SignInAsync("owner");
         var book = await owner.AddBookAsync("Piranesi");
 
-        var friend = await SignInAsync("friend");
+        var friend = await _factory.SignInAsync("friend");
         await owner.TrustAsync("friend");
 
         var refused = await friend.PostAsJsonAsync(
@@ -69,10 +62,10 @@ public class TrustTests : IDisposable
     [Fact]
     public async Task UntrustingDeclinesTheirPendingRequests()
     {
-        var owner = await SignInAsync("owner");
+        var owner = await _factory.SignInAsync("owner");
         var book = await owner.AddBookAsync("Piranesi", offer: "available-to-borrow");
 
-        var friend = await SignInAsync("friend");
+        var friend = await _factory.SignInAsync("friend");
         await owner.TrustAsync("friend");
         var request = await friend.RequestBookAsync(book.Id);
 
@@ -86,10 +79,10 @@ public class TrustTests : IDisposable
     [Fact]
     public async Task AnUntrustedReadersRequestCannotBeAccepted()
     {
-        var owner = await SignInAsync("owner");
+        var owner = await _factory.SignInAsync("owner");
         var book = await owner.AddBookAsync("Piranesi", offer: "available-to-borrow");
 
-        var friend = await SignInAsync("friend");
+        var friend = await _factory.SignInAsync("friend");
         await owner.TrustAsync("friend");
         var request = await friend.RequestBookAsync(book.Id);
 
@@ -100,14 +93,16 @@ public class TrustTests : IDisposable
             new { status = "accepted" }
         );
 
-        Assert.Equal(HttpStatusCode.Forbidden, accept.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, accept.StatusCode);
+        Assert.Empty((await friend.GetBorrowingAsync()).Borrowed);
+        Assert.Equal("available-to-borrow", (await owner.GetLibraryAsync()).Single().Offer);
     }
 
     [Fact]
     public async Task TrustIsOneWay()
     {
-        var owner = await SignInAsync("owner");
-        var friend = await SignInAsync("friend");
+        var owner = await _factory.SignInAsync("owner");
+        var friend = await _factory.SignInAsync("friend");
 
         await owner.TrustAsync("friend");
 
@@ -120,8 +115,8 @@ public class TrustTests : IDisposable
     [Fact]
     public async Task TrustingSomeoneNotifiesThem()
     {
-        var owner = await SignInAsync("owner");
-        var friend = await SignInAsync("friend");
+        var owner = await _factory.SignInAsync("owner");
+        var friend = await _factory.SignInAsync("friend");
 
         await owner.TrustAsync("friend");
 
@@ -134,8 +129,8 @@ public class TrustTests : IDisposable
     [Fact]
     public async Task UntrustingRemovesThemAndTheirNotification()
     {
-        var owner = await SignInAsync("owner");
-        var friend = await SignInAsync("friend");
+        var owner = await _factory.SignInAsync("owner");
+        var friend = await _factory.SignInAsync("friend");
 
         await owner.TrustAsync("friend");
         (await owner.DeleteAsync("/api/users/friend/trust")).EnsureSuccessStatusCode();
@@ -150,9 +145,9 @@ public class TrustTests : IDisposable
     [Fact]
     public async Task TheTrustedListShowsWhoYouTrust()
     {
-        var owner = await SignInAsync("owner");
-        await SignInAsync("friend");
-        await SignInAsync("other");
+        var owner = await _factory.SignInAsync("owner");
+        await _factory.SignInAsync("friend");
+        await _factory.SignInAsync("other");
 
         await owner.TrustAsync("friend");
 
@@ -162,8 +157,8 @@ public class TrustTests : IDisposable
     [Fact]
     public async Task TrustingTwiceDoesNotDuplicate()
     {
-        var owner = await SignInAsync("owner");
-        await SignInAsync("friend");
+        var owner = await _factory.SignInAsync("owner");
+        await _factory.SignInAsync("friend");
 
         await owner.TrustAsync("friend");
         await owner.TrustAsync("friend");
@@ -174,7 +169,7 @@ public class TrustTests : IDisposable
     [Fact]
     public async Task YouCannotTrustYourself()
     {
-        var owner = await SignInAsync("owner");
+        var owner = await _factory.SignInAsync("owner");
 
         var response = await owner.PostAsync("/api/users/owner/trust", null);
 
@@ -184,10 +179,10 @@ public class TrustTests : IDisposable
     [Fact]
     public async Task BrowseSaysWhetherYouCanRequestEachBook()
     {
-        var owner = await SignInAsync("owner");
+        var owner = await _factory.SignInAsync("owner");
         await owner.AddBookAsync("Piranesi", offer: "available-to-borrow");
 
-        var friend = await SignInAsync("friend");
+        var friend = await _factory.SignInAsync("friend");
 
         Assert.False((await friend.GetBrowseAsync()).Single().CanRequest);
 

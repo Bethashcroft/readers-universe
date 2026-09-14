@@ -28,6 +28,7 @@ const profile: ProfileResponse = {
   canView: true,
   trusted: false,
   trustsMe: false,
+  followRequestCount: 0,
 };
 
 function renderForm(overrides: Partial<ProfileResponse> = {}) {

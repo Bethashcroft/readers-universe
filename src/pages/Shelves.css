@@ -86,17 +86,4 @@
 .shelf-search {
   flex: 1;
   min-width: 240px;
-  padding: 10px 14px;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  font: inherit;
-  font-size: 14px;
-  color: var(--color-text);
-  background-color: var(--color-bg);
-  outline: none;
-  transition: border-color 0.15s ease;
-}
-
-.shelf-search:focus {
-  border-color: var(--color-primary);
 }

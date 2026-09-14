@@ -15,10 +15,12 @@ namespace ReadersRealm.Api.Controllers;
 public class LibraryController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly LendingService _lending;
 
-    public LibraryController(AppDbContext context)
+    public LibraryController(AppDbContext context, LendingService lending)
     {
         _context = context;
+        _lending = lending;
     }
 
     [HttpGet]
@@ -26,6 +28,7 @@ public class LibraryController : ControllerBase
         [FromQuery] string? shelf,
         [FromQuery] string? search,
         [FromQuery] string? sort,
+        [FromQuery] bool offerable,
         [FromQuery] int? page,
         [FromQuery] int? pageSize
     )
@@ -49,6 +52,13 @@ public class LibraryController : ControllerBase
         if (!string.IsNullOrEmpty(shelf))
         {
             query = query.Where(e => e.Shelf == shelf);
+        }
+
+        if (offerable)
+        {
+            query = query.Where(e =>
+                e.Offer == BookOffer.None && e.Shelf != BookShelf.WantToRead
+            );
         }
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -166,6 +176,19 @@ public class LibraryController : ControllerBase
             return BadRequest(new { message = "Rating must be between 1 and 5" });
         }
 
+        if (request.Offer == BookOffer.AvailableToBorrow)
+        {
+            if (request.Shelf == BookShelf.WantToRead)
+            {
+                return BadRequest(new { message = LendingService.NotOwnedMessage });
+            }
+
+            if (!await _lending.HasRoomAsync(userId!))
+            {
+                return BadRequest(new { message = LendingService.FullMessage });
+            }
+        }
+
         var book = await FindOrCreateBookAsync(request);
 
         if (book == null)
@@ -224,12 +247,6 @@ public class LibraryController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        var validationError = ValidateStates(request.Shelf, request.Offer);
-        if (validationError != null)
-        {
-            return BadRequest(new { message = validationError });
-        }
-
         var entry = await _context
             .LibraryEntries.Include(e => e.Book)
             .Include(e => e.User)
@@ -245,11 +262,117 @@ public class LibraryController : ControllerBase
             return Forbid();
         }
 
+        var offerChanging = request.Offer != entry.Offer;
+
+        var validationError = offerChanging
+            ? ValidateStates(request.Shelf, request.Offer)
+            : ValidateShelf(request.Shelf);
+
+        if (validationError != null)
+        {
+            return BadRequest(new { message = validationError });
+        }
+
+        if (offerChanging && await _lending.OnLoanAsync(entry.Id))
+        {
+            return BadRequest(new { message = LendingService.OnLoanMessage });
+        }
+
+        if (BookOffer.Lendable.Contains(request.Offer) && request.Shelf == BookShelf.WantToRead)
+        {
+            return BadRequest(new { message = LendingService.NotOwnedMessage });
+        }
+
+        var enteringPool =
+            request.Offer == BookOffer.AvailableToBorrow
+            && !BookOffer.Lendable.Contains(entry.Offer);
+
+        if (enteringPool && !await _lending.HasRoomAsync(userId!))
+        {
+            return BadRequest(new { message = LendingService.FullMessage });
+        }
+
+        var leavingPool =
+            BookOffer.Lendable.Contains(entry.Offer)
+            && request.Offer != BookOffer.AvailableToBorrow;
+
+        if (leavingPool)
+        {
+            await _lending.DeclinePendingAsync(entry.Id);
+        }
+
         entry.Shelf = request.Shelf;
         entry.Offer = request.Offer;
         await _context.SaveChangesAsync();
 
         return Ok((await ToResponsesAsync([entry], userId!)).Single());
+    }
+
+    [HttpPost("{id}/offer")]
+    public async Task<IActionResult> OfferBook(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var entry = await _context.LibraryEntries.FirstOrDefaultAsync(e =>
+            e.Id == id && e.UserId == userId
+        );
+
+        if (entry == null)
+        {
+            return NotFound(new { message = "Book not found on your shelves" });
+        }
+
+        if (entry.Shelf == BookShelf.WantToRead)
+        {
+            return BadRequest(new { message = LendingService.NotOwnedMessage });
+        }
+
+        if (entry.Offer == BookOffer.ForSale)
+        {
+            return BadRequest(
+                new { message = "This book is for sale. Take it off sale before offering it." }
+            );
+        }
+
+        if (entry.Offer == BookOffer.None)
+        {
+            if (!await _lending.HasRoomAsync(userId!))
+            {
+                return BadRequest(new { message = LendingService.FullMessage });
+            }
+
+            entry.Offer = BookOffer.AvailableToBorrow;
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok();
+    }
+
+    [HttpDelete("{id}/offer")]
+    public async Task<IActionResult> TakeBackBook(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var entry = await _context.LibraryEntries.FirstOrDefaultAsync(e =>
+            e.Id == id && e.UserId == userId
+        );
+
+        if (entry == null)
+        {
+            return NotFound(new { message = "Book not found on your shelves" });
+        }
+
+        if (entry.Offer == BookOffer.LentOut || await _lending.OnLoanAsync(entry.Id))
+        {
+            return BadRequest(new { message = LendingService.OnLoanMessage });
+        }
+
+        if (entry.Offer == BookOffer.AvailableToBorrow)
+        {
+            await _lending.DeclinePendingAsync(entry.Id);
+            entry.Offer = BookOffer.None;
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok();
     }
 
     [HttpDelete("{id}")]
@@ -266,6 +389,13 @@ public class LibraryController : ControllerBase
         if (entry.UserId != userId)
         {
             return Forbid();
+        }
+
+        if (await _lending.OnLoanAsync(entry.Id))
+        {
+            return BadRequest(
+                new { message = "This book is out on loan. Mark it returned before removing it." }
+            );
         }
 
         _context.LibraryEntries.Remove(entry);
@@ -326,20 +456,18 @@ public class LibraryController : ControllerBase
         string viewerId
     ) => LibraryEntryMapper.MapAsync(_context, entries, _ => viewerId);
 
-    public static string? ValidateStates(string shelf, string offer)
-    {
-        if (!BookShelf.All.Contains(shelf))
-        {
-            return $"Shelf must be one of: {string.Join(", ", BookShelf.All)}";
-        }
+    public static string? ValidateStates(string shelf, string offer) =>
+        ValidateShelf(shelf)
+        ?? (
+            BookOffer.Selectable.Contains(offer)
+                ? null
+                : $"Offer must be one of: {string.Join(", ", BookOffer.Selectable)}"
+        );
 
-        if (!BookOffer.All.Contains(offer))
-        {
-            return $"Offer must be one of: {string.Join(", ", BookOffer.All)}";
-        }
-
-        return null;
-    }
+    private static string? ValidateShelf(string shelf) =>
+        BookShelf.All.Contains(shelf)
+            ? null
+            : $"Shelf must be one of: {string.Join(", ", BookShelf.All)}";
 }
 
 public class AddToLibraryRequest

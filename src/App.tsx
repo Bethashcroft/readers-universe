@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { BookProvider } from "./context/BookContext";
 import { AuthProvider } from "./context/AuthContext";
 import Layout from "./components/Layout";
@@ -13,7 +13,7 @@ import AddBook from "./pages/AddBook";
 import BookDetail from "./pages/BookDetail";
 import Browse from "./pages/Browse";
 import Readers from "./pages/Readers";
-import Requests from "./pages/Requests";
+import Borrowing from "./pages/Borrowing";
 import Conversation from "./pages/Conversation";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -101,12 +101,16 @@ function App() {
                 }
               />
               <Route
-                path="/requests"
+                path="/borrowing"
                 element={
                   <ProtectedRoute>
-                    <Requests />
+                    <Borrowing />
                   </ProtectedRoute>
                 }
+              />
+              <Route
+                path="/requests"
+                element={<Navigate to="/borrowing" replace />}
               />
               <Route
                 path="/messages/:requestId"

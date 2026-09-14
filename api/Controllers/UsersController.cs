@@ -107,6 +107,13 @@ public class UsersController : ControllerBase
             t.TrusterId == user.Id && t.TrustedId == me
         );
 
+        if (user.Id == me)
+        {
+            profile.FollowRequestCount = await _context.Follows.CountAsync(f =>
+                f.FollowingId == me && !f.Approved
+            );
+        }
+
         return Ok(profile);
     }
 

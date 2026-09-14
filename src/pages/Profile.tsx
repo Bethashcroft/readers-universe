@@ -174,6 +174,11 @@ function Profile() {
                 >
                   <h2>Followers</h2>
                   <p>{profile.followerCount}</p>
+                  {profile.followRequestCount > 0 && (
+                    <span className="badge badge-amber">
+                      {profile.followRequestCount} waiting
+                    </span>
+                  )}
                 </Link>
                 <Link
                   className="profile-detail-card profile-detail-link"

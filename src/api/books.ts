@@ -69,14 +69,18 @@ export function getMyBooks(options?: {
   shelf?: string;
   search?: string;
   sort?: string;
+  offerable?: boolean;
   page?: number;
+  pageSize?: number;
 }): Promise<PagedResult<LibraryEntryResponse>> {
   const params = new URLSearchParams();
   if (options?.shelf) params.set("shelf", options.shelf);
   if (options?.search) params.set("search", options.search);
   if (options?.sort && options.sort !== "added")
     params.set("sort", options.sort);
+  if (options?.offerable) params.set("offerable", "true");
   if (options?.page) params.set("page", String(options.page));
+  if (options?.pageSize) params.set("pageSize", String(options.pageSize));
   const query = params.toString();
 
   return request(
@@ -112,6 +116,18 @@ export function refreshCovers(
 
 export function getShelfCounts(): Promise<Record<string, number>> {
   return request("/library/shelf-counts", "Failed to fetch shelf counts");
+}
+
+export function offerBook(id: number): Promise<void> {
+  return requestVoid(`/library/${id}/offer`, "Failed to offer that book", {
+    method: "POST",
+  });
+}
+
+export function takeBackBook(id: number): Promise<void> {
+  return requestVoid(`/library/${id}/offer`, "Failed to take that book back", {
+    method: "DELETE",
+  });
 }
 
 export function browseBooks(options?: {

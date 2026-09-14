@@ -23,7 +23,6 @@ public class AvatarTests : IDisposable
 
     private record ProfileResult(string UserName, string DisplayName, string AvatarUrl);
 
-    private record MessageResult(string Message);
 
     private static readonly byte[] PngBytes =
     [
@@ -85,7 +84,7 @@ public class AvatarTests : IDisposable
         );
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<MessageResult>();
+        var body = await response.Content.ReadFromJsonAsync<ErrorResult>();
         Assert.Equal("Only JPG, PNG, or WebP images are allowed", body!.Message);
     }
 
@@ -112,7 +111,7 @@ public class AvatarTests : IDisposable
         );
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<MessageResult>();
+        var body = await response.Content.ReadFromJsonAsync<ErrorResult>();
         Assert.Equal("Only JPG, PNG, or WebP images are allowed", body!.Message);
     }
 
@@ -128,7 +127,7 @@ public class AvatarTests : IDisposable
         );
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<MessageResult>();
+        var body = await response.Content.ReadFromJsonAsync<ErrorResult>();
         Assert.Equal("Image must be 2MB or smaller", body!.Message);
     }
 }

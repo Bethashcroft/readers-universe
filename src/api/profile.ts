@@ -16,6 +16,7 @@ export interface ProfileResponse {
   canView: boolean;
   trusted: boolean;
   trustsMe: boolean;
+  followRequestCount: number;
 }
 
 export interface UpdateProfileRequest {

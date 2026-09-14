@@ -24,7 +24,7 @@ function ConfirmDialog({
   return (
     <Modal title={title} onClose={onCancel} locked={busy}>
       <div className="confirm-body">{children}</div>
-      {error && <p className="confirm-error">{error}</p>}
+      {error && <p className="form-error">{error}</p>}
       <div className="confirm-actions">
         <button
           type="button"

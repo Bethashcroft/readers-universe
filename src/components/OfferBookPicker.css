@@ -1,0 +1,70 @@
+.picker-modal {
+  max-width: 540px;
+}
+
+.picker-modal .search-input {
+  width: 100%;
+}
+
+.picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.picker-empty,
+.picker-more {
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.picker-empty {
+  padding: 24px 0;
+}
+
+.picker-more {
+  font-size: 13px;
+}
+
+.picker-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.picker-cover {
+  width: 40px;
+  height: 58px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background-color: var(--color-bg);
+}
+
+.picker-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.picker-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-author {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}

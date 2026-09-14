@@ -8,7 +8,9 @@ import {
 } from "../api/notifications";
 import type { NotificationResponse } from "../api/notifications";
 import { getChatConnection } from "../realtime/connection";
+import { useAuth } from "../context/useAuth";
 import { useClickOutside } from "../hooks/useClickOutside";
+import { timeAgo } from "../utils/dates";
 import Avatar from "./Avatar";
 import "./NotificationBell.css";
 
@@ -19,22 +21,20 @@ const messages: Record<NotificationResponse["type"], string> = {
   trusted: "added you to their Trusted Book Club",
 };
 
-function timeAgo(date: string) {
-  const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
-
-  if (seconds < 60) return "just now";
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-
-  return new Date(date).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-  });
+function linkFor(notification: NotificationResponse, me: string | undefined) {
+  switch (notification.type) {
+    case "follow-requested":
+      return me ? `/profile/${me}/followers` : "/";
+    case "new-follower":
+    case "follow-approved":
+    case "trusted":
+      return `/profile/${notification.actorUserName}`;
+  }
 }
 
 function NotificationBell() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [items, setItems] = useState<NotificationResponse[]>([]);
   const [count, setCount] = useState(0);
   const [open, setOpen] = useState(false);
@@ -103,11 +103,7 @@ function NotificationBell() {
 
   const goTo = (notification: NotificationResponse) => {
     setOpen(false);
-    navigate(
-      notification.type === "follow-requested"
-        ? "/requests"
-        : `/profile/${notification.actorUserName}`,
-    );
+    navigate(linkFor(notification, user?.userName));
   };
 
   return (

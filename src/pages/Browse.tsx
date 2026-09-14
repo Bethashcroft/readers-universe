@@ -4,6 +4,8 @@ import { browseBooks } from "../api/books";
 import type { LibraryEntryResponse } from "../api/books";
 import { createBorrowRequest } from "../api/borrow";
 import { useAuth } from "../context/useAuth";
+import { offerLabel, offerBadgeClass } from "../types/book";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import VintedButton from "../components/VintedButton";
 import BookCover from "../components/BookCover";
 import Pager from "../components/Pager";
@@ -16,9 +18,9 @@ function Browse() {
   const { user } = useAuth();
   const [books, setBooks] = useState<LibraryEntryResponse[]>([]);
   const [page, setPage] = useState(1);
+  const [pageFor, setPageFor] = useState("");
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
-  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [requestingBookId, setRequestingBookId] = useState<number | null>(null);
@@ -27,6 +29,8 @@ function Browse() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
+  const currentPage = pageFor === debouncedSearch ? page : 1;
   const [filter, setFilter] = useState<
     "all" | "available-to-borrow" | "for-sale"
   >("all");
@@ -39,7 +43,7 @@ function Browse() {
     setLoadError(false);
     try {
       const result = await browseBooks({
-        page,
+        page: currentPage,
         search: debouncedSearch,
         offer: filter,
       });
@@ -56,20 +60,11 @@ function Browse() {
         setLoading(false);
       }
     }
-  }, [page, debouncedSearch, filter]);
+  }, [currentPage, debouncedSearch, filter]);
 
   useEffect(() => {
     loadBooks();
   }, [loadBooks]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-      setPage(1);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [search]);
 
   const handleRequest = async (bookId: number) => {
     setError("");
@@ -94,6 +89,7 @@ function Browse() {
 
   const changePage = (next: number) => {
     setPage(next);
+    setPageFor(debouncedSearch);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -120,7 +116,7 @@ function Browse() {
       <div className="browse-controls">
         <input
           type="text"
-          className="browse-search"
+          className="search-input browse-search"
           placeholder="Search by title or author"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -184,8 +180,8 @@ function Browse() {
                   Offered by {book.ownerName}
                 </Link>
               )}
-              <span className={`browse-badge ${book.offer}`}>
-                {book.offer === "for-sale" ? "For Sale" : "Available to Borrow"}
+              <span className={`browse-badge ${offerBadgeClass(book.offer)}`}>
+                {offerLabel(book.offer)}
               </span>
               {book.offer === "for-sale" ? (
                 <div className="for-sale-actions">
@@ -262,7 +258,7 @@ function Browse() {
       </div>
 
       <Pager
-        page={page}
+        page={currentPage}
         totalPages={totalPages}
         total={total}
         noun="book"

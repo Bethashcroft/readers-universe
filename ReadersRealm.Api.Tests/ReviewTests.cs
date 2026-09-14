@@ -124,7 +124,7 @@ public class ReviewTests : IDisposable
         );
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<MessageResult>();
+        var body = await response.Content.ReadFromJsonAsync<ErrorResult>();
         Assert.Equal("Rating must be between 1 and 5", body!.Message);
     }
 
@@ -152,7 +152,7 @@ public class ReviewTests : IDisposable
         );
 
         Assert.Equal(HttpStatusCode.BadRequest, second.StatusCode);
-        var body = await second.Content.ReadFromJsonAsync<MessageResult>();
+        var body = await second.Content.ReadFromJsonAsync<ErrorResult>();
         Assert.Equal("You have already reviewed this book", body!.Message);
     }
 
@@ -288,5 +288,4 @@ public class ReviewTests : IDisposable
 
     private record SpoilerReviewResult(int Id, bool ContainsSpoiler);
 
-    private record MessageResult(string Message);
 }

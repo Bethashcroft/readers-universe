@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { searchReaders } from "../api/readers";
 import type { ReaderResponse } from "../api/readers";
 import { useClickOutside } from "../hooks/useClickOutside";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import Avatar from "./Avatar";
 import "./ReaderSearchBar.css";
 
 function ReaderSearchBar() {
   const navigate = useNavigate();
   const [term, setTerm] = useState("");
+  const query = useDebouncedValue(term.trim());
   const [results, setResults] = useState<ReaderResponse[]>([]);
   const [total, setTotal] = useState(0);
   const [open, setOpen] = useState(false);
@@ -18,15 +20,15 @@ function ReaderSearchBar() {
   useClickOutside(containerRef, open, close);
 
   useEffect(() => {
-    if (!term.trim()) {
+    if (!query) {
       return;
     }
 
     let active = true;
 
-    const timer = setTimeout(async () => {
+    const search = async () => {
       try {
-        const found = await searchReaders({ q: term.trim(), page: 1 });
+        const found = await searchReaders({ q: query, page: 1 });
         if (!active) return;
         setResults(found.items.slice(0, 5));
         setTotal(found.total);
@@ -34,13 +36,14 @@ function ReaderSearchBar() {
       } catch (err) {
         console.error("Reader search failed:", err);
       }
-    }, 300);
+    };
+
+    search();
 
     return () => {
       active = false;
-      clearTimeout(timer);
     };
-  }, [term]);
+  }, [query]);
 
   const visible = term.trim() ? results : [];
 

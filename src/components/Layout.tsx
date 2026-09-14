@@ -13,8 +13,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-import { getMyRequests } from "../api/borrow";
-import { getFollowRequests } from "../api/follows";
+import { getPendingRequestCount } from "../api/borrow";
 import { getUnreadCount, messagesReadEvent } from "../api/messages";
 import {
   getChatConnection,
@@ -95,16 +94,12 @@ function Layout() {
       const ticket = ++countsRequest.current;
 
       try {
-        const [requests, follows] = await Promise.all([
-          getMyRequests(),
-          getFollowRequests(),
+        const [{ count }] = await Promise.all([
+          getPendingRequestCount(),
+          refreshUnreadCount(),
         ]);
         if (ticket !== countsRequest.current) return;
-        const incomingPending = requests.filter(
-          (r) => r.toUserId === user.userId && r.status === "pending",
-        );
-        setPendingCount(incomingPending.length + follows.length);
-        await refreshUnreadCount();
+        setPendingCount(count);
       } catch (err) {
         console.error("Failed to load nav counts:", err);
       }
@@ -203,8 +198,8 @@ function Layout() {
                 <NavLink to="/add-book">Add Books</NavLink>
                 <NavLink to="/browse">Browse</NavLink>
                 <NavLink to="/readers">Find Readers</NavLink>
-                <NavLink to="/requests">
-                  Requests
+                <NavLink to="/borrowing">
+                  Borrowing
                   {pendingCount > 0 && (
                     <span className="nav-badge">{pendingCount}</span>
                   )}

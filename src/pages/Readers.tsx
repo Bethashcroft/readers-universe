@@ -6,6 +6,7 @@ import Avatar from "../components/Avatar";
 import Pager from "../components/Pager";
 import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import "./Readers.css";
 
 function Readers() {
@@ -15,9 +16,11 @@ function Readers() {
   const urlQuery = params.get("q") ?? "";
 
   const [search, setSearch] = useState(urlQuery);
-  const [debouncedSearch, setDebouncedSearch] = useState(urlQuery);
+  const debouncedSearch = useDebouncedValue(search);
   const [syncedQuery, setSyncedQuery] = useState(urlQuery);
   const [page, setPage] = useState(1);
+  const [pageFor, setPageFor] = useState(urlQuery);
+  const currentPage = pageFor === debouncedSearch ? page : 1;
   const [readers, setReaders] = useState<ReaderResponse[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -34,7 +37,10 @@ function Readers() {
     setLoadError(false);
 
     try {
-      const result = await searchReaders({ q: debouncedSearch, page });
+      const result = await searchReaders({
+        q: debouncedSearch,
+        page: currentPage,
+      });
       setReaders(result.items);
       setTotal(result.total);
       setTotalPages(result.totalPages);
@@ -44,23 +50,15 @@ function Readers() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, page]);
+  }, [debouncedSearch, currentPage]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-      setPage(1);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [search]);
-
   const changePage = (next: number) => {
     setPage(next);
+    setPageFor(debouncedSearch);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -82,7 +80,7 @@ function Readers() {
 
       <input
         type="text"
-        className="readers-search"
+        className="search-input readers-search"
         placeholder="Search by name or username"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -124,7 +122,7 @@ function Readers() {
       </div>
 
       <Pager
-        page={page}
+        page={currentPage}
         totalPages={totalPages}
         total={total}
         noun="reader"

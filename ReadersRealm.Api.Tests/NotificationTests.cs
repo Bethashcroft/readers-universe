@@ -20,13 +20,6 @@ public class NotificationTests : IDisposable
 
     public void Dispose() => _factory.Dispose();
 
-    private async Task<HttpClient> SignInAsync(string name)
-    {
-        var client = _factory.CreateClient();
-        var user = await client.RegisterAsync(name);
-        client.Authenticate(user.Token);
-        return client;
-    }
 
     private static Task GoPrivateAsync(HttpClient client, string username) =>
         client.PutAsJsonAsync(
@@ -50,8 +43,8 @@ public class NotificationTests : IDisposable
     [Fact]
     public async Task FollowingAPublicAccountNotifiesThem()
     {
-        var rebel = await SignInAsync("rebel");
-        var beth = await SignInAsync("beth");
+        var rebel = await _factory.SignInAsync("rebel");
+        var beth = await _factory.SignInAsync("beth");
 
         await beth.PostAsync("/api/users/rebel/follow", null);
 
@@ -65,10 +58,10 @@ public class NotificationTests : IDisposable
     [Fact]
     public async Task RequestingAPrivateAccountNotifiesThem()
     {
-        var rebel = await SignInAsync("rebel");
+        var rebel = await _factory.SignInAsync("rebel");
         await GoPrivateAsync(rebel, "rebel");
 
-        var beth = await SignInAsync("beth");
+        var beth = await _factory.SignInAsync("beth");
         await beth.PostAsync("/api/users/rebel/follow", null);
 
         Assert.Equal("follow-requested", (await NotificationsAsync(rebel)).Single().Type);
@@ -77,10 +70,10 @@ public class NotificationTests : IDisposable
     [Fact]
     public async Task ApprovingAFollowNotifiesTheRequester()
     {
-        var rebel = await SignInAsync("rebel");
+        var rebel = await _factory.SignInAsync("rebel");
         await GoPrivateAsync(rebel, "rebel");
 
-        var beth = await SignInAsync("beth");
+        var beth = await _factory.SignInAsync("beth");
         await beth.PostAsync("/api/users/rebel/follow", null);
         await rebel.PostAsync("/api/users/beth/approve-follow", null);
 
@@ -93,10 +86,10 @@ public class NotificationTests : IDisposable
     [Fact]
     public async Task DecliningNotifiesNobody()
     {
-        var rebel = await SignInAsync("rebel");
+        var rebel = await _factory.SignInAsync("rebel");
         await GoPrivateAsync(rebel, "rebel");
 
-        var beth = await SignInAsync("beth");
+        var beth = await _factory.SignInAsync("beth");
         await beth.PostAsync("/api/users/rebel/follow", null);
         await rebel.PostAsync("/api/users/beth/decline-follow", null);
 
@@ -106,8 +99,8 @@ public class NotificationTests : IDisposable
     [Fact]
     public async Task UnfollowingClearsTheNotificationItCreated()
     {
-        var rebel = await SignInAsync("rebel");
-        var beth = await SignInAsync("beth");
+        var rebel = await _factory.SignInAsync("rebel");
+        var beth = await _factory.SignInAsync("beth");
 
         await beth.PostAsync("/api/users/rebel/follow", null);
         await beth.DeleteAsync("/api/users/rebel/follow");
@@ -118,8 +111,8 @@ public class NotificationTests : IDisposable
     [Fact]
     public async Task MarkingAsReadClearsTheUnreadCount()
     {
-        var rebel = await SignInAsync("rebel");
-        var beth = await SignInAsync("beth");
+        var rebel = await _factory.SignInAsync("rebel");
+        var beth = await _factory.SignInAsync("beth");
 
         await beth.PostAsync("/api/users/rebel/follow", null);
         (await rebel.PostAsync("/api/notifications/read", null)).EnsureSuccessStatusCode();
@@ -131,8 +124,8 @@ public class NotificationTests : IDisposable
     [Fact]
     public async Task ClearingRemovesEverything()
     {
-        var rebel = await SignInAsync("rebel");
-        var beth = await SignInAsync("beth");
+        var rebel = await _factory.SignInAsync("rebel");
+        var beth = await _factory.SignInAsync("beth");
 
         await beth.PostAsync("/api/users/rebel/follow", null);
         (await rebel.DeleteAsync("/api/notifications")).EnsureSuccessStatusCode();
@@ -144,8 +137,8 @@ public class NotificationTests : IDisposable
     [Fact]
     public async Task YouOnlySeeYourOwnNotifications()
     {
-        var rebel = await SignInAsync("rebel");
-        var beth = await SignInAsync("beth");
+        var rebel = await _factory.SignInAsync("rebel");
+        var beth = await _factory.SignInAsync("beth");
 
         await beth.PostAsync("/api/users/rebel/follow", null);
 
