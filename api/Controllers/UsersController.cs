@@ -64,15 +64,7 @@ public class UsersController : ControllerBase
                 Bio = u.Bio,
                 AvatarUrl = u.AvatarUrl,
                 JoinedDate = u.JoinedDate,
-                BookCount = _context.LibraryEntries.Count(e =>
-                    e.UserId == u.Id
-                    && (
-                        (e.Shelf != BookShelf.Tbr
-                            && e.Shelf != BookShelf.WantToRead
-                            && e.Shelf != BookShelf.Dnf)
-                        || e.Offer != BookOffer.None
-                    )
-                ),
+                BookCount = _context.LibraryEntries.Count(e => e.UserId == u.Id),
             })
             .ToListAsync();
 
@@ -134,21 +126,8 @@ public class UsersController : ControllerBase
             return StatusCode(403, new { message = "This account is private." });
         }
 
-        var query = _context.LibraryEntries.Where(e => e.UserId == user.Id);
-
-        if (user.Id != requesterId)
-        {
-            query = query.Where(e =>
-                (
-                    e.Shelf != BookShelf.Tbr
-                    && e.Shelf != BookShelf.WantToRead
-                    && e.Shelf != BookShelf.Dnf
-                )
-                || e.Offer != BookOffer.None
-            );
-        }
-
-        var entries = await query
+        var entries = await _context
+            .LibraryEntries.Where(e => e.UserId == user.Id)
             .Include(e => e.Book)
             .Include(e => e.User)
             .OrderByDescending(e => e.Id)

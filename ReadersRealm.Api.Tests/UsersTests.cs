@@ -20,7 +20,7 @@ public class UsersTests : IDisposable
     }
 
     [Fact]
-    public async Task ViewingAnotherUsersProfile_HidesPrivateShelves()
+    public async Task ViewingAnotherUsersProfile_ShowsEveryShelf()
     {
         var owner = await _client.RegisterAsync("owner");
         _client.Authenticate(owner.Token);
@@ -39,27 +39,9 @@ public class UsersTests : IDisposable
         var titles = theirBooks!.Select(b => b.Title).ToArray();
 
         Assert.Contains("Public Read", titles);
-        Assert.DoesNotContain("Secret Wishlist", titles);
-        Assert.DoesNotContain("Books I Fancy", titles);
-        Assert.DoesNotContain("Abandoned", titles);
-    }
-
-    [Fact]
-    public async Task ViewingAnotherUsersProfile_ShowsPrivateShelfBooksWithActiveOffers()
-    {
-        var owner = await _client.RegisterAsync("owner");
-        _client.Authenticate(owner.Token);
-        await _client.AddBookAsync("Unread but Selling", "tbr", "for-sale");
-
-        var viewerClient = _factory.CreateClient();
-        var viewer = await viewerClient.RegisterAsync("viewer");
-        viewerClient.Authenticate(viewer.Token);
-
-        var theirBooks = await viewerClient.GetFromJsonAsync<BookResult[]>(
-            "/api/users/owner/books"
-        );
-
-        Assert.Contains(theirBooks!, b => b.Title == "Unread but Selling");
+        Assert.Contains("Secret Wishlist", titles);
+        Assert.Contains("Books I Fancy", titles);
+        Assert.Contains("Abandoned", titles);
     }
 
     [Fact]

@@ -85,13 +85,13 @@ public class ReaderSearchTests : IDisposable
     }
 
     [Fact]
-    public async Task ReaderBookCountHidesPrivateShelvesJustLikeTheProfileDoes()
+    public async Task ReaderBookCountCoversEveryShelf()
     {
         var otherClient = _factory.CreateClient();
         var other = await otherClient.RegisterAsync("rebel");
         otherClient.Authenticate(other.Token);
         await otherClient.AddBookAsync("Public Read", "read");
-        await otherClient.AddBookAsync("Secret Wishlist", "want-to-read");
+        await otherClient.AddBookAsync("Wishlist", "want-to-read");
         await otherClient.AddBookAsync("Unread but Lending", "tbr", "available-to-borrow");
 
         var beth = await _client.RegisterAsync("beth");
@@ -99,7 +99,7 @@ public class ReaderSearchTests : IDisposable
 
         var found = (await SearchAsync("?q=rebel")).Items.Single();
 
-        Assert.Equal(2, found.BookCount);
+        Assert.Equal(3, found.BookCount);
     }
 
     [Fact]
