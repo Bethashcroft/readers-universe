@@ -6,6 +6,8 @@ import type { ProfileResponse } from "../api/profile";
 import { getUserBooks } from "../api/books";
 import type { LibraryEntryResponse } from "../api/books";
 import type { FollowState } from "../api/follows";
+import { getUserActivity } from "../api/feed";
+import ActivityFeed from "../components/ActivityFeed";
 import Avatar from "../components/Avatar";
 import BookCard from "../components/BookCard";
 import FollowButton from "../components/FollowButton";
@@ -48,6 +50,11 @@ function Profile() {
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
+
+  const loadActivity = useCallback(
+    () => getUserActivity(username ?? ""),
+    [username],
+  );
 
   const handleFollowChange = (state: FollowState) => {
     setProfile((current) => {
@@ -201,6 +208,17 @@ function Profile() {
           )}
         </div>
       </div>
+
+      {profile.canView && (
+        <section className="profile-activity">
+          <h2 className="eyebrow">Recent activity</h2>
+          <ActivityFeed
+            load={loadActivity}
+            initialCount={5}
+            empty={<p>Nothing yet.</p>}
+          />
+        </section>
+      )}
 
       <section className="profile-books">
         {profile.canView ? (

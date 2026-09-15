@@ -135,6 +135,34 @@ public class UsersController : ControllerBase
 
         return Ok(await LibraryEntryMapper.MapAsync(_context, entries, e => e.UserId));
     }
+
+    [HttpGet("{username}/activity")]
+    public async Task<IActionResult> GetUserActivity(string username)
+    {
+        var user = await _userManager.FindByNameAsync(username);
+
+        if (user == null)
+        {
+            return NotFound(new { message = "User not found" });
+        }
+
+        var me = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!await _access.CanViewLibraryAsync(user, me))
+        {
+            return StatusCode(403, new { message = "This account is private." });
+        }
+
+        var activity = await _context
+            .Activities.Where(a => a.UserId == user.Id)
+            .OrderByDescending(a => a.Date)
+            .ThenByDescending(a => a.Id)
+            .Take(ActivityMapper.PageLength)
+            .ToResponses()
+            .ToListAsync();
+
+        return Ok(activity);
+    }
 }
 
 public class ReaderResponse

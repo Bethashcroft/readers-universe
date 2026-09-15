@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useBooks } from "../context/useBooks";
 import { useAuth } from "../context/useAuth";
@@ -40,6 +40,8 @@ function BookDetail() {
   const [offerError, setOfferError] = useState("");
   const [reviewSpoiler, setReviewSpoiler] = useState(false);
   const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
+  const [dnfNudge, setDnfNudge] = useState(false);
+  const reviewTextRef = useRef<HTMLTextAreaElement>(null);
   const [addShelf, setAddShelf] = useState<ShelfType>("tbr");
   const [adding, setAdding] = useState(false);
   const [requestingEntryId, setRequestingEntryId] = useState<number | null>(
@@ -108,6 +110,15 @@ function BookDetail() {
     setShelf(newShelf);
     try {
       await saveEntry({ shelf: newShelf });
+
+      if (newShelf === "dnf" && !myReview) {
+        setDnfNudge(true);
+        reviewTextRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        reviewTextRef.current?.focus({ preventScroll: true });
+      }
     } catch (err) {
       console.error("Failed to update shelf:", err);
       setShelf(myEntry?.shelf ?? "");
@@ -197,6 +208,7 @@ function BookDetail() {
     setText("");
     setReviewSpoiler(false);
     setError("");
+    setDnfNudge(false);
   };
 
   const handleReviewSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -496,7 +508,18 @@ function BookDetail() {
 
       {(!myReview || editingReviewId !== null) && (
         <section className="add-review-section">
-          <h2>{editingReviewId ? "Edit your review" : "Rate and Review"}</h2>
+          <h2>
+            {editingReviewId
+              ? "Edit your review"
+              : dnfNudge
+                ? "Didn't finish? Say why"
+                : "Rate and Review"}
+          </h2>
+          {dnfNudge && !editingReviewId && (
+            <p className="review-nudge">
+              Optional, but other readers will want to know. No stars needed.
+            </p>
+          )}
           {error && <p className="form-error">{error}</p>}
           <form className="review-form" onSubmit={handleReviewSubmit}>
             <label htmlFor="review-rating">Rating</label>
@@ -516,6 +539,7 @@ function BookDetail() {
             <label htmlFor="review-text">Review (optional)</label>
             <textarea
               id="review-text"
+              ref={reviewTextRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={4}

@@ -49,6 +49,17 @@ public static class FollowStates
     public const string Self = "self";
 }
 
+public static class ActivityTypes
+{
+    public const string StartedReading = "started-reading";
+    public const string Finished = "finished";
+    public const string DidNotFinish = "did-not-finish";
+    public const string WantsToRead = "wants-to-read";
+    public const string Reviewed = "reviewed";
+    public const string Offered = "offered";
+    public const string Followed = "followed";
+}
+
 public static class NotificationTypes
 {
     public const string FollowRequested = "follow-requested";

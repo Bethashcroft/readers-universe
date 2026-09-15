@@ -18,18 +18,21 @@ public class FollowsController : ControllerBase
     private readonly UserManager<AppUser> _userManager;
     private readonly NotificationService _notifications;
     private readonly ReaderAccess _access;
+    private readonly ActivityService _activity;
 
     public FollowsController(
         AppDbContext context,
         UserManager<AppUser> userManager,
         NotificationService notifications,
-        ReaderAccess access
+        ReaderAccess access,
+        ActivityService activity
     )
     {
         _context = context;
         _userManager = userManager;
         _notifications = notifications;
         _access = access;
+        _activity = activity;
     }
 
     [HttpPost("{username}/follow")]
@@ -64,6 +67,11 @@ public class FollowsController : ControllerBase
                     Approved = approved,
                 }
             );
+
+            if (approved)
+            {
+                _activity.Record(me!, ActivityTypes.Followed, targetUserId: them.Id);
+            }
 
             if (await _context.TrySaveChangesAsync())
             {
@@ -214,6 +222,11 @@ public class FollowsController : ControllerBase
         }
 
         request.Approved = true;
+        _activity.Record(
+            request.FollowerId,
+            ActivityTypes.Followed,
+            targetUserId: request.FollowingId
+        );
         await _context.SaveChangesAsync();
 
         await _notifications.AddAsync(

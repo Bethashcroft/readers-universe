@@ -52,6 +52,16 @@
   margin-top: 12px;
 }
 
+.profile-activity {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-activity .activity-feed-empty {
+  padding: 20px;
+}
+
 .profile-books {
   display: flex;
   flex-direction: column;

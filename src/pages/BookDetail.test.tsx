@@ -5,14 +5,14 @@ import BookDetail from "./BookDetail";
 import type { BookDetailResponse, LibraryEntryResponse } from "../api/books";
 import type { ReviewResponse } from "../api/reviews";
 
-const { mockGetBook, mockGetReviews, mockUseAuth, mockAddBook } = vi.hoisted(
-  () => ({
+const { mockGetBook, mockGetReviews, mockUseAuth, mockAddBook, mockUpdateBook } =
+  vi.hoisted(() => ({
     mockGetBook: vi.fn(),
     mockGetReviews: vi.fn(),
     mockUseAuth: vi.fn(),
     mockAddBook: vi.fn(),
-  }),
-);
+    mockUpdateBook: vi.fn(),
+  }));
 
 vi.mock("../api/books", () => ({
   getBook: mockGetBook,
@@ -28,7 +28,7 @@ vi.mock("../api/reviews", () => ({
 vi.mock("../context/useBooks", () => ({
   useBooks: () => ({
     addBook: mockAddBook,
-    updateBook: vi.fn(),
+    updateBook: mockUpdateBook,
     removeBook: vi.fn(),
   }),
 }));
@@ -266,5 +266,25 @@ describe("BookDetail", () => {
     expect(
       screen.queryByText("This book isn't on your shelves."),
     ).not.toBeInTheDocument();
+  });
+
+  it("nudges you to say why when you mark a book Did Not Finish", async () => {
+    mockGetBook.mockResolvedValue({ ...book, myEntry });
+    mockGetReviews.mockResolvedValue([]);
+    mockUpdateBook.mockResolvedValue({ ...myEntry, shelf: "dnf" });
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    renderBookDetail();
+
+    await screen.findByText("Gone Girl");
+    expect(screen.getByText("Rate and Review")).toBeInTheDocument();
+
+    await userEvent.selectOptions(screen.getByLabelText("Shelf"), "dnf");
+
+    expect(
+      await screen.findByText("Didn't finish? Say why"),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Review (optional)")).toHaveFocus();
+    expect(scrollIntoView).toHaveBeenCalled();
   });
 });

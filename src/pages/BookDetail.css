@@ -246,6 +246,12 @@
   margin-bottom: 16px;
 }
 
+.review-nudge {
+  margin: -8px 0 16px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
 .review-card {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);

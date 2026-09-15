@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ReadersRealm.Api.Data;
 using ReadersRealm.Api.Models;
+using ReadersRealm.Api.Services;
 
 namespace ReadersRealm.Api.Controllers;
 
@@ -14,11 +15,17 @@ public class ReviewsController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly UserManager<AppUser> _userManager;
+    private readonly ActivityService _activity;
 
-    public ReviewsController(AppDbContext context, UserManager<AppUser> userManager)
+    public ReviewsController(
+        AppDbContext context,
+        UserManager<AppUser> userManager,
+        ActivityService activity
+    )
     {
         _context = context;
         _userManager = userManager;
+        _activity = activity;
     }
 
     [HttpGet("book/{bookId}")]
@@ -81,6 +88,7 @@ public class ReviewsController : ControllerBase
         };
 
         _context.Reviews.Add(review);
+        _activity.Record(userId!, ActivityTypes.Reviewed, review.BookId, rating: review.Rating);
         await _context.SaveChangesAsync();
 
         var user = await _userManager.FindByIdAsync(userId!);

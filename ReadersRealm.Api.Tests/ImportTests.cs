@@ -157,6 +157,10 @@ public class ImportTests : IDisposable
             $"/api/reviews/book/{stand.BookId}"
         );
         Assert.Equal("Shite. Feels like a first draft.", reviews!.Single().Text);
+
+        Assert.Empty(
+            await _client.GetFromJsonAsync<ActivityResult[]>("/api/users/beth/activity") ?? []
+        );
     }
 
     [Fact]

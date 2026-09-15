@@ -16,11 +16,17 @@ public class LibraryController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly LendingService _lending;
+    private readonly ActivityService _activity;
 
-    public LibraryController(AppDbContext context, LendingService lending)
+    public LibraryController(
+        AppDbContext context,
+        LendingService lending,
+        ActivityService activity
+    )
     {
         _context = context;
         _lending = lending;
+        _activity = activity;
     }
 
     [HttpGet]
@@ -234,6 +240,18 @@ public class LibraryController : ControllerBase
             }
         }
 
+        var shelfEvent = ActivityService.ForShelf(request.Shelf);
+
+        if (shelfEvent != null)
+        {
+            _activity.Record(userId!, shelfEvent, book.Id, rating: request.Rating);
+        }
+
+        if (request.Offer == BookOffer.AvailableToBorrow)
+        {
+            _activity.Record(userId!, ActivityTypes.Offered, book.Id);
+        }
+
         await _context.SaveChangesAsync();
 
         entry.Book = book;
@@ -301,6 +319,26 @@ public class LibraryController : ControllerBase
             await _lending.DeclinePendingAsync(entry.Id);
         }
 
+        if (request.Shelf != entry.Shelf)
+        {
+            var shelfEvent = ActivityService.ForShelf(request.Shelf);
+
+            if (shelfEvent != null)
+            {
+                var rating = await _context
+                    .Reviews.Where(r => r.BookId == entry.BookId && r.UserId == userId)
+                    .Select(r => r.Rating)
+                    .FirstOrDefaultAsync();
+
+                _activity.Record(userId!, shelfEvent, entry.BookId, rating: rating);
+            }
+        }
+
+        if (enteringPool)
+        {
+            _activity.Record(userId!, ActivityTypes.Offered, entry.BookId);
+        }
+
         entry.Shelf = request.Shelf;
         entry.Offer = request.Offer;
         await _context.SaveChangesAsync();
@@ -341,6 +379,7 @@ public class LibraryController : ControllerBase
             }
 
             entry.Offer = BookOffer.AvailableToBorrow;
+            _activity.Record(userId!, ActivityTypes.Offered, entry.BookId);
             await _context.SaveChangesAsync();
         }
 

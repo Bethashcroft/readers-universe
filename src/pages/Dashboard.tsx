@@ -3,11 +3,13 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { getDashboardSummary } from "../api/dashboard";
 import type { DashboardSummary } from "../api/dashboard";
+import { getFeed } from "../api/feed";
+import ActivityFeed from "../components/ActivityFeed";
 import { usePageTitle } from "../hooks/usePageTitle";
 import "./Dashboard.css";
 
 function Dashboard() {
-  usePageTitle("Dashboard");
+  usePageTitle("Home");
   const { user } = useAuth();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
 
@@ -23,54 +25,53 @@ function Dashboard() {
     loadSummary();
   }, []);
 
-  const actions = [
-    {
-      to: "/shelves",
-      title: "My Shelves",
-      text: "Organise everything you're reading, want to read, and have read.",
-      stat:
-        summary &&
-        `${summary.myBooks} ${summary.myBooks === 1 ? "book" : "books"}`,
-    },
-    {
-      to: "/browse",
-      title: "Browse Nearby",
-      text: "Discover books to borrow or buy from readers around you.",
-      stat: summary && `${summary.nearby} available`,
-    },
-    {
-      to: "/add-book",
-      title: "Add a Book",
-      text: "Put a new book on your shelves in seconds.",
-      stat: null,
-    },
-    {
-      to: "/borrowing",
-      title: "Borrowing",
-      text: "Offer books to your Trusted Book Club and keep track of loans.",
-      stat: summary && `${summary.pendingRequests} pending`,
-    },
-  ];
+  const stats = summary
+    ? [
+        {
+          to: "/shelves",
+          value: summary.myBooks,
+          label: summary.myBooks === 1 ? "book" : "books",
+        },
+        { to: "/browse", value: summary.nearby, label: "to borrow" },
+        {
+          to: "/borrowing",
+          value: summary.pendingRequests,
+          label: summary.pendingRequests === 1 ? "request" : "requests",
+        },
+      ]
+    : [];
 
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <p className="dashboard-eyebrow">Welcome back</p>
-        <h1>{user?.displayName}</h1>
-        <p className="dashboard-sub">Where would you like to go?</p>
+        <h1>Welcome back, {user?.displayName}</h1>
       </header>
 
-      <div className="dashboard-grid">
-        {actions.map((action) => (
-          <Link key={action.to} to={action.to} className="dashboard-card">
-            <h2>{action.title}</h2>
-            <p>{action.text}</p>
-            {action.stat && (
-              <span className="dashboard-stat">{action.stat}</span>
-            )}
+      <nav className="dashboard-strip" aria-label="At a glance">
+        {stats.map((stat) => (
+          <Link key={stat.to} to={stat.to} className="dashboard-stat">
+            <strong>{stat.value}</strong> {stat.label}
           </Link>
         ))}
-      </div>
+        <Link to="/add-book" className="dashboard-stat dashboard-stat-action">
+          Add a book
+        </Link>
+      </nav>
+
+      <section className="dashboard-feed">
+        <h2 className="eyebrow">From people you follow</h2>
+        <ActivityFeed
+          load={getFeed}
+          empty={
+            <>
+              <p>Follow some readers and their reading shows up here.</p>
+              <Link className="btn btn-primary" to="/readers">
+                Find readers
+              </Link>
+            </>
+          }
+        />
+      </section>
     </div>
   );
 }
