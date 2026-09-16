@@ -3,9 +3,10 @@ import type { ActivityResponse, ActivityType } from "../api/feed";
 import { timeAgo } from "../utils/dates";
 import Avatar from "./Avatar";
 import BookCover from "./BookCover";
+import { percentThrough } from "../utils/progress";
 import "./ActivityItem.css";
 
-const verbs: Record<ActivityType, string> = {
+const verbs: Record<Exclude<ActivityType, "progress">, string> = {
   "started-reading": "started reading",
   finished: "finished",
   "did-not-finish": "didn't finish",
@@ -14,6 +15,15 @@ const verbs: Record<ActivityType, string> = {
   offered: "is offering",
   followed: "started following",
 };
+
+function verbFor(activity: ActivityResponse) {
+  if (activity.type !== "progress") return verbs[activity.type];
+
+  const percent = percentThrough(activity.page, activity.pageCount);
+  return percent === null
+    ? `is on page ${activity.page} of`
+    : `is ${percent}% through`;
+}
 
 type ActivityItemProps = {
   activity: ActivityResponse;
@@ -33,7 +43,7 @@ function ActivityItem({ activity }: ActivityItemProps) {
           <Link to={`/profile/${activity.userName}`} className="activity-name">
             {activity.displayName}
           </Link>{" "}
-          {verbs[activity.type]}{" "}
+          {verbFor(activity)}{" "}
           {book && (
             <Link to={`/book/${book.id}`} className="activity-subject">
               {book.title}

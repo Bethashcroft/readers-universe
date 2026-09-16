@@ -58,6 +58,7 @@ public static class ActivityTypes
     public const string Reviewed = "reviewed";
     public const string Offered = "offered";
     public const string Followed = "followed";
+    public const string Progress = "progress";
 }
 
 public static class NotificationTypes

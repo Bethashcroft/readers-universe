@@ -1,14 +1,15 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useBooks } from "../context/useBooks";
 import { lookupBook } from "../api/books";
-import type { BookLookupResult } from "../api/books";
+import type { BookLookupResult, BookSearchResult } from "../api/books";
 import { shelfLabels, offerLabels, selectableOffers } from "../types/book";
 import type { ShelfType, OfferType } from "../types/book";
 import { placeholderCover } from "../types/covers";
 import { usePageTitle } from "../hooks/usePageTitle";
 import ImportLibrary from "../components/ImportLibrary";
 import CoverBackfill from "../components/CoverBackfill";
+import BookFinder from "../components/BookFinder";
 import "../styles/forms.css";
 import "./AddBook.css";
 
@@ -18,6 +19,7 @@ function AddBook() {
   usePageTitle("Add a Book");
   const { addBook } = useBooks();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
 
   const [isbn, setIsbn] = useState("");
   const [lookupStatus, setLookupStatus] = useState<LookupStatus>("idle");
@@ -61,6 +63,16 @@ function AddBook() {
     }
   };
 
+  const handlePick = (book: BookSearchResult) => {
+    setTitle(book.title);
+    setAuthor(book.author);
+    setCoverUrl(book.coverUrl);
+    setIsbn(book.isbn);
+    setLastLookup(book);
+    setLookupStatus("found");
+    setError("");
+  };
+
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
@@ -76,6 +88,7 @@ function AddBook() {
         rating: rating ? Number(rating) : null,
         reviewText,
         containsSpoiler,
+        pageCount: lastLookup?.pageCount ?? null,
       });
       navigate("/shelves");
     } catch (err) {
@@ -92,9 +105,12 @@ function AddBook() {
           <h1>Add a Book</h1>
           {error && <p className="form-error">{error}</p>}
 
-          <label htmlFor="isbn">
-            Have the book? Enter its ISBN to auto-fill
-          </label>
+          <BookFinder
+            initialQuery={params.get("q") ?? ""}
+            onPick={handlePick}
+          />
+
+          <label htmlFor="isbn">Or enter its ISBN to auto-fill</label>
           <div className="isbn-lookup">
             <input
               type="text"

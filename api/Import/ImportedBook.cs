@@ -11,6 +11,7 @@ public class ImportedBook
     public bool ContainsSpoiler { get; set; }
     public DateTime? ReadDate { get; set; }
     public DateTime? AddedDate { get; set; }
+    public int? PageCount { get; set; }
 }
 
 public class SkippedRow

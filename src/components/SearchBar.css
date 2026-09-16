@@ -1,11 +1,11 @@
-.reader-search {
+.search-bar {
   position: relative;
   display: flex;
   align-items: center;
   z-index: 2;
 }
 
-.reader-search-icon {
+.search-bar-icon {
   position: absolute;
   left: 13px;
   width: 15px;
@@ -16,7 +16,7 @@
   pointer-events: none;
 }
 
-.reader-search-input {
+.search-bar-input {
   width: 200px;
   padding: 8px 14px 8px 34px;
   border-radius: 999px;
@@ -31,20 +31,20 @@
     border-color 0.15s ease;
 }
 
-.reader-search-input::placeholder {
+.search-bar-input::placeholder {
   color: var(--color-text-muted);
 }
 
-.reader-search-input:focus {
+.search-bar-input:focus {
   width: 250px;
   border-color: rgba(167, 139, 250, 0.6);
 }
 
-.reader-search-panel {
+.search-bar-panel {
   position: absolute;
   top: calc(100% + 10px);
   left: 0;
-  min-width: 260px;
+  min-width: 300px;
   display: flex;
   flex-direction: column;
   padding: 6px;
@@ -55,13 +55,29 @@
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
 }
 
-.reader-search-empty {
+.search-bar-empty {
   padding: 10px 12px;
   font-size: 13px;
   color: var(--color-text-muted);
 }
 
-.reader-search-result {
+.search-bar-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-bar-group + .search-bar-group {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--color-border);
+}
+
+.search-bar-heading {
+  display: block;
+  padding: 6px 10px 2px;
+}
+
+.search-bar-result {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -76,27 +92,40 @@
   transition: background-color 0.15s ease;
 }
 
-.reader-search-result:hover {
+.search-bar-result:hover {
   background-color: rgba(167, 139, 250, 0.14);
 }
 
-.reader-search-names {
+.search-bar-cover {
+  width: 26px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+.search-bar-names {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
-.reader-search-name {
+.search-bar-name {
   font-size: 14px;
   color: var(--color-text);
 }
 
-.reader-search-handle {
+.search-bar-handle {
   font-size: 12px;
   color: var(--color-primary);
 }
 
-.reader-search-more {
+.search-bar-author {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.search-bar-more {
   margin-top: 4px;
   padding: 9px 12px;
   border: none;
@@ -109,12 +138,12 @@
   color: var(--color-primary);
 }
 
-.reader-search-more:hover {
+.search-bar-more:hover {
   color: var(--color-text);
 }
 
 @media (max-width: 860px) {
-  .reader-search {
+  .search-bar {
     display: none;
   }
 }

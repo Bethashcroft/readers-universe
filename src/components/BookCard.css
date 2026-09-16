@@ -45,6 +45,20 @@ a.book-card {
   color: var(--color-text-muted);
 }
 
+.book-progress {
+  height: 6px;
+  margin-top: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.book-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--gradient);
+}
+
 .book-rating {
   font-size: 14px;
   color: #f59e0b;

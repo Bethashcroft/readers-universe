@@ -7,7 +7,8 @@ export type ActivityType =
   | "wants-to-read"
   | "reviewed"
   | "offered"
-  | "followed";
+  | "followed"
+  | "progress";
 
 export interface ActivityBook {
   id: number;
@@ -26,6 +27,8 @@ export interface ActivityResponse {
   type: ActivityType;
   date: string;
   rating: number | null;
+  page: number | null;
+  pageCount: number | null;
   userName: string;
   displayName: string;
   avatarUrl: string;

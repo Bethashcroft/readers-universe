@@ -79,6 +79,7 @@ public partial class GoodreadsCsvParser : IBookImportParser
                     ContainsSpoiler = Field("Spoiler").Equals("true", StringComparison.OrdinalIgnoreCase),
                     ReadDate = ReadDate(Field("Date Read")),
                     AddedDate = ReadDate(Field("Date Added")),
+                    PageCount = ReadPageCount(Field("Number of Pages")),
                 }
             );
         }
@@ -106,6 +107,9 @@ public partial class GoodreadsCsvParser : IBookImportParser
         var withBreaks = LineBreakTag().Replace(value, "\n");
         return WebUtility.HtmlDecode(withBreaks).Trim();
     }
+
+    private static int? ReadPageCount(string value) =>
+        int.TryParse(value.Trim(), out var pages) && pages > 0 ? pages : null;
 
     private static int? ReadRating(string value)
     {

@@ -216,6 +216,7 @@ public class LibraryController : ControllerBase
             UserId = userId!,
             Shelf = request.Shelf,
             Offer = request.Offer,
+            PageCount = request.PageCount > 0 ? request.PageCount : null,
         };
         _context.LibraryEntries.Add(entry);
 
@@ -342,6 +343,87 @@ public class LibraryController : ControllerBase
         entry.Shelf = request.Shelf;
         entry.Offer = request.Offer;
         await _context.SaveChangesAsync();
+
+        return Ok((await ToResponsesAsync([entry], userId!)).Single());
+    }
+
+    [HttpPut("{id}/progress")]
+    public async Task<IActionResult> UpdateProgress(
+        int id,
+        [FromBody] UpdateProgressRequest request
+    )
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var entry = await _context
+            .LibraryEntries.Include(e => e.Book)
+            .Include(e => e.User)
+            .FirstOrDefaultAsync(e => e.Id == id && e.UserId == userId);
+
+        if (entry == null)
+        {
+            return NotFound(new { message = "Book not found on your shelves" });
+        }
+
+        if (request.Page < 0 || request.PageCount is < 1)
+        {
+            return BadRequest(new { message = "Pages need to be positive numbers." });
+        }
+
+        if (request.Page > request.PageCount)
+        {
+            return BadRequest(new { message = "You can't be past the last page." });
+        }
+
+        var pageChanged = request.Page != entry.Page;
+
+        entry.Page = request.Page;
+        entry.PageCount = request.PageCount;
+
+        if (pageChanged && request.Page > 0)
+        {
+            _activity.Record(
+                userId!,
+                ActivityTypes.Progress,
+                entry.BookId,
+                page: request.Page,
+                pageCount: request.PageCount
+            );
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok((await ToResponsesAsync([entry], userId!)).Single());
+    }
+
+    [HttpPost("{id}/page-count")]
+    public async Task<IActionResult> LookUpPageCount(int id, [FromServices] IBookLookup lookup)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var entry = await _context
+            .LibraryEntries.Include(e => e.Book)
+            .Include(e => e.User)
+            .FirstOrDefaultAsync(e => e.Id == id && e.UserId == userId);
+
+        if (entry == null)
+        {
+            return NotFound(new { message = "Book not found on your shelves" });
+        }
+
+        if (entry.PageCount == null)
+        {
+            var found = await lookup.LookupAsync(entry.Book.Isbn);
+            var pageCount =
+                found?.PageCount
+                ?? await lookup.FindPageCountAsync(entry.Book.Title, entry.Book.Author);
+
+            if (pageCount != null)
+            {
+                entry.PageCount = pageCount;
+                await _context.SaveChangesAsync();
+            }
+        }
 
         return Ok((await ToResponsesAsync([entry], userId!)).Single());
     }
@@ -529,6 +611,13 @@ public class AddToLibraryRequest
     public int? Rating { get; set; }
     public string ReviewText { get; set; } = string.Empty;
     public bool ContainsSpoiler { get; set; }
+    public int? PageCount { get; set; }
+}
+
+public class UpdateProgressRequest
+{
+    public int? Page { get; set; }
+    public int? PageCount { get; set; }
 }
 
 public class UpdateLibraryEntryRequest
@@ -547,6 +636,8 @@ public class LibraryEntryResponse
     public string Isbn { get; set; } = string.Empty;
     public string Shelf { get; set; } = string.Empty;
     public string Offer { get; set; } = BookOffer.None;
+    public int? Page { get; set; }
+    public int? PageCount { get; set; }
     public int? Rating { get; set; }
     public string UserId { get; set; } = string.Empty;
     public string OwnerName { get; set; } = string.Empty;

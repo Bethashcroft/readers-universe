@@ -1,16 +1,11 @@
-using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using ReadersRealm.Api.Models;
 
 namespace ReadersRealm.Api.Services;
 
-public partial class OpenLibraryCoverSource(HttpClient http) : ICoverSource
+public class OpenLibraryCoverSource(HttpClient http) : ICoverSource
 {
     private readonly HttpClient _http = http;
-
-    [GeneratedRegex(@"\s*\([^)]*\)\s*$")]
-    private static partial Regex TrailingSeries();
 
     public async Task<CoverResult> FindCoverAsync(
         string title,
@@ -105,7 +100,7 @@ public partial class OpenLibraryCoverSource(HttpClient http) : ICoverSource
         CancellationToken cancellationToken
     )
     {
-        var bareTitle = TrailingSeries().Replace(title, string.Empty).Trim();
+        var bareTitle = OpenLibraryMatching.BareTitle(title);
         var terms = $"{bareTitle} {author}".Trim();
 
         if (terms.Length == 0)
@@ -135,8 +130,8 @@ public partial class OpenLibraryCoverSource(HttpClient http) : ICoverSource
                 return CoverResult.NothingThere;
             }
 
-            var wantedTitle = Normalise(bareTitle);
-            var wantedAuthor = Normalise(author);
+            var wantedTitle = OpenLibraryMatching.Normalise(bareTitle);
+            var wantedAuthor = OpenLibraryMatching.Normalise(author);
 
             foreach (var doc in docs.EnumerateArray())
             {
@@ -145,16 +140,15 @@ public partial class OpenLibraryCoverSource(HttpClient http) : ICoverSource
                     continue;
                 }
 
-                var candidateTitle = doc.TryGetProperty("title", out var docTitle)
-                    ? Normalise(docTitle.GetString() ?? string.Empty)
-                    : string.Empty;
-
-                if (candidateTitle.Length == 0 || candidateTitle != wantedTitle)
+                if (!OpenLibraryMatching.TitleMatches(doc, wantedTitle))
                 {
                     continue;
                 }
 
-                if (wantedAuthor.Length > 0 && !AuthorMatches(doc, wantedAuthor))
+                if (
+                    wantedAuthor.Length > 0
+                    && !OpenLibraryMatching.AuthorMatches(doc, wantedAuthor)
+                )
                 {
                     continue;
                 }
@@ -164,42 +158,6 @@ public partial class OpenLibraryCoverSource(HttpClient http) : ICoverSource
         }
 
         return CoverResult.NothingThere;
-    }
-
-    private static bool AuthorMatches(JsonElement doc, string wantedAuthor)
-    {
-        if (
-            !doc.TryGetProperty("author_name", out var authors)
-            || authors.ValueKind != JsonValueKind.Array
-        )
-        {
-            return false;
-        }
-
-        foreach (var author in authors.EnumerateArray())
-        {
-            if (Normalise(author.GetString() ?? string.Empty) == wantedAuthor)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static string Normalise(string value)
-    {
-        var builder = new StringBuilder();
-
-        foreach (var c in value)
-        {
-            if (char.IsLetterOrDigit(c))
-            {
-                builder.Append(char.ToLowerInvariant(c));
-            }
-        }
-
-        return builder.ToString();
     }
 
     private enum Reach

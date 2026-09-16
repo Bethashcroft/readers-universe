@@ -17,7 +17,9 @@ public class ActivityService
         string type,
         int? bookId = null,
         string? targetUserId = null,
-        int? rating = null
+        int? rating = null,
+        int? page = null,
+        int? pageCount = null
     )
     {
         _context.Activities.Add(
@@ -28,6 +30,8 @@ public class ActivityService
                 BookId = bookId,
                 TargetUserId = targetUserId,
                 Rating = rating,
+                Page = page,
+                PageCount = pageCount,
             }
         );
     }

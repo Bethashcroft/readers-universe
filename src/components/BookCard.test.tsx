@@ -8,6 +8,8 @@ const book: LibraryEntryResponse = {
   bookId: 77,
   alreadyOnShelves: false,
   canRequest: true,
+  page: null,
+  pageCount: null,
   title: "The Hobbit",
   author: "J.R.R. Tolkien",
   coverUrl: "x",
@@ -53,5 +55,22 @@ describe("BookCard", () => {
     renderCard({ ...book, rating: null });
 
     expect(screen.queryByText("★★★★☆")).not.toBeInTheDocument();
+  });
+
+  it("shows a progress bar while you are reading it", () => {
+    renderCard({
+      ...book,
+      shelf: "currently-reading",
+      page: 85,
+      pageCount: 340,
+    });
+
+    expect(screen.getByTitle("25% through")).toBeInTheDocument();
+  });
+
+  it("shows no progress bar once the book is finished", () => {
+    renderCard({ ...book, shelf: "read", page: 340, pageCount: 340 });
+
+    expect(screen.queryByTitle(/through/)).not.toBeInTheDocument();
   });
 });

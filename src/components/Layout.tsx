@@ -20,7 +20,7 @@ import {
   startChatConnection,
   stopChatConnection,
 } from "../realtime/connection";
-import ReaderSearchBar from "./ReaderSearchBar";
+import SearchBar from "./SearchBar";
 import NotificationBell from "./NotificationBell";
 import { useClickOutside } from "../hooks/useClickOutside";
 import "./Layout.css";
@@ -188,7 +188,7 @@ function Layout() {
         <Link to="/" className="navbar-brand">
           The Readers Universe
         </Link>
-        {user && <ReaderSearchBar />}
+        {user && <SearchBar />}
         <ul className="navbar-links">
           {user ? (
             <>

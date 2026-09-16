@@ -5,17 +5,25 @@ import BookDetail from "./BookDetail";
 import type { BookDetailResponse, LibraryEntryResponse } from "../api/books";
 import type { ReviewResponse } from "../api/reviews";
 
-const { mockGetBook, mockGetReviews, mockUseAuth, mockAddBook, mockUpdateBook } =
-  vi.hoisted(() => ({
-    mockGetBook: vi.fn(),
-    mockGetReviews: vi.fn(),
-    mockUseAuth: vi.fn(),
-    mockAddBook: vi.fn(),
-    mockUpdateBook: vi.fn(),
-  }));
+const {
+  mockGetBook,
+  mockLookupPageCount,
+  mockGetReviews,
+  mockUseAuth,
+  mockAddBook,
+  mockUpdateBook,
+} = vi.hoisted(() => ({
+  mockGetBook: vi.fn(),
+  mockLookupPageCount: vi.fn(),
+  mockGetReviews: vi.fn(),
+  mockUseAuth: vi.fn(),
+  mockAddBook: vi.fn(),
+  mockUpdateBook: vi.fn(),
+}));
 
 vi.mock("../api/books", () => ({
   getBook: mockGetBook,
+  lookupPageCount: mockLookupPageCount,
 }));
 
 vi.mock("../api/reviews", () => ({
@@ -46,6 +54,8 @@ const myEntry: LibraryEntryResponse = {
   bookId: 1,
   alreadyOnShelves: false,
   canRequest: true,
+  page: null,
+  pageCount: null,
   title: "Gone Girl",
   author: "Gillian Flynn",
   coverUrl: "x",
@@ -95,6 +105,7 @@ function renderBookDetail() {
 describe("BookDetail", () => {
   beforeEach(() => {
     mockGetBook.mockReset();
+    mockLookupPageCount.mockReset();
     mockGetReviews.mockReset();
     mockUseAuth.mockReset();
     mockUseAuth.mockReturnValue({
@@ -286,5 +297,30 @@ describe("BookDetail", () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Review (optional)")).toHaveFocus();
     expect(scrollIntoView).toHaveBeenCalled();
+  });
+
+  it("fills in a missing page count for a book you are reading", async () => {
+    const reading = { ...myEntry, shelf: "currently-reading" };
+    mockGetBook.mockResolvedValue({ ...book, myEntry: reading });
+    mockGetReviews.mockResolvedValue([]);
+    mockLookupPageCount.mockResolvedValue({ ...reading, pageCount: 340 });
+    renderBookDetail();
+
+    await screen.findByText("Gone Girl");
+
+    expect(mockLookupPageCount).toHaveBeenCalledWith(9);
+    expect(screen.getByText("340")).toBeInTheDocument();
+  });
+
+  it("leaves a page count you already have alone", async () => {
+    const reading = { ...myEntry, shelf: "currently-reading", pageCount: 300 };
+    mockGetBook.mockResolvedValue({ ...book, myEntry: reading });
+    mockGetReviews.mockResolvedValue([]);
+    renderBookDetail();
+
+    await screen.findByText("Gone Girl");
+
+    expect(mockLookupPageCount).not.toHaveBeenCalled();
+    expect(screen.getByText("300")).toBeInTheDocument();
   });
 });

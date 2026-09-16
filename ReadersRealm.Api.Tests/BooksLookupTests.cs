@@ -20,7 +20,42 @@ public class BooksLookupTests : IDisposable
         _factory.Dispose();
     }
 
-    private record LookupResult(string Title, string Author, string CoverUrl);
+    private record LookupResult(string Title, string Author, string CoverUrl, int? PageCount);
+
+    private record SearchResult(
+        string Title,
+        string Author,
+        string CoverUrl,
+        string Isbn,
+        int? PageCount,
+        int? Year
+    );
+
+    [Fact]
+    public async Task SearchingByTitle_ListsMatchesWithTheirDetails()
+    {
+        var user = await _client.RegisterAsync("reader");
+        _client.Authenticate(user.Token);
+
+        var found = await _client.GetFromJsonAsync<SearchResult[]>("/api/books/lookup?q=the%20hobbit");
+
+        var hobbit = Assert.Single(found!);
+        Assert.Equal("The Hobbit", hobbit.Title);
+        Assert.Equal(FakeBookLookup.KnownIsbn, hobbit.Isbn);
+        Assert.Equal(310, hobbit.PageCount);
+        Assert.Equal(1937, hobbit.Year);
+    }
+
+    [Fact]
+    public async Task SearchingWithNothingTyped_IsRefused()
+    {
+        var user = await _client.RegisterAsync("reader");
+        _client.Authenticate(user.Token);
+
+        var response = await _client.GetAsync("/api/books/lookup?q=%20");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 
     [Fact]
     public async Task LookingUpAKnownIsbn_ReturnsTheBookDetails()
@@ -33,6 +68,7 @@ public class BooksLookupTests : IDisposable
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<LookupResult>();
         Assert.Equal("The Hobbit", result!.Title);
+        Assert.Equal(310, result.PageCount);
         Assert.Equal("J.R.R. Tolkien", result.Author);
         Assert.False(string.IsNullOrWhiteSpace(result.CoverUrl));
     }

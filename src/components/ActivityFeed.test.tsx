@@ -13,6 +13,8 @@ function activity(
     type: "finished",
     date: new Date().toISOString(),
     rating: null,
+    page: null,
+    pageCount: null,
     userName: "bookdragon",
     displayName: "Sophie Bell",
     avatarUrl: "",
@@ -46,9 +48,13 @@ describe("ActivityFeed", () => {
         book: null,
         targetUser: { userName: "quietpages", displayName: "Tom Ashby" },
       }),
+      activity(6, { type: "progress", page: 120, pageCount: 340 }),
+      activity(7, { type: "progress", page: 120, pageCount: null }),
     ]);
 
-    expect(await screen.findAllByText("Sophie Bell")).toHaveLength(5);
+    expect(await screen.findAllByText("Sophie Bell")).toHaveLength(7);
+    expect(screen.getByText("is 35% through")).toBeInTheDocument();
+    expect(screen.getByText("is on page 120 of")).toBeInTheDocument();
     expect(screen.getByText("finished")).toBeInTheDocument();
     expect(screen.getByText("★★★★☆")).toBeInTheDocument();
     expect(screen.getByText("started reading")).toBeInTheDocument();

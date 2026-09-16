@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useBooks } from "../context/useBooks";
 import { useAuth } from "../context/useAuth";
-import { getBook } from "../api/books";
+import { getBook, lookupPageCount } from "../api/books";
 import type { BookDetailResponse } from "../api/books";
 import { createBorrowRequest } from "../api/borrow";
 import VintedButton from "../components/VintedButton";
@@ -17,6 +17,7 @@ import {
 import type { ReviewResponse } from "../api/reviews";
 import { shelfLabels, offerLabels, selectableOffers } from "../types/book";
 import BookCover from "../components/BookCover";
+import ReadingProgress from "../components/ReadingProgress";
 import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { formatDate } from "../utils/dates";
@@ -60,6 +61,14 @@ function BookDetail() {
     setLoadError(false);
     try {
       const data = await getBook(Number(id));
+
+      if (
+        data.myEntry?.shelf === "currently-reading" &&
+        data.myEntry.pageCount === null
+      ) {
+        data.myEntry = await lookupPageCount(data.myEntry.id);
+      }
+
       setBook(data);
       setShelf(data.myEntry?.shelf ?? "");
       setOffer(data.myEntry?.offer ?? "");
@@ -322,6 +331,14 @@ function BookDetail() {
               </div>
 
               {offerError && <p className="form-error">{offerError}</p>}
+
+              {shelf === "currently-reading" && (
+                <ReadingProgress
+                  key={myEntry.id}
+                  entry={myEntry}
+                  onSaved={(updated) => setBook({ ...book, myEntry: updated })}
+                />
+              )}
 
               {offer === "for-sale" && (
                 <button

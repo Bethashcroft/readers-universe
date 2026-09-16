@@ -42,6 +42,57 @@ public class BooksController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("lookup")]
+    public async Task<IActionResult> Find([FromQuery] string? q)
+    {
+        var query = (q ?? string.Empty).Trim();
+
+        if (query.Length == 0)
+        {
+            return BadRequest(new { message = "Type a title or author to search." });
+        }
+
+        return Ok(await _lookup.SearchAsync(query));
+    }
+
+    [HttpGet("search")]
+    public async Task<IActionResult> Search(
+        [FromQuery] string? q,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize
+    )
+    {
+        var (currentPage, size) = PagedResult<BookSummaryResponse>.Normalise(page, pageSize);
+        var term = (q ?? string.Empty).Trim().ToLower();
+
+        var query = _context.Books.AsQueryable();
+
+        if (term.Length > 0)
+        {
+            query = query.Where(b =>
+                b.Title.ToLower().Contains(term) || b.Author.ToLower().Contains(term)
+            );
+        }
+
+        var total = await query.CountAsync();
+
+        var books = await query
+            .OrderBy(b => b.Title)
+            .ThenBy(b => b.Id)
+            .Skip((currentPage - 1) * size)
+            .Take(size)
+            .Select(b => new BookSummaryResponse
+            {
+                Id = b.Id,
+                Title = b.Title,
+                Author = b.Author,
+                CoverUrl = b.CoverUrl,
+            })
+            .ToListAsync();
+
+        return Ok(PagedResult<BookSummaryResponse>.From(books, currentPage, size, total));
+    }
+
     [HttpGet("browse")]
     public async Task<IActionResult> Browse(
         [FromQuery] int? page,
@@ -175,6 +226,14 @@ public class BooksController : ControllerBase
             }
         );
     }
+}
+
+public class BookSummaryResponse
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Author { get; set; } = string.Empty;
+    public string CoverUrl { get; set; } = string.Empty;
 }
 
 public class BookDetailResponse

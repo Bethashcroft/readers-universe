@@ -17,7 +17,9 @@ public record BookResult(
     int? Rating,
     string UserId,
     string OwnerName,
-    bool CanRequest
+    bool CanRequest,
+    int? Page,
+    int? PageCount
 );
 
 public record BookOwnerResult(

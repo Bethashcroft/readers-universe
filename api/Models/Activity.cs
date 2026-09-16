@@ -16,6 +16,8 @@ public class Activity
     public AppUser? TargetUser { get; set; }
 
     public int? Rating { get; set; }
+    public int? Page { get; set; }
+    public int? PageCount { get; set; }
 
     public DateTime Date { get; set; } = DateTime.UtcNow;
 }

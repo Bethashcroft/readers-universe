@@ -14,6 +14,9 @@ public class LibraryEntry
 
     public DateTime AddedDate { get; set; } = DateTime.UtcNow;
 
+    public int? Page { get; set; }
+    public int? PageCount { get; set; }
+
     public int BookId { get; set; }
     public Book Book { get; set; } = null!;
 

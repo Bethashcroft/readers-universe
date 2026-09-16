@@ -11,6 +11,8 @@ export interface LibraryEntryResponse {
   isbn: string;
   shelf: string;
   offer: string;
+  page: number | null;
+  pageCount: number | null;
   rating: number | null;
   userId: string;
   ownerName: string;
@@ -50,6 +52,7 @@ export interface AddToLibraryRequest {
   rating: number | null;
   reviewText: string;
   containsSpoiler: boolean;
+  pageCount?: number | null;
 }
 
 export interface UpdateLibraryEntryRequest {
@@ -63,6 +66,28 @@ export interface PagedResult<T> {
   pageSize: number;
   total: number;
   totalPages: number;
+}
+
+export interface BookSummaryResponse {
+  id: number;
+  title: string;
+  author: string;
+  coverUrl: string;
+}
+
+export function searchBooks(options?: {
+  q?: string;
+  page?: number;
+}): Promise<PagedResult<BookSummaryResponse>> {
+  const params = new URLSearchParams();
+  if (options?.q) params.set("q", options.q);
+  if (options?.page) params.set("page", String(options.page));
+  const query = params.toString();
+
+  return request(
+    `/books/search${query ? `?${query}` : ""}`,
+    "Failed to search books",
+  );
 }
 
 export function getMyBooks(options?: {
@@ -177,6 +202,24 @@ export function updateBook(
   });
 }
 
+export function updateProgress(
+  id: number,
+  progress: { page: number | null; pageCount: number | null },
+): Promise<LibraryEntryResponse> {
+  return request(`/library/${id}/progress`, "Failed to save your progress", {
+    method: "PUT",
+    body: JSON.stringify(progress),
+  });
+}
+
+export function lookupPageCount(id: number): Promise<LibraryEntryResponse> {
+  return request(
+    `/library/${id}/page-count`,
+    "Failed to look up the page count",
+    { method: "POST" },
+  );
+}
+
 export function deleteBook(id: number): Promise<void> {
   return requestVoid(`/library/${id}`, "Failed to delete book", {
     method: "DELETE",
@@ -187,11 +230,28 @@ export interface BookLookupResult {
   title: string;
   author: string;
   coverUrl: string;
+  pageCount: number | null;
 }
 
 export function lookupBook(isbn: string): Promise<BookLookupResult> {
   return request(
     `/books/lookup/${encodeURIComponent(isbn)}`,
     "No book found for that ISBN",
+  );
+}
+
+export interface BookSearchResult {
+  title: string;
+  author: string;
+  coverUrl: string;
+  isbn: string;
+  pageCount: number | null;
+  year: number | null;
+}
+
+export function findBooks(q: string): Promise<BookSearchResult[]> {
+  return request(
+    `/books/lookup?q=${encodeURIComponent(q)}`,
+    "Failed to search for books",
   );
 }

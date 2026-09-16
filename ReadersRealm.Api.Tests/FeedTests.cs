@@ -11,6 +11,8 @@ public record ActivityResult(
     int Id,
     string Type,
     int? Rating,
+    int? Page,
+    int? PageCount,
     string UserName,
     ActivityBookResult? Book,
     ActivityUserResult? TargetUser

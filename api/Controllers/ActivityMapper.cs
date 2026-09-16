@@ -15,6 +15,8 @@ public static class ActivityMapper
             Type = a.Type,
             Date = a.Date,
             Rating = a.Rating,
+            Page = a.Page,
+            PageCount = a.PageCount,
             UserName = a.User.UserName!,
             DisplayName = a.User.DisplayName,
             AvatarUrl = a.User.AvatarUrl,
@@ -45,6 +47,8 @@ public class ActivityResponse
     public string Type { get; set; } = string.Empty;
     public DateTime Date { get; set; }
     public int? Rating { get; set; }
+    public int? Page { get; set; }
+    public int? PageCount { get; set; }
     public string UserName { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string AvatarUrl { get; set; } = string.Empty;

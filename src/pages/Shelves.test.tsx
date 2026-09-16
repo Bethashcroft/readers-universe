@@ -19,6 +19,8 @@ const book: LibraryEntryResponse = {
   bookId: 10,
   alreadyOnShelves: false,
   canRequest: true,
+  page: null,
+  pageCount: null,
   title: "Piranesi",
   author: "Susanna Clarke",
   coverUrl: "x",

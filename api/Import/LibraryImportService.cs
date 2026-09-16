@@ -133,6 +133,7 @@ public class LibraryImportService(AppDbContext context)
                     Shelf = source.Shelf,
                     Offer = BookOffer.None,
                     AddedDate = source.AddedDate ?? DateTime.UtcNow,
+                    PageCount = source.PageCount,
                 }
             );
 
