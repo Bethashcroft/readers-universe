@@ -78,6 +78,19 @@ describe("AddBook ISBN lookup", () => {
     expect(mockLookupBook).toHaveBeenCalledWith("9780261103344");
   });
 
+  it("keeps the Goodreads import folded away until you ask", async () => {
+    const user = userEvent.setup();
+    renderAddBook();
+
+    expect(screen.queryByText(/drop the CSV here/)).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: /Bring your library with you/ }),
+    );
+
+    expect(screen.getByText(/drop the CSV here/)).toBeInTheDocument();
+  });
+
   it("shows a message when the ISBN isn't found", async () => {
     mockLookupBook.mockRejectedValue(new Error("No book found for that ISBN"));
     const user = userEvent.setup();

@@ -4,6 +4,8 @@ import { importLibrary } from "../api/import";
 import type { ImportSummary } from "../api/import";
 import { shelfLabels } from "../types/book";
 import type { ShelfType } from "../types/book";
+import { useCoverSearch } from "../hooks/useCoverSearch";
+import CoverSearchStatus from "./CoverSearchStatus";
 import "./ImportLibrary.css";
 
 type Stage = "idle" | "checking" | "ready" | "importing" | "done";
@@ -16,6 +18,7 @@ function ImportLibrary() {
   const [preview, setPreview] = useState<ImportSummary | null>(null);
   const [result, setResult] = useState<ImportSummary | null>(null);
   const [error, setError] = useState("");
+  const covers = useCoverSearch();
 
   const reset = () => {
     setFile(null);
@@ -61,6 +64,9 @@ function ImportLibrary() {
       setResult(done);
       setPreview(null);
       setStage("done");
+      if (done.added > 0) {
+        covers.start();
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "The import did not finish.",
@@ -71,10 +77,10 @@ function ImportLibrary() {
 
   return (
     <section className="import-library">
-      <h2>Bring your library with you</h2>
       <p className="import-intro">
         Already keep your books on Goodreads? Export your library there under My
-        Books, Import and Export, then drop the CSV here.
+        Books, Import and Export, then drop the CSV here. Once your books are
+        in, we look for any missing covers for you.
       </p>
 
       {error && <p className="form-error">{error}</p>}
@@ -100,6 +106,7 @@ function ImportLibrary() {
                 : "books were already on your shelves, so we left them alone."}
             </p>
           )}
+          {result.added > 0 && <CoverSearchStatus search={covers} />}
           <div className="import-actions">
             <Link className="btn btn-primary" to="/shelves">
               Go to my shelves

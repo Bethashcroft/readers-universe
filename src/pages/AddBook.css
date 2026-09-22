@@ -12,6 +12,44 @@
   max-width: none;
 }
 
+.add-book-more {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border);
+}
+
+.add-book-more-toggle {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.add-book-more-toggle h2 {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.add-book-more-toggle:hover h2 {
+  color: var(--color-primary);
+}
+
+.add-book-more-hint {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
 .auth-form select {
   padding: 10px 12px;
   border: 1px solid var(--color-border);

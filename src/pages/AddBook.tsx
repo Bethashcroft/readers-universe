@@ -8,7 +8,6 @@ import type { ShelfType, OfferType } from "../types/book";
 import { placeholderCover } from "../types/covers";
 import { usePageTitle } from "../hooks/usePageTitle";
 import ImportLibrary from "../components/ImportLibrary";
-import CoverBackfill from "../components/CoverBackfill";
 import BookFinder from "../components/BookFinder";
 import "../styles/forms.css";
 import "./AddBook.css";
@@ -33,6 +32,7 @@ function AddBook() {
   const [containsSpoiler, setContainsSpoiler] = useState(false);
   const [error, setError] = useState("");
   const [lastLookup, setLastLookup] = useState<BookLookupResult | null>(null);
+  const [showMore, setShowMore] = useState(false);
 
   const handleLookup = async () => {
     if (!isbn.trim()) return;
@@ -99,8 +99,6 @@ function AddBook() {
   return (
     <div className="auth-page add-book-page">
       <div className="add-book-inner">
-        <ImportLibrary />
-        <CoverBackfill />
         <form className="auth-form" onSubmit={handleSubmit}>
           <h1>Add a Book</h1>
           {error && <p className="form-error">{error}</p>}
@@ -217,6 +215,21 @@ function AddBook() {
 
           <button type="submit">Add book</button>
         </form>
+
+        <section className="add-book-more">
+          <button
+            type="button"
+            className="add-book-more-toggle"
+            aria-expanded={showMore}
+            onClick={() => setShowMore((open) => !open)}
+          >
+            <h2>Bring your library with you</h2>
+            <span className="add-book-more-hint">
+              {showMore ? "Hide" : "Show"}
+            </span>
+          </button>
+          {showMore && <ImportLibrary />}
+        </section>
       </div>
     </div>
   );
