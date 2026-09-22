@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
 import type { NotificationResponse } from "../api/notifications";
 
@@ -45,6 +45,10 @@ function renderBell() {
       <ul>
         <NotificationBell />
       </ul>
+      <Routes>
+        <Route path="/" element={null} />
+        <Route path="/borrowing" element={<p>Borrowing page</p>} />
+      </Routes>
     </MemoryRouter>,
   );
 }
@@ -99,6 +103,28 @@ describe("NotificationBell", () => {
     expect(
       await screen.findByText("liked your update on Babel"),
     ).toBeInTheDocument();
+  });
+
+  it("names the book and points at Borrowing for a borrow event", async () => {
+    mockGetNotifications.mockResolvedValue([
+      {
+        ...approved,
+        id: 3,
+        type: "borrow-requested",
+        bookTitle: "Babel",
+      },
+    ]);
+    renderBell();
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Notifications, 1 unread" }),
+    );
+
+    expect(await screen.findByText("asked to borrow Babel")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByText("asked to borrow Babel"));
+
+    expect(screen.getByText("Borrowing page")).toBeInTheDocument();
   });
 
   it("clear all empties the panel", async () => {

@@ -134,6 +134,7 @@ public class LibraryImportService(AppDbContext context)
                     Offer = BookOffer.None,
                     AddedDate = source.AddedDate ?? DateTime.UtcNow,
                     PageCount = source.PageCount,
+                    Format = source.Format,
                 }
             );
 

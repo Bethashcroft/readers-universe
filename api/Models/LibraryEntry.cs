@@ -12,6 +12,9 @@ public class LibraryEntry
     [MaxLength(50)]
     public string Offer { get; set; } = BookOffer.None;
 
+    [MaxLength(50)]
+    public string Format { get; set; } = BookFormat.Unknown;
+
     public DateTime AddedDate { get; set; } = DateTime.UtcNow;
 
     public int? Page { get; set; }

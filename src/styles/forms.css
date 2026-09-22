@@ -36,7 +36,7 @@
   border-color: var(--color-primary);
 }
 
-.auth-form button {
+.auth-form > button {
   padding: 12px;
   background-color: var(--color-primary);
   color: white;
@@ -50,10 +50,16 @@
   margin-top: 8px;
 }
 
-.auth-form button:hover {
+.auth-form > button:hover {
   background-color: var(--color-primary-hover);
 }
 
+
+.form-field-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
 
 .form-footer {
   text-align: center;

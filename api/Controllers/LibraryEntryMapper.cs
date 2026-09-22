@@ -43,6 +43,7 @@ public static class LibraryEntryMapper
                 Isbn = e.Book.Isbn,
                 Shelf = e.Shelf,
                 Offer = e.Offer,
+                Format = e.Format,
                 Page = e.Page,
                 PageCount = e.PageCount,
                 Rating = lookup.GetValueOrDefault((e.BookId, ratingUserSelector(e))),

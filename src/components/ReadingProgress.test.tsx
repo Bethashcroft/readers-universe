@@ -24,6 +24,7 @@ const entry: LibraryEntryResponse = {
   isbn: "",
   shelf: "currently-reading",
   offer: "none",
+  format: "",
   rating: null,
   userId: "me",
   ownerName: "Me",

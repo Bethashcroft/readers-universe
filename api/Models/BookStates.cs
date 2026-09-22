@@ -23,6 +23,20 @@ public static class BookOffer
     public static readonly string[] Lendable = [AvailableToBorrow, LentOut];
 }
 
+public static class BookFormat
+{
+    public const string Unknown = "";
+    public const string Physical = "physical";
+    public const string Ebook = "ebook";
+    public const string Audiobook = "audiobook";
+
+    public static readonly string[] All = [Unknown, Physical, Ebook, Audiobook];
+    public static readonly string[] CannotOffer = [Ebook, Audiobook];
+
+    public const string CannotOfferMessage =
+        "Ebooks and audiobooks can't be lent out or sold.";
+}
+
 public static class BorrowStatus
 {
     public const string Pending = "pending";
@@ -69,4 +83,8 @@ public static class NotificationTypes
     public const string Trusted = "trusted";
     public const string Liked = "liked";
     public const string Commented = "commented";
+    public const string BorrowRequested = "borrow-requested";
+    public const string BorrowAccepted = "borrow-accepted";
+    public const string BorrowDeclined = "borrow-declined";
+    public const string BorrowReturned = "borrow-returned";
 }

@@ -1,3 +1,5 @@
+using ReadersRealm.Api.Models;
+
 namespace ReadersRealm.Api.Import;
 
 public class ImportedBook
@@ -12,6 +14,7 @@ public class ImportedBook
     public DateTime? ReadDate { get; set; }
     public DateTime? AddedDate { get; set; }
     public int? PageCount { get; set; }
+    public string Format { get; set; } = BookFormat.Unknown;
 }
 
 public class SkippedRow

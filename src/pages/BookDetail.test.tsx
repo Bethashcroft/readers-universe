@@ -62,6 +62,7 @@ const myEntry: LibraryEntryResponse = {
   isbn: "",
   shelf: "read",
   offer: "none",
+  format: "",
   rating: 4,
   userId: "viewer",
   ownerName: "Viewer",
@@ -192,7 +193,7 @@ describe("BookDetail", () => {
     expect(screen.getByLabelText("Review (optional)")).toHaveValue(
       "My original thoughts",
     );
-    expect(screen.getByLabelText("Rating")).toHaveValue("5");
+    expect(screen.getByRole("button", { name: "★★★★★" })).toBeInTheDocument();
   });
 
   it("offers to add the book to your shelves when you don't own it", async () => {
@@ -273,7 +274,7 @@ describe("BookDetail", () => {
 
     await screen.findByText("Gone Girl");
 
-    expect(screen.getByLabelText("Shelf")).toBeInTheDocument();
+    expect(screen.getByText("Shelf")).toBeInTheDocument();
     expect(
       screen.queryByText("This book isn't on your shelves."),
     ).not.toBeInTheDocument();
@@ -290,7 +291,10 @@ describe("BookDetail", () => {
     await screen.findByText("Gone Girl");
     expect(screen.getByText("Rate and Review")).toBeInTheDocument();
 
-    await userEvent.selectOptions(screen.getByLabelText("Shelf"), "dnf");
+    await userEvent.click(screen.getByRole("button", { name: /Read/ }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Did Not Finish" }),
+    );
 
     expect(
       await screen.findByText("Didn't finish? Say why"),
@@ -310,6 +314,47 @@ describe("BookDetail", () => {
 
     expect(mockLookupPageCount).toHaveBeenCalledWith(9);
     expect(screen.getByText("340")).toBeInTheDocument();
+  });
+
+  it("takes the lending controls away from an ebook", async () => {
+    mockGetBook.mockResolvedValue({
+      ...book,
+      myEntry: { ...myEntry, format: "ebook" },
+    });
+    mockGetReviews.mockResolvedValue([]);
+    renderBookDetail();
+
+    await screen.findByText("Gone Girl");
+
+    expect(
+      screen.getByText("Ebooks and audiobooks can't be lent out or sold."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("combobox", { name: "Lending & Selling" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("drops the offer when you switch a lent book to an ebook", async () => {
+    const offered = { ...myEntry, offer: "available-to-borrow" };
+    mockGetBook.mockResolvedValue({ ...book, myEntry: offered });
+    mockGetReviews.mockResolvedValue([]);
+    mockUpdateBook.mockResolvedValue({
+      ...offered,
+      offer: "none",
+      format: "ebook",
+    });
+    renderBookDetail();
+
+    await screen.findByText("Gone Girl");
+
+    await userEvent.click(screen.getByRole("button", { name: /Not set/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Ebook" }));
+
+    expect(mockUpdateBook).toHaveBeenCalledWith(9, {
+      shelf: "read",
+      offer: "none",
+      format: "ebook",
+    });
   });
 
   it("leaves a page count you already have alone", async () => {

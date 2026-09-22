@@ -16,6 +16,7 @@ const book: LibraryEntryResponse = {
   isbn: "",
   shelf: "read",
   offer: "none",
+  format: "",
   rating: 4,
   userId: "u1",
   sellerVintedUrl: "",

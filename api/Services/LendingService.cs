@@ -15,6 +15,8 @@ public class LendingService
 
     public const string NotOwnedMessage = "You can only offer books you own.";
 
+    public static bool CanOffer(string format) => !BookFormat.CannotOffer.Contains(format);
+
     private readonly AppDbContext _context;
 
     public LendingService(AppDbContext context)
@@ -34,7 +36,7 @@ public class LendingService
             r.LibraryEntryId == libraryEntryId && r.Status == BorrowStatus.Accepted
         );
 
-    public async Task DeclinePendingAsync(int libraryEntryId)
+    public async Task<List<BorrowRequest>> DeclinePendingAsync(int libraryEntryId)
     {
         var pending = await _context
             .BorrowRequests.Where(r =>
@@ -46,5 +48,7 @@ public class LendingService
         {
             request.Status = BorrowStatus.Declined;
         }
+
+        return pending;
     }
 }

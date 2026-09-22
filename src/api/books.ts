@@ -11,6 +11,7 @@ export interface LibraryEntryResponse {
   isbn: string;
   shelf: string;
   offer: string;
+  format: string;
   page: number | null;
   pageCount: number | null;
   rating: number | null;
@@ -49,6 +50,7 @@ export interface AddToLibraryRequest {
   isbn: string;
   shelf: string;
   offer: string;
+  format: string;
   rating: number | null;
   reviewText: string;
   containsSpoiler: boolean;
@@ -58,6 +60,7 @@ export interface AddToLibraryRequest {
 export interface UpdateLibraryEntryRequest {
   shelf: string;
   offer: string;
+  format: string;
 }
 
 export interface PagedResult<T> {

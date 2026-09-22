@@ -72,6 +72,13 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .HasForeignKey(n => n.ActivityId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        builder
+            .Entity<Notification>()
+            .HasOne(n => n.Book)
+            .WithMany()
+            .HasForeignKey(n => n.BookId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.Entity<Notification>().HasIndex(n => new { n.UserId, n.IsRead });
 
         builder

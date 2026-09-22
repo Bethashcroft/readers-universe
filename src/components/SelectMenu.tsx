@@ -11,9 +11,16 @@ interface SelectMenuProps {
   value: string;
   options: SelectOption[];
   onChange: (value: string) => void;
+  block?: boolean;
 }
 
-function SelectMenu({ label, value, options, onChange }: SelectMenuProps) {
+function SelectMenu({
+  label,
+  value,
+  options,
+  onChange,
+  block = false,
+}: SelectMenuProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -46,7 +53,10 @@ function SelectMenu({ label, value, options, onChange }: SelectMenuProps) {
   }, [open]);
 
   return (
-    <div className="select-menu" ref={containerRef}>
+    <div
+      className={`select-menu${block ? " select-menu-block" : ""}`}
+      ref={containerRef}
+    >
       <span className="select-menu-label">{label}</span>
       <button
         type="button"

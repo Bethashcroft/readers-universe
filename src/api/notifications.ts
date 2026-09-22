@@ -6,7 +6,11 @@ export type NotificationType =
   | "new-follower"
   | "trusted"
   | "liked"
-  | "commented";
+  | "commented"
+  | "borrow-requested"
+  | "borrow-accepted"
+  | "borrow-declined"
+  | "borrow-returned";
 
 export interface NotificationResponse {
   id: number;

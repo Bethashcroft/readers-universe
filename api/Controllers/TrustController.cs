@@ -92,7 +92,8 @@ public class TrustController : ControllerBase
             _context.Notifications.RemoveRange(stale);
 
             var pendingRequests = await _context
-                .BorrowRequests.Where(r =>
+                .BorrowRequests.Include(r => r.LibraryEntry)
+                .Where(r =>
                     r.FromUserId == them.Id
                     && r.ToUserId == me
                     && r.Status == BorrowStatus.Pending
@@ -105,6 +106,16 @@ public class TrustController : ControllerBase
             }
 
             await _context.SaveChangesAsync();
+
+            foreach (var pending in pendingRequests)
+            {
+                await _notifications.AddAsync(
+                    pending.FromUserId,
+                    pending.ToUserId,
+                    NotificationTypes.BorrowDeclined,
+                    bookId: pending.LibraryEntry.BookId
+                );
+            }
         }
 
         return Ok(new { trusted = false });

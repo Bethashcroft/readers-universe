@@ -15,11 +15,17 @@ public class BorrowRequestsController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly LendingService _lending;
+    private readonly NotificationService _notifications;
 
-    public BorrowRequestsController(AppDbContext context, LendingService lending)
+    public BorrowRequestsController(
+        AppDbContext context,
+        LendingService lending,
+        NotificationService notifications
+    )
     {
         _context = context;
         _lending = lending;
+        _notifications = notifications;
     }
 
     [HttpPost]
@@ -102,6 +108,13 @@ public class BorrowRequestsController : ControllerBase
 
         _context.BorrowRequests.Add(borrowRequest);
         await _context.SaveChangesAsync();
+
+        await _notifications.AddAsync(
+            entry.UserId,
+            fromUserId!,
+            NotificationTypes.BorrowRequested,
+            bookId: entry.BookId
+        );
 
         return Ok(await ResponseForAsync(borrowRequest.Id));
     }
@@ -191,6 +204,8 @@ public class BorrowRequestsController : ControllerBase
             return BadRequest(new { message = "This request has already been answered." });
         }
 
+        var declined = new List<BorrowRequest>();
+
         if (request.Status == BorrowStatus.Accepted)
         {
             var stillTrusted = await _context.Trusts.AnyAsync(t =>
@@ -213,11 +228,24 @@ public class BorrowRequestsController : ControllerBase
             }
 
             borrowRequest.LibraryEntry.Offer = BookOffer.LentOut;
-            await _lending.DeclinePendingAsync(borrowRequest.LibraryEntryId);
+            declined = await _lending.DeclinePendingAsync(borrowRequest.LibraryEntryId);
         }
 
         borrowRequest.Status = request.Status;
         await _context.SaveChangesAsync();
+
+        var bookId = borrowRequest.LibraryEntry.BookId;
+
+        await _notifications.AddAsync(
+            borrowRequest.FromUserId,
+            userId!,
+            request.Status == BorrowStatus.Accepted
+                ? NotificationTypes.BorrowAccepted
+                : NotificationTypes.BorrowDeclined,
+            bookId: bookId
+        );
+
+        await _notifications.BorrowDeclinedAsync(declined, bookId);
 
         return Ok(await ResponseForAsync(borrowRequest.Id));
     }
@@ -256,6 +284,13 @@ public class BorrowRequestsController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
+
+        await _notifications.AddAsync(
+            borrowRequest.FromUserId,
+            userId!,
+            NotificationTypes.BorrowReturned,
+            bookId: borrowRequest.LibraryEntry.BookId
+        );
 
         return Ok(await ResponseForAsync(borrowRequest.Id));
     }

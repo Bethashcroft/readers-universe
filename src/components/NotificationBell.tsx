@@ -32,6 +32,14 @@ function messageFor(notification: NotificationResponse) {
       return notification.bookTitle
         ? `commented on your update on ${notification.bookTitle}`
         : "commented on your update";
+    case "borrow-requested":
+      return `asked to borrow ${notification.bookTitle}`;
+    case "borrow-accepted":
+      return `said yes to lending you ${notification.bookTitle}`;
+    case "borrow-declined":
+      return `can't lend you ${notification.bookTitle} right now`;
+    case "borrow-returned":
+      return `marked ${notification.bookTitle} as returned`;
   }
 }
 
@@ -42,6 +50,11 @@ function linkFor(notification: NotificationResponse, me: string | undefined) {
     case "liked":
     case "commented":
       return me ? `/profile/${me}` : "/";
+    case "borrow-requested":
+    case "borrow-accepted":
+    case "borrow-declined":
+    case "borrow-returned":
+      return "/borrowing";
     case "new-follower":
     case "follow-approved":
     case "trusted":

@@ -6,7 +6,6 @@ import { getBook, lookupPageCount } from "../api/books";
 import type { BookDetailResponse } from "../api/books";
 import { createBorrowRequest } from "../api/borrow";
 import VintedButton from "../components/VintedButton";
-import { shelfLabels as allShelfLabels } from "../types/book";
 import type { ShelfType } from "../types/book";
 import {
   getReviewsForBook,
@@ -15,7 +14,14 @@ import {
   deleteReview,
 } from "../api/reviews";
 import type { ReviewResponse } from "../api/reviews";
-import { shelfLabels, offerLabels, selectableOffers } from "../types/book";
+import {
+  shelfChoices,
+  offerChoices,
+  formatChoices,
+  ratingOptions,
+  canOffer,
+} from "../types/book";
+import SelectMenu from "../components/SelectMenu";
 import BookCover from "../components/BookCover";
 import ReadingProgress from "../components/ReadingProgress";
 import ErrorState from "../components/ErrorState";
@@ -38,6 +44,7 @@ function BookDetail() {
   const [error, setError] = useState("");
   const [shelf, setShelf] = useState("");
   const [offer, setOffer] = useState("");
+  const [format, setFormat] = useState("");
   const [offerError, setOfferError] = useState("");
   const [reviewSpoiler, setReviewSpoiler] = useState(false);
   const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
@@ -72,6 +79,7 @@ function BookDetail() {
       setBook(data);
       setShelf(data.myEntry?.shelf ?? "");
       setOffer(data.myEntry?.offer ?? "");
+      setFormat(data.myEntry?.format ?? "");
       setReviews(await getReviewsForBook(data.id));
     } catch (err) {
       console.error("Failed to load book:", err);
@@ -106,11 +114,16 @@ function BookDetail() {
   const myReview = reviews.find((r) => r.userId === user?.userId);
   const averageStars = book.averageRating ? Math.round(book.averageRating) : 0;
 
-  const saveEntry = async (changes: { shelf?: string; offer?: string }) => {
+  const saveEntry = async (changes: {
+    shelf?: string;
+    offer?: string;
+    format?: string;
+  }) => {
     if (!myEntry) return;
     const updated = await updateBook(myEntry.id, {
       shelf: changes.shelf ?? shelf,
       offer: changes.offer ?? offer,
+      format: changes.format ?? format,
     });
     setBook({ ...book, myEntry: updated });
   };
@@ -147,6 +160,24 @@ function BookDetail() {
     }
   };
 
+  const handleFormatChange = async (newFormat: string) => {
+    const newOffer = canOffer(newFormat) ? offer : "none";
+
+    setFormat(newFormat);
+    setOffer(newOffer);
+    setOfferError("");
+
+    try {
+      await saveEntry({ format: newFormat, offer: newOffer });
+    } catch (err) {
+      setOfferError(
+        err instanceof Error ? err.message : "Failed to update format",
+      );
+      setFormat(myEntry?.format ?? "");
+      setOffer(myEntry?.offer ?? "");
+    }
+  };
+
   const handleAddToShelves = async () => {
     setError("");
     setAdding(true);
@@ -160,6 +191,7 @@ function BookDetail() {
         isbn: book.isbn,
         shelf: addShelf,
         offer: "none",
+        format: "",
         rating: null,
         reviewText: "",
         containsSpoiler: false,
@@ -294,39 +326,46 @@ function BookDetail() {
           {myEntry ? (
             <>
               <div className="book-detail-controls">
-                <label htmlFor="book-shelf">Shelf</label>
-                <select
-                  id="book-shelf"
+                <SelectMenu
+                  label="Shelf"
                   value={shelf}
-                  onChange={(e) => handleShelfChange(e.target.value)}
-                >
-                  {Object.entries(shelfLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                  options={shelfChoices}
+                  onChange={handleShelfChange}
+                  block
+                />
 
-                <label htmlFor="book-offer" id="book-offer-label">
-                  Lending &amp; Selling
-                </label>
-                {offer === "lent-out" ? (
-                  <p className="rating-meta" aria-labelledby="book-offer-label">
-                    Out on loan. Mark it returned on{" "}
-                    <Link to="/borrowing">Borrowing</Link> to change this.
-                  </p>
+                <SelectMenu
+                  label="Format"
+                  value={format}
+                  options={formatChoices}
+                  onChange={handleFormatChange}
+                  block
+                />
+
+                {offer === "lent-out" || !canOffer(format) ? (
+                  <div className="book-offer-note">
+                    <span className="form-field-label" id="book-offer-label">
+                      Lending &amp; Selling
+                    </span>
+                    <p className="rating-meta" aria-labelledby="book-offer-label">
+                      {offer === "lent-out" ? (
+                        <>
+                          Out on loan. Mark it returned on{" "}
+                          <Link to="/borrowing">Borrowing</Link> to change this.
+                        </>
+                      ) : (
+                        "Ebooks and audiobooks can't be lent out or sold."
+                      )}
+                    </p>
+                  </div>
                 ) : (
-                  <select
-                    id="book-offer"
+                  <SelectMenu
+                    label="Lending & Selling"
                     value={offer}
-                    onChange={(e) => handleOfferChange(e.target.value)}
-                  >
-                    {selectableOffers.map((value) => (
-                      <option key={value} value={value}>
-                        {offerLabels[value]}
-                      </option>
-                    ))}
-                  </select>
+                    options={offerChoices}
+                    onChange={handleOfferChange}
+                    block
+                  />
                 )}
               </div>
 
@@ -360,19 +399,14 @@ function BookDetail() {
             </>
           ) : (
             <div className="add-to-shelves">
-              <label htmlFor="add-shelf">Add this book to your shelves</label>
               <div className="add-to-shelves-row">
-                <select
-                  id="add-shelf"
+                <SelectMenu
+                  label="Add this book to your shelves"
                   value={addShelf}
-                  onChange={(e) => setAddShelf(e.target.value as ShelfType)}
-                >
-                  {Object.entries(allShelfLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                  options={shelfChoices}
+                  onChange={(chosen) => setAddShelf(chosen as ShelfType)}
+                  block
+                />
                 <button
                   className="btn btn-primary"
                   onClick={handleAddToShelves}
@@ -539,19 +573,13 @@ function BookDetail() {
           )}
           {error && <p className="form-error">{error}</p>}
           <form className="review-form" onSubmit={handleReviewSubmit}>
-            <label htmlFor="review-rating">Rating</label>
-            <select
-              id="review-rating"
+            <SelectMenu
+              label="Rating"
               value={rating}
-              onChange={(e) => setRating(e.target.value)}
-            >
-              <option value="">No rating</option>
-              <option value="1">★☆☆☆☆</option>
-              <option value="2">★★☆☆☆</option>
-              <option value="3">★★★☆☆</option>
-              <option value="4">★★★★☆</option>
-              <option value="5">★★★★★</option>
-            </select>
+              options={ratingOptions}
+              onChange={setRating}
+              block
+            />
 
             <label htmlFor="review-text">Review (optional)</label>
             <textarea

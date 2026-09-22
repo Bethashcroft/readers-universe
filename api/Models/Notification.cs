@@ -15,6 +15,9 @@ public class Notification
     public int? ActivityId { get; set; }
     public Activity? Activity { get; set; }
 
+    public int? BookId { get; set; }
+    public Book? Book { get; set; }
+
     public bool IsRead { get; set; }
 
     public DateTime Date { get; set; } = DateTime.UtcNow;

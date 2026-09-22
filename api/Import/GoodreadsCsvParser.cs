@@ -80,6 +80,7 @@ public partial class GoodreadsCsvParser : IBookImportParser
                     ReadDate = ReadDate(Field("Date Read")),
                     AddedDate = ReadDate(Field("Date Added")),
                     PageCount = ReadPageCount(Field("Number of Pages")),
+                    Format = ReadFormat(Field("Binding")),
                 }
             );
         }
@@ -110,6 +111,32 @@ public partial class GoodreadsCsvParser : IBookImportParser
 
     private static int? ReadPageCount(string value) =>
         int.TryParse(value.Trim(), out var pages) && pages > 0 ? pages : null;
+
+    private static string ReadFormat(string value)
+    {
+        var binding = value.Trim();
+
+        if (binding.Length == 0 || binding.Contains("unknown", StringComparison.OrdinalIgnoreCase))
+        {
+            return BookFormat.Unknown;
+        }
+
+        if (
+            binding.Contains("kindle", StringComparison.OrdinalIgnoreCase)
+            || binding.Contains("ebook", StringComparison.OrdinalIgnoreCase)
+            || binding.Contains("e-book", StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            return BookFormat.Ebook;
+        }
+
+        if (binding.Contains("audio", StringComparison.OrdinalIgnoreCase))
+        {
+            return BookFormat.Audiobook;
+        }
+
+        return BookFormat.Physical;
+    }
 
     private static int? ReadRating(string value)
     {

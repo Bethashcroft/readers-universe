@@ -3,8 +3,15 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useBooks } from "../context/useBooks";
 import { lookupBook } from "../api/books";
 import type { BookLookupResult, BookSearchResult } from "../api/books";
-import { shelfLabels, offerLabels, selectableOffers } from "../types/book";
-import type { ShelfType, OfferType } from "../types/book";
+import {
+  shelfChoices,
+  offerChoices,
+  formatChoices,
+  ratingOptions,
+  canOffer,
+} from "../types/book";
+import type { ShelfType, OfferType, FormatType } from "../types/book";
+import SelectMenu from "../components/SelectMenu";
 import { placeholderCover } from "../types/covers";
 import { usePageTitle } from "../hooks/usePageTitle";
 import ImportLibrary from "../components/ImportLibrary";
@@ -27,6 +34,7 @@ function AddBook() {
   const [coverUrl, setCoverUrl] = useState("");
   const [shelf, setShelf] = useState<ShelfType>("tbr");
   const [offer, setOffer] = useState<OfferType>("none");
+  const [format, setFormat] = useState<FormatType>("");
   const [rating, setRating] = useState("");
   const [reviewText, setReviewText] = useState("");
   const [containsSpoiler, setContainsSpoiler] = useState(false);
@@ -63,6 +71,14 @@ function AddBook() {
     }
   };
 
+  const handleFormatChange = (chosen: string) => {
+    setFormat(chosen as FormatType);
+
+    if (!canOffer(chosen)) {
+      setOffer("none");
+    }
+  };
+
   const handlePick = (book: BookSearchResult) => {
     setTitle(book.title);
     setAuthor(book.author);
@@ -85,6 +101,7 @@ function AddBook() {
         isbn,
         shelf,
         offer,
+        format,
         rating: rating ? Number(rating) : null,
         reviewText,
         containsSpoiler,
@@ -157,45 +174,46 @@ function AddBook() {
             required
           />
 
-          <label htmlFor="shelf">Shelf</label>
-          <select
-            id="shelf"
+          <SelectMenu
+            label="Shelf"
             value={shelf}
-            onChange={(e) => setShelf(e.target.value as ShelfType)}
-          >
-            {Object.entries(shelfLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+            options={shelfChoices}
+            onChange={(chosen) => setShelf(chosen as ShelfType)}
+            block
+          />
 
-          <label htmlFor="offer">Lending & Selling</label>
-          <select
-            id="offer"
-            value={offer}
-            onChange={(e) => setOffer(e.target.value as OfferType)}
-          >
-            {selectableOffers.map((value) => (
-              <option key={value} value={value}>
-                {offerLabels[value]}
-              </option>
-            ))}
-          </select>
+          <SelectMenu
+            label="Format"
+            value={format}
+            options={formatChoices}
+            onChange={handleFormatChange}
+            block
+          />
 
-          <label htmlFor="rating">Optional Rating</label>
-          <select
-            id="rating"
+          {canOffer(format) ? (
+            <SelectMenu
+              label="Lending & Selling"
+              value={offer}
+              options={offerChoices}
+              onChange={(chosen) => setOffer(chosen as OfferType)}
+              block
+            />
+          ) : (
+            <>
+              <span className="form-field-label">Lending & Selling</span>
+              <p className="isbn-status notfound">
+                Ebooks and audiobooks can't be lent out or sold.
+              </p>
+            </>
+          )}
+
+          <SelectMenu
+            label="Optional Rating"
             value={rating}
-            onChange={(e) => setRating(e.target.value)}
-          >
-            <option value="">No rating</option>
-            <option value="1">★☆☆☆☆</option>
-            <option value="2">★★☆☆☆</option>
-            <option value="3">★★★☆☆</option>
-            <option value="4">★★★★☆</option>
-            <option value="5">★★★★★</option>
-          </select>
+            options={ratingOptions}
+            onChange={setRating}
+            block
+          />
 
           <label htmlFor="reviewText">Review (optional)</label>
           <textarea

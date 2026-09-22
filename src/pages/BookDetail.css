@@ -162,15 +162,12 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  align-items: flex-end;
 }
 
-.add-to-shelves-row select {
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  font: inherit;
-  background-color: var(--color-bg);
-  color: var(--color-text);
+.add-to-shelves-row .select-menu-block {
+  flex: 1;
+  min-width: 200px;
 }
 
 .owners-section {
@@ -311,7 +308,6 @@
   font-weight: 600;
 }
 
-.review-form select,
 .review-form textarea {
   padding: 10px 12px;
   border: 1px solid var(--color-border);
@@ -324,7 +320,6 @@
   resize: vertical;
 }
 
-.review-form select:focus,
 .review-form textarea:focus {
   border-color: var(--color-primary);
 }
@@ -368,12 +363,17 @@
   font-weight: 600;
 }
 
-.book-detail-controls select {
-  padding: 8px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  font: inherit;
-  background-color: var(--color-bg);
+.book-offer-note {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.book-offer-note .form-field-label,
+.add-to-shelves .form-field-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
 }
 
 .remove-entry {

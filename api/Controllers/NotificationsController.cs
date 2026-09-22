@@ -37,9 +37,9 @@ public class NotificationsController : ControllerBase
                 ActorDisplayName = n.Actor.DisplayName,
                 ActorAvatarUrl = n.Actor.AvatarUrl,
                 BookTitle =
-                    n.Activity == null || n.Activity.Book == null
-                        ? null
-                        : n.Activity.Book.Title,
+                    n.Book != null ? n.Book.Title
+                    : n.Activity != null && n.Activity.Book != null ? n.Activity.Book.Title
+                    : null,
             })
             .ToListAsync();
 

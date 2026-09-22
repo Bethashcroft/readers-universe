@@ -17,16 +17,19 @@ public class LibraryController : ControllerBase
     private readonly AppDbContext _context;
     private readonly LendingService _lending;
     private readonly ActivityService _activity;
+    private readonly NotificationService _notifications;
 
     public LibraryController(
         AppDbContext context,
         LendingService lending,
-        ActivityService activity
+        ActivityService activity,
+        NotificationService notifications
     )
     {
         _context = context;
         _lending = lending;
         _activity = activity;
+        _notifications = notifications;
     }
 
     [HttpGet]
@@ -63,7 +66,9 @@ public class LibraryController : ControllerBase
         if (offerable)
         {
             query = query.Where(e =>
-                e.Offer == BookOffer.None && e.Shelf != BookShelf.WantToRead
+                e.Offer == BookOffer.None
+                && e.Shelf != BookShelf.WantToRead
+                && !BookFormat.CannotOffer.Contains(e.Format)
             );
         }
 
@@ -171,7 +176,10 @@ public class LibraryController : ControllerBase
             return BadRequest(new { message = "A title is required." });
         }
 
-        var validationError = ValidateStates(request.Shelf, request.Offer);
+        var validationError =
+            ValidateStates(request.Shelf, request.Offer)
+            ?? ValidateFormat(request.Format, request.Offer);
+
         if (validationError != null)
         {
             return BadRequest(new { message = validationError });
@@ -216,6 +224,7 @@ public class LibraryController : ControllerBase
             UserId = userId!,
             Shelf = request.Shelf,
             Offer = request.Offer,
+            Format = request.Format,
             PageCount = request.PageCount > 0 ? request.PageCount : null,
         };
         _context.LibraryEntries.Add(entry);
@@ -283,9 +292,12 @@ public class LibraryController : ControllerBase
 
         var offerChanging = request.Offer != entry.Offer;
 
-        var validationError = offerChanging
-            ? ValidateStates(request.Shelf, request.Offer)
-            : ValidateShelf(request.Shelf);
+        var validationError =
+            (
+                offerChanging
+                    ? ValidateStates(request.Shelf, request.Offer)
+                    : ValidateShelf(request.Shelf)
+            ) ?? ValidateFormat(request.Format, request.Offer);
 
         if (validationError != null)
         {
@@ -315,10 +327,9 @@ public class LibraryController : ControllerBase
             BookOffer.Lendable.Contains(entry.Offer)
             && request.Offer != BookOffer.AvailableToBorrow;
 
-        if (leavingPool)
-        {
-            await _lending.DeclinePendingAsync(entry.Id);
-        }
+        var declined = leavingPool
+            ? await _lending.DeclinePendingAsync(entry.Id)
+            : [];
 
         if (request.Shelf != entry.Shelf)
         {
@@ -342,7 +353,10 @@ public class LibraryController : ControllerBase
 
         entry.Shelf = request.Shelf;
         entry.Offer = request.Offer;
+        entry.Format = request.Format;
         await _context.SaveChangesAsync();
+
+        await _notifications.BorrowDeclinedAsync(declined, entry.BookId);
 
         return Ok((await ToResponsesAsync([entry], userId!)).Single());
     }
@@ -446,6 +460,11 @@ public class LibraryController : ControllerBase
             return BadRequest(new { message = LendingService.NotOwnedMessage });
         }
 
+        if (!LendingService.CanOffer(entry.Format))
+        {
+            return BadRequest(new { message = BookFormat.CannotOfferMessage });
+        }
+
         if (entry.Offer == BookOffer.ForSale)
         {
             return BadRequest(
@@ -488,9 +507,10 @@ public class LibraryController : ControllerBase
 
         if (entry.Offer == BookOffer.AvailableToBorrow)
         {
-            await _lending.DeclinePendingAsync(entry.Id);
+            var declined = await _lending.DeclinePendingAsync(entry.Id);
             entry.Offer = BookOffer.None;
             await _context.SaveChangesAsync();
+            await _notifications.BorrowDeclinedAsync(declined, entry.BookId);
         }
 
         return Ok();
@@ -589,6 +609,13 @@ public class LibraryController : ControllerBase
         BookShelf.All.Contains(shelf)
             ? null
             : $"Shelf must be one of: {string.Join(", ", BookShelf.All)}";
+
+    private static string? ValidateFormat(string format, string offer) =>
+        !BookFormat.All.Contains(format)
+            ? $"Format must be one of: {string.Join(", ", BookFormat.All.Skip(1))}"
+        : offer != BookOffer.None && !LendingService.CanOffer(format)
+            ? BookFormat.CannotOfferMessage
+        : null;
 }
 
 public class AddToLibraryRequest
@@ -608,6 +635,7 @@ public class AddToLibraryRequest
     public string Isbn { get; set; } = string.Empty;
     public string Shelf { get; set; } = string.Empty;
     public string Offer { get; set; } = BookOffer.None;
+    public string Format { get; set; } = BookFormat.Unknown;
     public int? Rating { get; set; }
     public string ReviewText { get; set; } = string.Empty;
     public bool ContainsSpoiler { get; set; }
@@ -624,6 +652,7 @@ public class UpdateLibraryEntryRequest
 {
     public string Shelf { get; set; } = string.Empty;
     public string Offer { get; set; } = BookOffer.None;
+    public string Format { get; set; } = BookFormat.Unknown;
 }
 
 public class LibraryEntryResponse
@@ -636,6 +665,7 @@ public class LibraryEntryResponse
     public string Isbn { get; set; } = string.Empty;
     public string Shelf { get; set; } = string.Empty;
     public string Offer { get; set; } = BookOffer.None;
+    public string Format { get; set; } = BookFormat.Unknown;
     public int? Page { get; set; }
     public int? PageCount { get; set; }
     public int? Rating { get; set; }

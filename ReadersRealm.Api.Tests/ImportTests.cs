@@ -153,6 +153,16 @@ public class ImportTests : IDisposable
         var stand = shelves.Single(b => b.Title == "The One Night Stand");
         Assert.Equal(2, stand.Rating);
         Assert.Equal(281, stand.PageCount);
+        Assert.Equal("ebook", stand.Format);
+
+        Assert.Equal(
+            "audiobook",
+            shelves.Single(b => b.Title == "The Profiler").Format
+        );
+        Assert.Equal(
+            "physical",
+            shelves.Single(b => b.Title == "I Who Have Never Known Men").Format
+        );
 
         var reviews = await _client.GetFromJsonAsync<ReviewResult[]>(
             $"/api/reviews/book/{stand.BookId}"

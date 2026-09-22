@@ -10,10 +10,11 @@
   color: var(--color-text-muted);
 }
 
-.select-menu-trigger {
+.select-menu .select-menu-trigger {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  margin: 0;
   padding: 8px 16px;
   border-radius: 999px;
   font: inherit;
@@ -28,8 +29,8 @@
     border-color 0.15s ease;
 }
 
-.select-menu-trigger:hover,
-.select-menu-trigger[aria-expanded="true"] {
+.select-menu .select-menu-trigger:hover,
+.select-menu .select-menu-trigger[aria-expanded="true"] {
   background-color: rgba(167, 139, 250, 0.22);
   border-color: rgba(167, 139, 250, 0.6);
 }
@@ -64,16 +65,18 @@
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
 }
 
-.select-menu-option {
+.select-menu .select-menu-option {
   display: flex;
   align-items: center;
   width: 100%;
+  margin: 0;
   padding: 9px 12px;
   border: none;
   border-radius: 8px;
   background: none;
   font: inherit;
   font-size: 14px;
+  font-weight: 400;
   text-align: left;
   white-space: nowrap;
   cursor: pointer;
@@ -83,13 +86,54 @@
     color 0.15s ease;
 }
 
-.select-menu-option:hover {
+.select-menu .select-menu-option:hover {
   background-color: rgba(167, 139, 250, 0.14);
   color: var(--color-text);
 }
 
-.select-menu-option.selected {
+.select-menu .select-menu-option.selected {
   color: var(--color-primary);
   background-color: rgba(167, 139, 250, 0.12);
   font-weight: 600;
+}
+
+.select-menu-block {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.select-menu-block .select-menu-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.select-menu-block .select-menu-trigger {
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+}
+
+.select-menu-block .select-menu-trigger:hover,
+.select-menu-block .select-menu-trigger[aria-expanded="true"] {
+  background-color: var(--color-bg);
+  border-color: var(--color-primary);
+}
+
+.select-menu-block .select-menu-panel {
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+}
+
+.select-menu-block .select-menu-option {
+  font-size: 16px;
+  white-space: normal;
 }

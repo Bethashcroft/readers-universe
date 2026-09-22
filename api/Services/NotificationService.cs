@@ -22,11 +22,25 @@ public class NotificationService
         _logger = logger;
     }
 
+    public async Task BorrowDeclinedAsync(IEnumerable<BorrowRequest> declined, int bookId)
+    {
+        foreach (var request in declined)
+        {
+            await AddAsync(
+                request.FromUserId,
+                request.ToUserId,
+                NotificationTypes.BorrowDeclined,
+                bookId: bookId
+            );
+        }
+    }
+
     public async Task AddAsync(
         string userId,
         string actorId,
         string type,
-        int? activityId = null
+        int? activityId = null,
+        int? bookId = null
     )
     {
         if (userId == actorId)
@@ -41,6 +55,7 @@ public class NotificationService
                 ActorId = actorId,
                 Type = type,
                 ActivityId = activityId,
+                BookId = bookId,
             }
         );
 

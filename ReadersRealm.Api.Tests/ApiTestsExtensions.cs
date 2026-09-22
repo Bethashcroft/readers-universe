@@ -14,6 +14,7 @@ public record BookResult(
     string Isbn,
     string Shelf,
     string Offer,
+    string Format,
     int? Rating,
     string UserId,
     string OwnerName,
@@ -170,7 +171,8 @@ public static class ApiTestExtensions
         string offer = "none",
         string author = "Test Author",
         int? rating = null,
-        string isbn = ""
+        string isbn = "",
+        string format = ""
     )
     {
         var response = await client.PostAsJsonAsync(
@@ -184,6 +186,7 @@ public static class ApiTestExtensions
                 shelf,
                 offer,
                 rating,
+                format,
             }
         );
 
