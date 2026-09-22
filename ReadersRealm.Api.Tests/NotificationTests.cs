@@ -7,7 +7,8 @@ public record NotificationResult(
     string Type,
     bool IsRead,
     string ActorUserName,
-    string ActorDisplayName
+    string ActorDisplayName,
+    string? BookTitle
 );
 
 public record UnreadCountResult(int Count);

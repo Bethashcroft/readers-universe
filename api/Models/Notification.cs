@@ -12,6 +12,9 @@ public class Notification
 
     public string Type { get; set; } = string.Empty;
 
+    public int? ActivityId { get; set; }
+    public Activity? Activity { get; set; }
+
     public bool IsRead { get; set; }
 
     public DateTime Date { get; set; } = DateTime.UtcNow;

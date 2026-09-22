@@ -22,7 +22,12 @@ public class NotificationService
         _logger = logger;
     }
 
-    public async Task AddAsync(string userId, string actorId, string type)
+    public async Task AddAsync(
+        string userId,
+        string actorId,
+        string type,
+        int? activityId = null
+    )
     {
         if (userId == actorId)
         {
@@ -35,6 +40,7 @@ public class NotificationService
                 UserId = userId,
                 ActorId = actorId,
                 Type = type,
+                ActivityId = activityId,
             }
         );
 

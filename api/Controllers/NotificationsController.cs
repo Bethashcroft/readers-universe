@@ -36,6 +36,10 @@ public class NotificationsController : ControllerBase
                 ActorUserName = n.Actor.UserName!,
                 ActorDisplayName = n.Actor.DisplayName,
                 ActorAvatarUrl = n.Actor.AvatarUrl,
+                BookTitle =
+                    n.Activity == null || n.Activity.Book == null
+                        ? null
+                        : n.Activity.Book.Title,
             })
             .ToListAsync();
 
@@ -94,4 +98,5 @@ public class NotificationResponse
     public string ActorUserName { get; set; } = string.Empty;
     public string ActorDisplayName { get; set; } = string.Empty;
     public string ActorAvatarUrl { get; set; } = string.Empty;
+    public string? BookTitle { get; set; }
 }

@@ -67,4 +67,6 @@ public static class NotificationTypes
     public const string FollowApproved = "follow-approved";
     public const string NewFollower = "new-follower";
     public const string Trusted = "trusted";
+    public const string Liked = "liked";
+    public const string Commented = "commented";
 }

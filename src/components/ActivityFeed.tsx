@@ -1,5 +1,5 @@
 import { useState, useEffect, type ReactNode } from "react";
-import type { ActivityResponse } from "../api/feed";
+import type { ActivityResponse, LikesResponse } from "../api/feed";
 import ActivityItem from "./ActivityItem";
 import "./ActivityFeed.css";
 
@@ -49,10 +49,28 @@ function ActivityFeed({ load, empty, initialCount = 10 }: ActivityFeedProps) {
 
   const visible = expanded ? items : items.slice(0, initialCount);
 
+  const updateItem = (id: number, changes: Partial<ActivityResponse>) =>
+    setItems((current) =>
+      current === null
+        ? current
+        : current.map((a) => (a.id === id ? { ...a, ...changes } : a)),
+    );
+
+  const updateLikes = (id: number, likes: LikesResponse) =>
+    updateItem(id, likes);
+
+  const updateCommentCount = (id: number, commentCount: number) =>
+    updateItem(id, { commentCount });
+
   return (
     <div className="activity-feed">
       {visible.map((activity) => (
-        <ActivityItem key={activity.id} activity={activity} />
+        <ActivityItem
+          key={activity.id}
+          activity={activity}
+          onLikesChanged={updateLikes}
+          onCommentCountChanged={updateCommentCount}
+        />
       ))}
       {!expanded && items.length > initialCount && (
         <button

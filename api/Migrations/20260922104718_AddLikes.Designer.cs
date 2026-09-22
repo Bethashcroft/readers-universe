@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ReadersRealm.Api.Data;
@@ -11,9 +12,11 @@ using ReadersRealm.Api.Data;
 namespace ReadersRealm.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260922104718_AddLikes")]
+    partial class AddLikes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -390,40 +393,6 @@ namespace ReadersRealm.Api.Migrations
                     b.ToTable("BorrowRequests");
                 });
 
-            modelBuilder.Entity("ReadersRealm.Api.Models.Comment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ActivityId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("EditedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("ActivityId", "Date");
-
-                    b.ToTable("Comments");
-                });
-
             modelBuilder.Entity("ReadersRealm.Api.Models.Follow", b =>
                 {
                     b.Property<int>("Id")
@@ -774,25 +743,6 @@ namespace ReadersRealm.Api.Migrations
                     b.Navigation("ToUser");
                 });
 
-            modelBuilder.Entity("ReadersRealm.Api.Models.Comment", b =>
-                {
-                    b.HasOne("ReadersRealm.Api.Models.Activity", "Activity")
-                        .WithMany("Comments")
-                        .HasForeignKey("ActivityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ReadersRealm.Api.Models.AppUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Activity");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("ReadersRealm.Api.Models.Follow", b =>
                 {
                     b.HasOne("ReadersRealm.Api.Models.AppUser", "Follower")
@@ -935,8 +885,6 @@ namespace ReadersRealm.Api.Migrations
 
             modelBuilder.Entity("ReadersRealm.Api.Models.Activity", b =>
                 {
-                    b.Navigation("Comments");
-
                     b.Navigation("Likes");
                 });
 #pragma warning restore 612, 618

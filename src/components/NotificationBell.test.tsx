@@ -36,6 +36,7 @@ const approved: NotificationResponse = {
   actorUserName: "bookdragon",
   actorDisplayName: "Sophie Bell",
   actorAvatarUrl: "",
+  bookTitle: null,
 };
 
 function renderBell() {
@@ -82,6 +83,21 @@ describe("NotificationBell", () => {
     expect(mockMarkRead).toHaveBeenCalled();
     expect(
       screen.getByRole("button", { name: "Notifications" }),
+    ).toBeInTheDocument();
+  });
+
+  it("names the book when someone likes your update", async () => {
+    mockGetNotifications.mockResolvedValue([
+      { ...approved, id: 2, type: "liked", bookTitle: "Babel" },
+    ]);
+    renderBell();
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Notifications, 1 unread" }),
+    );
+
+    expect(
+      await screen.findByText("liked your update on Babel"),
     ).toBeInTheDocument();
   });
 

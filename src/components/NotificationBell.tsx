@@ -14,17 +14,34 @@ import { timeAgo } from "../utils/dates";
 import Avatar from "./Avatar";
 import "./NotificationBell.css";
 
-const messages: Record<NotificationResponse["type"], string> = {
-  "new-follower": "started following you",
-  "follow-requested": "asked to follow you",
-  "follow-approved": "accepted your follow request",
-  trusted: "added you to their Trusted Book Club",
-};
+function messageFor(notification: NotificationResponse) {
+  switch (notification.type) {
+    case "new-follower":
+      return "started following you";
+    case "follow-requested":
+      return "asked to follow you";
+    case "follow-approved":
+      return "accepted your follow request";
+    case "trusted":
+      return "added you to their Trusted Book Club";
+    case "liked":
+      return notification.bookTitle
+        ? `liked your update on ${notification.bookTitle}`
+        : "liked your update";
+    case "commented":
+      return notification.bookTitle
+        ? `commented on your update on ${notification.bookTitle}`
+        : "commented on your update";
+  }
+}
 
 function linkFor(notification: NotificationResponse, me: string | undefined) {
   switch (notification.type) {
     case "follow-requested":
       return me ? `/profile/${me}/followers` : "/";
+    case "liked":
+    case "commented":
+      return me ? `/profile/${me}` : "/";
     case "new-follower":
     case "follow-approved":
     case "trusted":
@@ -159,7 +176,7 @@ function NotificationBell() {
                 <span className="notification-text">
                   <span>
                     <strong>{notification.actorDisplayName}</strong>{" "}
-                    {messages[notification.type]}
+                    {messageFor(notification)}
                   </span>
                   <span className="notification-time">
                     {timeAgo(notification.date)}

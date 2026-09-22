@@ -20,4 +20,7 @@ public class Activity
     public int? PageCount { get; set; }
 
     public DateTime Date { get; set; } = DateTime.UtcNow;
+
+    public List<Like> Likes { get; set; } = [];
+    public List<Comment> Comments { get; set; } = [];
 }

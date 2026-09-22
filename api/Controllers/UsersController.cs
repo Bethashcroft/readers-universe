@@ -158,7 +158,7 @@ public class UsersController : ControllerBase
             .OrderByDescending(a => a.Date)
             .ThenByDescending(a => a.Id)
             .Take(ActivityMapper.PageLength)
-            .ToResponses()
+            .ToResponses(me)
             .ToListAsync();
 
         return Ok(activity);

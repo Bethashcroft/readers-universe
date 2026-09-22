@@ -18,6 +18,8 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Trust> Trusts { get; set; }
     public DbSet<Activity> Activities { get; set; }
+    public DbSet<Like> Likes { get; set; }
+    public DbSet<Comment> Comments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -63,6 +65,13 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .HasForeignKey(n => n.ActorId)
             .OnDelete(DeleteBehavior.NoAction);
 
+        builder
+            .Entity<Notification>()
+            .HasOne(n => n.Activity)
+            .WithMany()
+            .HasForeignKey(n => n.ActivityId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.Entity<Notification>().HasIndex(n => new { n.UserId, n.IsRead });
 
         builder
@@ -103,6 +112,38 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .OnDelete(DeleteBehavior.NoAction);
 
         builder.Entity<Activity>().HasIndex(a => new { a.UserId, a.Date });
+
+        builder
+            .Entity<Like>()
+            .HasOne(l => l.Activity)
+            .WithMany(a => a.Likes)
+            .HasForeignKey(l => l.ActivityId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .Entity<Like>()
+            .HasOne(l => l.User)
+            .WithMany()
+            .HasForeignKey(l => l.UserId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<Like>().HasIndex(l => new { l.ActivityId, l.UserId }).IsUnique();
+
+        builder
+            .Entity<Comment>()
+            .HasOne(c => c.Activity)
+            .WithMany(a => a.Comments)
+            .HasForeignKey(c => c.ActivityId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .Entity<Comment>()
+            .HasOne(c => c.User)
+            .WithMany()
+            .HasForeignKey(c => c.UserId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<Comment>().HasIndex(c => new { c.ActivityId, c.Date });
 
         builder
             .Entity<LibraryEntry>()

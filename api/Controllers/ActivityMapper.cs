@@ -7,7 +7,8 @@ public static class ActivityMapper
     public const int PageLength = 30;
 
     public static IQueryable<ActivityResponse> ToResponses(
-        this IQueryable<Activity> activities
+        this IQueryable<Activity> activities,
+        string? me
     ) =>
         activities.Select(a => new ActivityResponse
         {
@@ -17,6 +18,9 @@ public static class ActivityMapper
             Rating = a.Rating,
             Page = a.Page,
             PageCount = a.PageCount,
+            LikeCount = a.Likes.Count,
+            LikedByMe = a.Likes.Any(l => l.UserId == me),
+            CommentCount = a.Comments.Count,
             UserName = a.User.UserName!,
             DisplayName = a.User.DisplayName,
             AvatarUrl = a.User.AvatarUrl,
@@ -49,6 +53,9 @@ public class ActivityResponse
     public int? Rating { get; set; }
     public int? Page { get; set; }
     public int? PageCount { get; set; }
+    public int LikeCount { get; set; }
+    public bool LikedByMe { get; set; }
+    public int CommentCount { get; set; }
     public string UserName { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string AvatarUrl { get; set; } = string.Empty;

@@ -13,6 +13,9 @@ public record ActivityResult(
     int? Rating,
     int? Page,
     int? PageCount,
+    int LikeCount,
+    bool LikedByMe,
+    int CommentCount,
     string UserName,
     ActivityBookResult? Book,
     ActivityUserResult? TargetUser

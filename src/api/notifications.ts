@@ -4,7 +4,9 @@ export type NotificationType =
   | "follow-requested"
   | "follow-approved"
   | "new-follower"
-  | "trusted";
+  | "trusted"
+  | "liked"
+  | "commented";
 
 export interface NotificationResponse {
   id: number;
@@ -14,6 +16,7 @@ export interface NotificationResponse {
   actorUserName: string;
   actorDisplayName: string;
   actorAvatarUrl: string;
+  bookTitle: string | null;
 }
 
 export function getNotifications(): Promise<NotificationResponse[]> {

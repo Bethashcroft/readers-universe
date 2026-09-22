@@ -1,12 +1,17 @@
 .activity-item {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
   padding: 12px 16px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background-color: var(--color-surface);
   backdrop-filter: blur(8px);
+}
+
+.activity-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .activity-avatar {
@@ -42,9 +47,60 @@
   white-space: nowrap;
 }
 
+.activity-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .activity-time {
   font-size: 12px;
   color: var(--color-text-muted);
+}
+
+.activity-like,
+.activity-comment {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.activity-like svg,
+.activity-comment svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.activity-comment:hover {
+  color: var(--color-primary);
+}
+
+.activity-like:hover,
+.activity-like.liked {
+  color: #f472b6;
+}
+
+.activity-like.liked svg {
+  fill: currentColor;
+}
+
+.activity-like:disabled,
+.activity-comment:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 
 .activity-cover {
