@@ -193,7 +193,9 @@ describe("BookDetail", () => {
     expect(screen.getByLabelText("Review (optional)")).toHaveValue(
       "My original thoughts",
     );
-    expect(screen.getByRole("button", { name: "★★★★★" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Rating ★★★★★" }),
+    ).toBeInTheDocument();
   });
 
   it("offers to add the book to your shelves when you don't own it", async () => {
@@ -274,7 +276,9 @@ describe("BookDetail", () => {
 
     await screen.findByText("Gone Girl");
 
-    expect(screen.getByText("Shelf")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Shelf Read" }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByText("This book isn't on your shelves."),
     ).not.toBeInTheDocument();
@@ -291,9 +295,9 @@ describe("BookDetail", () => {
     await screen.findByText("Gone Girl");
     expect(screen.getByText("Rate and Review")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: /Read/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Shelf Read" }));
     await userEvent.click(
-      screen.getByRole("button", { name: "Did Not Finish" }),
+      screen.getByRole("option", { name: "Did Not Finish" }),
     );
 
     expect(
@@ -334,6 +338,22 @@ describe("BookDetail", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("freezes the format while a book is out on loan", async () => {
+    mockGetBook.mockResolvedValue({
+      ...book,
+      myEntry: { ...myEntry, offer: "lent-out", format: "physical" },
+    });
+    mockGetReviews.mockResolvedValue([]);
+    renderBookDetail();
+
+    await screen.findByText("Gone Girl");
+
+    expect(screen.getByText("Physical")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Format/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("drops the offer when you switch a lent book to an ebook", async () => {
     const offered = { ...myEntry, offer: "available-to-borrow" };
     mockGetBook.mockResolvedValue({ ...book, myEntry: offered });
@@ -347,8 +367,10 @@ describe("BookDetail", () => {
 
     await screen.findByText("Gone Girl");
 
-    await userEvent.click(screen.getByRole("button", { name: /Not set/ }));
-    await userEvent.click(screen.getByRole("button", { name: "Ebook" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Format Not set" }),
+    );
+    await userEvent.click(screen.getByRole("option", { name: "Ebook" }));
 
     expect(mockUpdateBook).toHaveBeenCalledWith(9, {
       shelf: "read",

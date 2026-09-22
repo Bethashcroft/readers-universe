@@ -369,12 +369,6 @@
   gap: 6px;
 }
 
-.book-offer-note .form-field-label,
-.add-to-shelves .form-field-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text);
-}
 
 .remove-entry {
   margin-top: 16px;

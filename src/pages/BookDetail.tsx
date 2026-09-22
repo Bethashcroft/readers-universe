@@ -20,6 +20,8 @@ import {
   formatChoices,
   ratingOptions,
   canOffer,
+  formatLabel,
+  cannotOfferMessage,
 } from "../types/book";
 import SelectMenu from "../components/SelectMenu";
 import BookCover from "../components/BookCover";
@@ -27,6 +29,7 @@ import ReadingProgress from "../components/ReadingProgress";
 import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { formatDate } from "../utils/dates";
+import "../styles/forms.css";
 import "./BookDetail.css";
 
 function BookDetail() {
@@ -159,6 +162,8 @@ function BookDetail() {
       setOffer(myEntry?.offer ?? "");
     }
   };
+
+  const onLoan = offer === "lent-out";
 
   const handleFormatChange = async (newFormat: string) => {
     const newOffer = canOffer(newFormat) ? offer : "none";
@@ -334,27 +339,38 @@ function BookDetail() {
                   block
                 />
 
-                <SelectMenu
-                  label="Format"
-                  value={format}
-                  options={formatChoices}
-                  onChange={handleFormatChange}
-                  block
-                />
+                {onLoan ? (
+                  <div className="book-offer-note">
+                    <span className="form-field-label" id="book-format-label">
+                      Format
+                    </span>
+                    <p className="rating-meta" aria-labelledby="book-format-label">
+                      {formatLabel(format)}
+                    </p>
+                  </div>
+                ) : (
+                  <SelectMenu
+                    label="Format"
+                    value={format}
+                    options={formatChoices}
+                    onChange={handleFormatChange}
+                    block
+                  />
+                )}
 
-                {offer === "lent-out" || !canOffer(format) ? (
+                {onLoan || !canOffer(format) ? (
                   <div className="book-offer-note">
                     <span className="form-field-label" id="book-offer-label">
                       Lending &amp; Selling
                     </span>
                     <p className="rating-meta" aria-labelledby="book-offer-label">
-                      {offer === "lent-out" ? (
+                      {onLoan ? (
                         <>
                           Out on loan. Mark it returned on{" "}
                           <Link to="/borrowing">Borrowing</Link> to change this.
                         </>
                       ) : (
-                        "Ebooks and audiobooks can't be lent out or sold."
+                        cannotOfferMessage
                       )}
                     </p>
                   </div>

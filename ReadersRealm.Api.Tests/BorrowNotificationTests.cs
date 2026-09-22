@@ -113,6 +113,18 @@ public class BorrowNotificationTests : IDisposable
     }
 
     [Fact]
+    public async Task RemovingABookTellsEveryoneWaiting()
+    {
+        var (sophie, tom, entryId) = await SophieOffersABookAsync();
+        await tom.RequestBookAsync(entryId);
+
+        var response = await sophie.DeleteAsync($"/api/library/{entryId}");
+        response.EnsureSuccessStatusCode();
+
+        Assert.Equal("Babel", (await BorrowPingAsync(tom, "borrow-declined")).BookTitle);
+    }
+
+    [Fact]
     public async Task UntrustingSomeoneTellsThemTheirRequestIsOff()
     {
         var (sophie, tom, entryId) = await SophieOffersABookAsync();
@@ -122,6 +134,25 @@ public class BorrowNotificationTests : IDisposable
         response.EnsureSuccessStatusCode();
 
         Assert.Equal("Babel", (await BorrowPingAsync(tom, "borrow-declined")).BookTitle);
+    }
+
+    [Fact]
+    public async Task TheAcceptedBorrowerIsNotAlsoToldNo()
+    {
+        var (sophie, tom, entryId) = await SophieOffersABookAsync();
+        var nadia = await _factory.SignInAsync("nadia");
+        await sophie.TrustAsync("nadia");
+
+        var tomsRequest = await tom.RequestBookAsync(entryId);
+        await nadia.RequestBookAsync(entryId);
+
+        await sophie.AcceptRequestAsync(tomsRequest.Id);
+
+        var his = (await NotificationsAsync(tom))
+            .Where(n => n.Type.StartsWith("borrow-"))
+            .ToList();
+
+        Assert.Equal("borrow-accepted", Assert.Single(his).Type);
     }
 
     [Fact]

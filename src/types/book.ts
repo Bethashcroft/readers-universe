@@ -32,6 +32,9 @@ export const formatChoices = formatOptions.map((value) => ({
   label: formatLabels[value],
 }));
 
+export const cannotOfferMessage =
+  "Ebooks and audiobooks can't be lent out or sold.";
+
 const cannotOffer: FormatType[] = ["ebook", "audiobook"];
 
 export function canOffer(format: string) {

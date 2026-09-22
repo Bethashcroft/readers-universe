@@ -292,12 +292,14 @@ public class LibraryController : ControllerBase
 
         var offerChanging = request.Offer != entry.Offer;
 
+        var format = request.Format ?? entry.Format;
+
         var validationError =
             (
                 offerChanging
                     ? ValidateStates(request.Shelf, request.Offer)
                     : ValidateShelf(request.Shelf)
-            ) ?? ValidateFormat(request.Format, request.Offer);
+            ) ?? ValidateFormat(format, request.Offer);
 
         if (validationError != null)
         {
@@ -353,7 +355,7 @@ public class LibraryController : ControllerBase
 
         entry.Shelf = request.Shelf;
         entry.Offer = request.Offer;
-        entry.Format = request.Format;
+        entry.Format = format;
         await _context.SaveChangesAsync();
 
         await _notifications.BorrowDeclinedAsync(declined, entry.BookId);
@@ -539,8 +541,13 @@ public class LibraryController : ControllerBase
             );
         }
 
+        var declined = await _lending.DeclinePendingAsync(entry.Id);
+        var bookId = entry.BookId;
+
         _context.LibraryEntries.Remove(entry);
         await _context.SaveChangesAsync();
+
+        await _notifications.BorrowDeclinedAsync(declined, bookId);
 
         return Ok();
     }
@@ -652,7 +659,7 @@ public class UpdateLibraryEntryRequest
 {
     public string Shelf { get; set; } = string.Empty;
     public string Offer { get; set; } = BookOffer.None;
-    public string Format { get; set; } = BookFormat.Unknown;
+    public string? Format { get; set; }
 }
 
 public class LibraryEntryResponse

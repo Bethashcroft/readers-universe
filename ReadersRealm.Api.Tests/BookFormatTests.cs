@@ -146,6 +146,23 @@ public class BookFormatTests : IDisposable
     }
 
     [Fact]
+    public async Task ASaveThatLeavesFormatOutKeepsWhatYouHad()
+    {
+        var sophie = await _factory.SignInAsync("sophie");
+        var book = await sophie.AddBookAsync("Babel", format: "physical");
+
+        var response = await sophie.PutAsJsonAsync(
+            $"/api/library/{book.Id}",
+            new { shelf = "currently-reading", offer = "none" }
+        );
+        response.EnsureSuccessStatusCode();
+
+        var after = (await sophie.GetLibraryAsync()).Single();
+        Assert.Equal("physical", after.Format);
+        Assert.Equal("currently-reading", after.Shelf);
+    }
+
+    [Fact]
     public async Task MadeUpFormatsAreRefused()
     {
         var sophie = await _factory.SignInAsync("sophie");

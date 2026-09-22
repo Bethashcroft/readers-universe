@@ -9,6 +9,7 @@ import {
   formatChoices,
   ratingOptions,
   canOffer,
+  cannotOfferMessage,
 } from "../types/book";
 import type { ShelfType, OfferType, FormatType } from "../types/book";
 import SelectMenu from "../components/SelectMenu";
@@ -201,9 +202,7 @@ function AddBook() {
           ) : (
             <>
               <span className="form-field-label">Lending & Selling</span>
-              <p className="isbn-status notfound">
-                Ebooks and audiobooks can't be lent out or sold.
-              </p>
+              <p className="isbn-status notfound">{cannotOfferMessage}</p>
             </>
           )}
 

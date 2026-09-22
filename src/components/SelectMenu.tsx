@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import "./SelectMenu.css";
 
 export interface SelectOption {
@@ -22,6 +22,8 @@ function SelectMenu({
   block = false,
 }: SelectMenuProps) {
   const [open, setOpen] = useState(false);
+  const labelId = useId();
+  const triggerId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const current = options.find((o) => o.value === value) ?? options[0];
@@ -57,11 +59,15 @@ function SelectMenu({
       className={`select-menu${block ? " select-menu-block" : ""}`}
       ref={containerRef}
     >
-      <span className="select-menu-label">{label}</span>
+      <span className="select-menu-label" id={labelId}>
+        {label}
+      </span>
       <button
         type="button"
+        id={triggerId}
         className="select-menu-trigger"
-        aria-haspopup="true"
+        aria-haspopup="listbox"
+        aria-labelledby={`${labelId} ${triggerId}`}
         aria-expanded={open}
         onClick={() => setOpen((wasOpen) => !wasOpen)}
       >
@@ -75,11 +81,13 @@ function SelectMenu({
         </svg>
       </button>
       {open && (
-        <div className="select-menu-panel">
+        <div className="select-menu-panel" role="listbox" aria-labelledby={labelId}>
           {options.map((option) => (
             <button
               key={option.value}
               type="button"
+              role="option"
+              aria-selected={option.value === value}
               className={`select-menu-option ${option.value === value ? "selected" : ""}`}
               onClick={() => {
                 onChange(option.value);

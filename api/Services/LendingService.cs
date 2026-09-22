@@ -36,11 +36,16 @@ public class LendingService
             r.LibraryEntryId == libraryEntryId && r.Status == BorrowStatus.Accepted
         );
 
-    public async Task<List<BorrowRequest>> DeclinePendingAsync(int libraryEntryId)
+    public async Task<List<BorrowRequest>> DeclinePendingAsync(
+        int libraryEntryId,
+        int exceptRequestId = 0
+    )
     {
         var pending = await _context
             .BorrowRequests.Where(r =>
-                r.LibraryEntryId == libraryEntryId && r.Status == BorrowStatus.Pending
+                r.LibraryEntryId == libraryEntryId
+                && r.Status == BorrowStatus.Pending
+                && r.Id != exceptRequestId
             )
             .ToListAsync();
 

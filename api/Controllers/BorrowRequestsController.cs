@@ -228,7 +228,10 @@ public class BorrowRequestsController : ControllerBase
             }
 
             borrowRequest.LibraryEntry.Offer = BookOffer.LentOut;
-            declined = await _lending.DeclinePendingAsync(borrowRequest.LibraryEntryId);
+            declined = await _lending.DeclinePendingAsync(
+                borrowRequest.LibraryEntryId,
+                exceptRequestId: borrowRequest.Id
+            );
         }
 
         borrowRequest.Status = request.Status;
