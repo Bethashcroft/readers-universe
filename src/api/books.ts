@@ -14,6 +14,8 @@ export interface LibraryEntryResponse {
   format: string;
   page: number | null;
   pageCount: number | null;
+  finishedDate: string | null;
+  timesRead: number;
   rating: number | null;
   userId: string;
   ownerName: string;
@@ -61,6 +63,7 @@ export interface UpdateLibraryEntryRequest {
   shelf: string;
   offer: string;
   format: string;
+  today?: string;
 }
 
 export interface PagedResult<T> {
@@ -97,6 +100,7 @@ export function getMyBooks(options?: {
   shelf?: string;
   search?: string;
   sort?: string;
+  reverse?: boolean;
   offerable?: boolean;
   page?: number;
   pageSize?: number;
@@ -106,6 +110,7 @@ export function getMyBooks(options?: {
   if (options?.search) params.set("search", options.search);
   if (options?.sort && options.sort !== "added")
     params.set("sort", options.sort);
+  if (options?.reverse) params.set("reverse", "true");
   if (options?.offerable) params.set("offerable", "true");
   if (options?.page) params.set("page", String(options.page));
   if (options?.pageSize) params.set("pageSize", String(options.pageSize));
@@ -221,6 +226,34 @@ export function lookupPageCount(id: number): Promise<LibraryEntryResponse> {
     "Failed to look up the page count",
     { method: "POST" },
   );
+}
+
+export interface ReadingResponse {
+  id: number;
+  finishedDate: string;
+}
+
+export function getReadings(entryId: number): Promise<ReadingResponse[]> {
+  return request(
+    `/library/${entryId}/readings`,
+    "Failed to load your reading history",
+  );
+}
+
+export function editReading(
+  readingId: number,
+  finishedDate: string,
+): Promise<ReadingResponse[]> {
+  return request(`/library/readings/${readingId}`, "Failed to save that date", {
+    method: "PUT",
+    body: JSON.stringify({ finishedDate }),
+  });
+}
+
+export function deleteReading(readingId: number): Promise<ReadingResponse[]> {
+  return request(`/library/readings/${readingId}`, "Failed to delete that", {
+    method: "DELETE",
+  });
 }
 
 export function deleteBook(id: number): Promise<void> {

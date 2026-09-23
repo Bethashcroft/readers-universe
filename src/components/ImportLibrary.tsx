@@ -75,6 +75,15 @@ function ImportLibrary() {
     }
   };
 
+  const labelFor = (plan: ImportSummary) =>
+    stage === "importing"
+      ? "Working on your books…"
+      : plan.added > 0
+        ? `Import ${plan.added} ${plan.added === 1 ? "book" : "books"}`
+        : plan.updated > 0
+          ? `Fill in ${plan.updated} ${plan.updated === 1 ? "book" : "books"}`
+          : "Nothing new to import";
+
   return (
     <section className="import-library">
       <p className="import-intro">
@@ -88,22 +97,35 @@ function ImportLibrary() {
       {result && (
         <div className="import-done">
           <p className="import-headline">
-            Added <strong>{result.added}</strong>{" "}
-            {result.added === 1 ? "book" : "books"} to your shelves
-            {result.reviewsAdded > 0 && (
+            {result.added > 0 ? (
               <>
-                , along with <strong>{result.reviewsAdded}</strong> of your
-                reviews
+                Added <strong>{result.added}</strong>{" "}
+                {result.added === 1 ? "book" : "books"} to your shelves
+                {result.reviewsAdded > 0 && (
+                  <>
+                    , along with <strong>{result.reviewsAdded}</strong> of your
+                    reviews
+                  </>
+                )}
+                .
               </>
+            ) : result.updated > 0 ? (
+              <>
+                Filled in missing details on <strong>{result.updated}</strong>{" "}
+                {result.updated === 1 ? "book" : "books"}.
+              </>
+            ) : (
+              "Everything was already up to date."
             )}
-            .
           </p>
-          {result.alreadyOnShelves > 0 && (
+          {result.added > 0 && result.alreadyOnShelves > 0 && (
             <p className="import-note">
               {result.alreadyOnShelves}{" "}
-              {result.alreadyOnShelves === 1
-                ? "book was already on your shelves, so we left it alone."
-                : "books were already on your shelves, so we left them alone."}
+              {result.alreadyOnShelves === 1 ? "was" : "were"} already on your
+              shelves
+              {result.updated > 0
+                ? `, and we filled in what was missing on ${result.updated} of them.`
+                : " and up to date."}
             </p>
           )}
           {result.added > 0 && <CoverSearchStatus search={covers} />}
@@ -153,7 +175,13 @@ function ImportLibrary() {
             {preview.alreadyOnShelves > 0 && (
               <li>
                 <strong>{preview.alreadyOnShelves}</strong> already on your
-                shelves, which we will leave alone
+                shelves
+              </li>
+            )}
+            {preview.updated > 0 && (
+              <li>
+                <strong>{preview.updated}</strong> of those getting missing
+                finish dates, formats or page counts filled in
               </li>
             )}
             {preview.reviewsAdded > 0 && (
@@ -187,11 +215,12 @@ function ImportLibrary() {
               type="button"
               className="btn btn-primary"
               onClick={handleImport}
-              disabled={stage === "importing" || preview.added === 0}
+              disabled={
+                stage === "importing" ||
+                (preview.added === 0 && preview.updated === 0)
+              }
             >
-              {stage === "importing"
-                ? "Adding your books…"
-                : `Import ${preview.added} ${preview.added === 1 ? "book" : "books"}`}
+              {labelFor(preview)}
             </button>
             <button type="button" className="btn btn-secondary" onClick={reset}>
               Cancel

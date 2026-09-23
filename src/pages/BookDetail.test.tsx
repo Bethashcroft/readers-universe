@@ -56,6 +56,8 @@ const myEntry: LibraryEntryResponse = {
   canRequest: true,
   page: null,
   pageCount: null,
+  finishedDate: null,
+  timesRead: 0,
   title: "Gone Girl",
   author: "Gillian Flynn",
   coverUrl: "x",
@@ -376,6 +378,7 @@ describe("BookDetail", () => {
       shelf: "read",
       offer: "none",
       format: "ebook",
+      today: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
     });
   });
 

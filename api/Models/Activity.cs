@@ -19,6 +19,9 @@ public class Activity
     public int? Page { get; set; }
     public int? PageCount { get; set; }
 
+    public int? ReadingSessionId { get; set; }
+    public ReadingSession? ReadingSession { get; set; }
+
     public DateTime Date { get; set; } = DateTime.UtcNow;
 
     public List<Like> Likes { get; set; } = [];

@@ -20,6 +20,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<Activity> Activities { get; set; }
     public DbSet<Like> Likes { get; set; }
     public DbSet<Comment> Comments { get; set; }
+    public DbSet<ReadingSession> ReadingSessions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -118,6 +119,13 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .HasForeignKey(a => a.TargetUserId)
             .OnDelete(DeleteBehavior.NoAction);
 
+        builder
+            .Entity<Activity>()
+            .HasOne(a => a.ReadingSession)
+            .WithMany()
+            .HasForeignKey(a => a.ReadingSessionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.Entity<Activity>().HasIndex(a => new { a.UserId, a.Date });
 
         builder
@@ -151,6 +159,18 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .OnDelete(DeleteBehavior.NoAction);
 
         builder.Entity<Comment>().HasIndex(c => new { c.ActivityId, c.Date });
+
+        builder
+            .Entity<ReadingSession>()
+            .HasOne(r => r.LibraryEntry)
+            .WithMany(e => e.Readings)
+            .HasForeignKey(r => r.LibraryEntryId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .Entity<ReadingSession>()
+            .HasIndex(r => new { r.LibraryEntryId, r.FinishedDate })
+            .IsUnique();
 
         builder
             .Entity<LibraryEntry>()

@@ -22,6 +22,7 @@ const summary = {
   rowsFound: 2,
   added: 2,
   alreadyOnShelves: 0,
+  updated: 0,
   reviewsAdded: 0,
   newToCatalogue: 2,
   skippedRows: 0,
@@ -113,8 +114,50 @@ describe("ImportLibrary", () => {
     await user.click(screen.getByRole("button", { name: "Check the file" }));
 
     expect(
-      await screen.findByRole("button", { name: "Import 0 books" }),
+      await screen.findByRole("button", { name: "Nothing new to import" }),
     ).toBeDisabled();
+    expect(mockRefreshCovers).not.toHaveBeenCalled();
+  });
+
+  it("gets one book right in the summary", async () => {
+    const oneAlready = { ...summary, alreadyOnShelves: 1 };
+    mockImportLibrary
+      .mockResolvedValueOnce(oneAlready)
+      .mockResolvedValueOnce({ ...oneAlready, committed: true });
+    mockRefreshCovers.mockResolvedValue(coversDone);
+
+    await importAFile();
+
+    expect(
+      await screen.findByText(/1 was already on your shelves and up to date/),
+    ).toBeInTheDocument();
+  });
+
+  it("lets a re-import fill in books you already have", async () => {
+    const fillOnly = { ...summary, added: 0, alreadyOnShelves: 2, updated: 2 };
+    mockImportLibrary
+      .mockResolvedValueOnce(fillOnly)
+      .mockResolvedValueOnce({ ...fillOnly, committed: true });
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <ImportLibrary />
+      </MemoryRouter>,
+    );
+
+    const file = new File(["Title,Author"], "goodreads.csv", { type: "text/csv" });
+    await user.upload(document.getElementById("import-file")!, file);
+    await user.click(screen.getByRole("button", { name: "Check the file" }));
+
+    expect(
+      await screen.findByText(/getting missing finish dates/),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Fill in 2 books" }));
+
+    expect(
+      await screen.findByText(/Filled in missing details on/),
+    ).toBeInTheDocument();
     expect(mockRefreshCovers).not.toHaveBeenCalled();
   });
 });

@@ -20,7 +20,9 @@ public record BookResult(
     string OwnerName,
     bool CanRequest,
     int? Page,
-    int? PageCount
+    int? PageCount,
+    DateTime? FinishedDate,
+    int TimesRead
 );
 
 public record BookOwnerResult(
@@ -78,6 +80,7 @@ public record ImportSummaryResult(
     int RowsFound,
     int Added,
     int AlreadyOnShelves,
+    int Updated,
     int ReviewsAdded,
     int NewToCatalogue,
     int SkippedRows,

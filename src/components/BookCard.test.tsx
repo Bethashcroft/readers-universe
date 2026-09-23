@@ -10,6 +10,8 @@ const book: LibraryEntryResponse = {
   canRequest: true,
   page: null,
   pageCount: null,
+  finishedDate: null,
+  timesRead: 0,
   title: "The Hobbit",
   author: "J.R.R. Tolkien",
   coverUrl: "x",

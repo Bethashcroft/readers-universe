@@ -18,6 +18,8 @@ const entry: LibraryEntryResponse = {
   canRequest: true,
   page: 120,
   pageCount: 340,
+  finishedDate: null,
+  timesRead: 0,
   title: "Piranesi",
   author: "Susanna Clarke",
   coverUrl: "x",

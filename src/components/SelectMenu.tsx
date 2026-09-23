@@ -65,7 +65,7 @@ function SelectMenu({
       <button
         type="button"
         id={triggerId}
-        className="select-menu-trigger"
+        className="select-menu-trigger btn-pill"
         aria-haspopup="listbox"
         aria-labelledby={`${labelId} ${triggerId}`}
         aria-expanded={open}

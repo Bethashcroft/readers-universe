@@ -133,7 +133,12 @@ public class BooksController : ControllerBase
             .Take(size)
             .ToListAsync();
 
-        var responses = await LibraryEntryMapper.MapAsync(_context, entries, e => e.UserId);
+        var responses = await LibraryEntryMapper.MapAsync(
+            _context,
+            entries,
+            e => e.UserId,
+            userId
+        );
 
         if (userId != null)
         {
@@ -221,7 +226,12 @@ public class BooksController : ControllerBase
                     myEntry == null
                         ? null
                         : (
-                            await LibraryEntryMapper.MapAsync(_context, [myEntry], e => e.UserId)
+                            await LibraryEntryMapper.MapAsync(
+                                _context,
+                                [myEntry],
+                                e => e.UserId,
+                                userId
+                            )
                         ).Single(),
             }
         );

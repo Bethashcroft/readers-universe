@@ -76,6 +76,7 @@ public class ImportController(
                 RowsFound = parsed.Books.Count,
                 Added = outcome.Added,
                 AlreadyOnShelves = outcome.AlreadyOnShelves,
+                Updated = outcome.Updated,
                 ReviewsAdded = outcome.ReviewsAdded,
                 NewToCatalogue = outcome.NewToCatalogue,
                 SkippedRows = parsed.Skipped.Count,
@@ -93,6 +94,7 @@ public class ImportSummaryResponse
     public int RowsFound { get; set; }
     public int Added { get; set; }
     public int AlreadyOnShelves { get; set; }
+    public int Updated { get; set; }
     public int ReviewsAdded { get; set; }
     public int NewToCatalogue { get; set; }
     public int SkippedRows { get; set; }

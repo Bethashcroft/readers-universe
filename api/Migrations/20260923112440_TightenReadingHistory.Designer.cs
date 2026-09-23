@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ReadersRealm.Api.Data;
@@ -11,9 +12,11 @@ using ReadersRealm.Api.Data;
 namespace ReadersRealm.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260923112440_TightenReadingHistory")]
+    partial class TightenReadingHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -177,9 +180,6 @@ namespace ReadersRealm.Api.Migrations
                     b.Property<int?>("Rating")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ReadingSessionId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("TargetUserId")
                         .HasColumnType("text");
 
@@ -194,8 +194,6 @@ namespace ReadersRealm.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BookId");
-
-                    b.HasIndex("ReadingSessionId");
 
                     b.HasIndex("TargetUserId");
 
@@ -769,11 +767,6 @@ namespace ReadersRealm.Api.Migrations
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("ReadersRealm.Api.Models.ReadingSession", "ReadingSession")
-                        .WithMany()
-                        .HasForeignKey("ReadingSessionId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("ReadersRealm.Api.Models.AppUser", "TargetUser")
                         .WithMany()
                         .HasForeignKey("TargetUserId")
@@ -786,8 +779,6 @@ namespace ReadersRealm.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Book");
-
-                    b.Navigation("ReadingSession");
 
                     b.Navigation("TargetUser");
 

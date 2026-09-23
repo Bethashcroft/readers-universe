@@ -18,18 +18,21 @@ public class LibraryController : ControllerBase
     private readonly LendingService _lending;
     private readonly ActivityService _activity;
     private readonly NotificationService _notifications;
+    private readonly ReadingHistory _readings;
 
     public LibraryController(
         AppDbContext context,
         LendingService lending,
         ActivityService activity,
-        NotificationService notifications
+        NotificationService notifications,
+        ReadingHistory readings
     )
     {
         _context = context;
         _lending = lending;
         _activity = activity;
         _notifications = notifications;
+        _readings = readings;
     }
 
     [HttpGet]
@@ -37,6 +40,7 @@ public class LibraryController : ControllerBase
         [FromQuery] string? shelf,
         [FromQuery] string? search,
         [FromQuery] string? sort,
+        [FromQuery] bool reverse,
         [FromQuery] bool offerable,
         [FromQuery] int? page,
         [FromQuery] int? pageSize
@@ -86,22 +90,35 @@ public class LibraryController : ControllerBase
 
         var ordered = sort switch
         {
-            LibrarySort.Title => query.OrderBy(e => e.Book.Title).ThenBy(e => e.Id),
+            LibrarySort.Title => query.SortBy(e => e.Book.Title, descending: reverse),
             LibrarySort.Author => query
-                .OrderBy(e => e.Book.Author)
-                .ThenBy(e => e.Book.Title)
-                .ThenBy(e => e.Id),
+                .SortBy(e => e.Book.Author, descending: reverse)
+                .ThenBy(e => e.Book.Title),
             LibrarySort.Rating => query
-                .OrderByDescending(e =>
-                    myRatings.Where(r => r.BookId == e.BookId).Select(r => r.Rating).FirstOrDefault()
-                        ?? 0
+                .OrderBy(e =>
+                    myRatings.Any(r => r.BookId == e.BookId && r.Rating != null) ? 0 : 1
                 )
-                .ThenBy(e => e.Book.Title)
-                .ThenBy(e => e.Id),
-            _ => query.OrderByDescending(e => e.Id),
+                .ThenSortBy(
+                    e =>
+                        myRatings
+                            .Where(r => r.BookId == e.BookId)
+                            .Select(r => r.Rating)
+                            .FirstOrDefault(),
+                    descending: !reverse
+                )
+                .ThenBy(e => e.Book.Title),
+            LibrarySort.Finished => query
+                .OrderBy(e => e.Readings.Any() ? 0 : 1)
+                .ThenSortBy(
+                    e => e.Readings.Max(r => (DateTime?)r.FinishedDate),
+                    descending: !reverse
+                )
+                .ThenBy(e => e.Book.Title),
+            _ => query.SortBy(e => e.Id, descending: !reverse),
         };
 
         var entries = await ordered
+            .ThenBy(e => e.Id)
             .Include(e => e.Book)
             .Include(e => e.User)
             .Skip((currentPage - 1) * size)
@@ -335,6 +352,11 @@ public class LibraryController : ControllerBase
 
         if (request.Shelf != entry.Shelf)
         {
+            var finish =
+                request.Shelf == BookShelf.Read
+                    ? await _readings.RecordAsync(entry.Id, ReadingHistory.TodayFor(request.Today))
+                    : null;
+
             var shelfEvent = ActivityService.ForShelf(request.Shelf);
 
             if (shelfEvent != null)
@@ -344,7 +366,13 @@ public class LibraryController : ControllerBase
                     .Select(r => r.Rating)
                     .FirstOrDefaultAsync();
 
-                _activity.Record(userId!, shelfEvent, entry.BookId, rating: rating);
+                _activity.Record(
+                    userId!,
+                    shelfEvent,
+                    entry.BookId,
+                    rating: rating,
+                    finish: finish
+                );
             }
         }
 
@@ -602,7 +630,7 @@ public class LibraryController : ControllerBase
     private Task<List<LibraryEntryResponse>> ToResponsesAsync(
         List<LibraryEntry> entries,
         string viewerId
-    ) => LibraryEntryMapper.MapAsync(_context, entries, _ => viewerId);
+    ) => LibraryEntryMapper.MapAsync(_context, entries, _ => viewerId, viewerId);
 
     public static string? ValidateStates(string shelf, string offer) =>
         ValidateShelf(shelf)
@@ -660,6 +688,7 @@ public class UpdateLibraryEntryRequest
     public string Shelf { get; set; } = string.Empty;
     public string Offer { get; set; } = BookOffer.None;
     public string? Format { get; set; }
+    public DateTime? Today { get; set; }
 }
 
 public class LibraryEntryResponse
@@ -675,6 +704,8 @@ public class LibraryEntryResponse
     public string Format { get; set; } = BookFormat.Unknown;
     public int? Page { get; set; }
     public int? PageCount { get; set; }
+    public DateTime? FinishedDate { get; set; }
+    public int TimesRead { get; set; }
     public int? Rating { get; set; }
     public string UserId { get; set; } = string.Empty;
     public string OwnerName { get; set; } = string.Empty;

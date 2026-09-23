@@ -6,6 +6,7 @@ export interface ImportSummary {
   rowsFound: number;
   added: number;
   alreadyOnShelves: number;
+  updated: number;
   reviewsAdded: number;
   newToCatalogue: number;
   skippedRows: number;

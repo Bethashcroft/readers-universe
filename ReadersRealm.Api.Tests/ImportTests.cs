@@ -164,6 +164,13 @@ public class ImportTests : IDisposable
             shelves.Single(b => b.Title == "I Who Have Never Known Men").Format
         );
 
+        Assert.Equal(new DateTime(2026, 7, 26), stand.FinishedDate);
+        Assert.Equal(1, stand.TimesRead);
+
+        var neverRead = shelves.Single(b => b.Title == "I Who Have Never Known Men");
+        Assert.Null(neverRead.FinishedDate);
+        Assert.Equal(0, neverRead.TimesRead);
+
         var reviews = await _client.GetFromJsonAsync<ReviewResult[]>(
             $"/api/reviews/book/{stand.BookId}"
         );
@@ -211,10 +218,136 @@ public class ImportTests : IDisposable
 
         Assert.Equal(0, second.Added);
         Assert.Equal(5, second.AlreadyOnShelves);
+        Assert.Equal(0, second.Updated);
         Assert.Equal(0, second.NewToCatalogue);
 
         var shelves = await _client.GetLibraryAsync();
         Assert.Equal(5, shelves!.Length);
+        Assert.Equal(1, shelves.Single(b => b.Title == "The One Night Stand").TimesRead);
+    }
+
+    private async Task<BookResult> AddTheOneNightStandAsync(
+        string shelf = "tbr",
+        string format = ""
+    ) =>
+        await _client.AddBookAsync(
+            "The One Night Stand",
+            shelf: shelf,
+            author: "L.H. Stacey",
+            isbn: "9781785138720",
+            format: format
+        );
+
+    [Fact]
+    public async Task ReimportingFillsInWhatYourBooksAreMissing()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+        await AddTheOneNightStandAsync();
+
+        var summary = await ImportAsync(_client);
+
+        Assert.Equal(1, summary.AlreadyOnShelves);
+        Assert.Equal(1, summary.Updated);
+
+        var stand = (await _client.GetLibraryAsync()).Single(b => b.Title == "The One Night Stand");
+        Assert.Equal("ebook", stand.Format);
+        Assert.Equal(281, stand.PageCount);
+        Assert.Equal(new DateTime(2026, 7, 26), stand.FinishedDate);
+        Assert.Equal("tbr", stand.Shelf);
+    }
+
+    [Fact]
+    public async Task CheckingTheFileFirstStillReportsWhatWasFilledIn()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+        await AddTheOneNightStandAsync();
+
+        var preview = await ImportAsync(_client, preview: true);
+        var done = await ImportAsync(_client);
+
+        Assert.Equal(1, preview.Updated);
+        Assert.Equal(4, done.Added);
+        Assert.Equal(1, done.Updated);
+    }
+
+    [Fact]
+    public async Task ReimportingNeverOverwritesWhatYouSet()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+        var mine = await AddTheOneNightStandAsync(shelf: "currently-reading", format: "physical");
+        await _client.PutAsJsonAsync(
+            $"/api/library/{mine.Id}",
+            new { shelf = "read", offer = "none" }
+        );
+        await _client.PutAsJsonAsync(
+            $"/api/library/{mine.Id}/progress",
+            new { page = (int?)null, pageCount = 300 }
+        );
+
+        var summary = await ImportAsync(_client);
+
+        Assert.Equal(0, summary.Updated);
+
+        var stand = (await _client.GetLibraryAsync()).Single(b => b.Title == "The One Night Stand");
+        Assert.Equal("physical", stand.Format);
+        Assert.Equal(300, stand.PageCount);
+        Assert.Equal(DateTime.UtcNow.Date, stand.FinishedDate!.Value.Date);
+        Assert.Equal(1, stand.TimesRead);
+    }
+
+    [Fact]
+    public async Task ReimportingDoesNotBringBackAFinishYouDeleted()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+        await ImportAsync(_client);
+        var stand = (await _client.GetLibraryAsync()).Single(b => b.Title == "The One Night Stand");
+        var wrong = (
+            await _client.GetFromJsonAsync<ReadingResult[]>($"/api/library/{stand.Id}/readings")
+        )!.Single();
+        await _client.DeleteAsync($"/api/library/readings/{wrong.Id}");
+
+        await ImportAsync(_client);
+
+        var after = (await _client.GetLibraryAsync()).Single(b => b.Title == "The One Night Stand");
+        Assert.Equal(0, after.TimesRead);
+    }
+
+    [Fact]
+    public async Task ReimportingWillNotSetAPageCountBelowYourPage()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+        var mine = await AddTheOneNightStandAsync(shelf: "currently-reading");
+        await _client.PutAsJsonAsync(
+            $"/api/library/{mine.Id}/progress",
+            new { page = 300, pageCount = (int?)null }
+        );
+
+        await ImportAsync(_client);
+
+        var stand = (await _client.GetLibraryAsync()).Single(b => b.Title == "The One Night Stand");
+        Assert.Equal(300, stand.Page);
+        Assert.Null(stand.PageCount);
+    }
+
+    [Fact]
+    public async Task ReimportingWillNotTurnABookYouLendIntoAnEbook()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+        var mine = await AddTheOneNightStandAsync();
+        await _client.OfferBookAsync(mine.Id);
+
+        await ImportAsync(_client);
+
+        var stand = (await _client.GetLibraryAsync()).Single(b => b.Title == "The One Night Stand");
+        Assert.Equal("", stand.Format);
+        Assert.Equal("available-to-borrow", stand.Offer);
+        Assert.Equal(281, stand.PageCount);
     }
 
     [Fact]

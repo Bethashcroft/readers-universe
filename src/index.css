@@ -183,6 +183,31 @@ option {
   border-color: rgba(239, 68, 68, 0.55);
 }
 
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  color: var(--color-primary);
+  background-color: rgba(167, 139, 250, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.btn-pill:hover,
+.btn-pill[aria-expanded="true"] {
+  background-color: rgba(167, 139, 250, 0.22);
+  border-color: rgba(167, 139, 250, 0.6);
+}
+
 .badge {
   display: inline-block;
   width: fit-content;

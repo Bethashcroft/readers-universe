@@ -21,6 +21,8 @@ const book: LibraryEntryResponse = {
   canRequest: true,
   page: null,
   pageCount: null,
+  finishedDate: null,
+  timesRead: 0,
   title: "Piranesi",
   author: "Susanna Clarke",
   coverUrl: "x",
@@ -74,5 +76,39 @@ describe("Shelves", () => {
     expect(mockGetMyBooks).toHaveBeenLastCalledWith(
       expect.objectContaining({ shelf: "tbr", page: 1 }),
     );
+  });
+
+  it("flips the order and says which way round it is", async () => {
+    renderShelves();
+    await screen.findByText("Piranesi");
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Sort by Recently added" }),
+    );
+    await userEvent.click(screen.getByRole("option", { name: "Date finished" }));
+    await userEvent.click(screen.getByRole("button", { name: /Newest first/ }));
+
+    expect(mockGetMyBooks).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sort: "finished", reverse: true }),
+    );
+    expect(
+      screen.getByRole("button", { name: /Oldest first/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("starts a new sort the natural way round", async () => {
+    renderShelves();
+    await screen.findByText("Piranesi");
+
+    await userEvent.click(screen.getByRole("button", { name: /Newest first/ }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Sort by Recently added" }),
+    );
+    await userEvent.click(screen.getByRole("option", { name: "Title" }));
+
+    expect(mockGetMyBooks).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sort: "title", reverse: false }),
+    );
+    expect(screen.getByRole("button", { name: /A to Z/ })).toBeInTheDocument();
   });
 });

@@ -9,7 +9,8 @@ public static class LibraryEntryMapper
     public static async Task<List<LibraryEntryResponse>> MapAsync(
         AppDbContext context,
         List<LibraryEntry> entries,
-        Func<LibraryEntry, string> ratingUserSelector
+        Func<LibraryEntry, string> ratingUserSelector,
+        string? viewerId
     )
     {
         if (entries.Count == 0)
@@ -32,6 +33,27 @@ public static class LibraryEntryMapper
 
         var lookup = ratings.ToDictionary(r => (r.BookId, r.UserId), r => r.Rating);
 
+        var myEntryIds = entries.Where(e => e.UserId == viewerId).Select(e => e.Id).ToList();
+
+        var readings =
+            myEntryIds.Count == 0
+                ? []
+                : (
+                    await context
+                        .ReadingSessions.Where(r => myEntryIds.Contains(r.LibraryEntryId))
+                        .GroupBy(r => r.LibraryEntryId)
+                        .Select(g => new
+                        {
+                            LibraryEntryId = g.Key,
+                            Finished = g.Max(r => r.FinishedDate),
+                            Times = g.Count(),
+                        })
+                        .ToListAsync()
+                ).ToDictionary(
+                    r => r.LibraryEntryId,
+                    r => new ReadingSummary(r.Finished, r.Times)
+                );
+
         return entries
             .Select(e => new LibraryEntryResponse
             {
@@ -46,6 +68,8 @@ public static class LibraryEntryMapper
                 Format = e.Format,
                 Page = e.Page,
                 PageCount = e.PageCount,
+                FinishedDate = readings.GetValueOrDefault(e.Id)?.Finished,
+                TimesRead = readings.GetValueOrDefault(e.Id)?.Times ?? 0,
                 Rating = lookup.GetValueOrDefault((e.BookId, ratingUserSelector(e))),
                 UserId = e.UserId,
                 OwnerName = e.User.DisplayName,
@@ -54,4 +78,6 @@ public static class LibraryEntryMapper
             })
             .ToList();
     }
+
+    private record ReadingSummary(DateTime Finished, int Times);
 }

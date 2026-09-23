@@ -20,6 +20,9 @@ public class LibraryEntry
     public int? Page { get; set; }
     public int? PageCount { get; set; }
 
+    public List<ReadingSession> Readings { get; set; } = [];
+    public bool ReadingsEdited { get; set; }
+
     public int BookId { get; set; }
     public Book Book { get; set; } = null!;
 

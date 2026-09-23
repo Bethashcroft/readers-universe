@@ -125,6 +125,7 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<ReaderAccess>();
 builder.Services.AddScoped<LendingService>();
 builder.Services.AddScoped<ActivityService>();
+builder.Services.AddScoped<ReadingHistory>();
 builder.Services.AddScoped<IBookImportParser, GoodreadsCsvParser>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>

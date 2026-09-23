@@ -9,6 +9,7 @@ public class ImportOutcome
 {
     public int Added { get; set; }
     public int AlreadyOnShelves { get; set; }
+    public int Updated { get; set; }
     public int ReviewsAdded { get; set; }
     public int NewToCatalogue { get; set; }
     public Dictionary<string, int> ByShelf { get; set; } = [];
@@ -52,9 +53,19 @@ public class LibraryImportService(AppDbContext context)
             .GroupBy(b => b.MatchKey)
             .ToDictionary(g => g.Key, g => g.First());
 
-        var myBookIds = (
-            await _context.LibraryEntries.Where(e => e.UserId == userId)
-                .Select(e => e.BookId)
+        var myEntries = (
+            await _context.LibraryEntries.Where(e => e.UserId == userId).ToListAsync()
+        )
+            .GroupBy(e => e.BookId)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        var myBookIds = myEntries.Keys.ToHashSet();
+
+        var entriesWithReadings = (
+            await _context
+                .ReadingSessions.Where(r => r.LibraryEntry.UserId == userId)
+                .Select(r => r.LibraryEntryId)
+                .Distinct()
                 .ToListAsync()
         ).ToHashSet();
 
@@ -122,21 +133,40 @@ public class LibraryImportService(AppDbContext context)
             if (alreadyMine)
             {
                 outcome.AlreadyOnShelves++;
+
+                if (
+                    myEntries.TryGetValue(book.Id, out var mine)
+                    && FillBlanks(mine, source, entriesWithReadings)
+                )
+                {
+                    outcome.Updated++;
+                }
+
                 continue;
             }
 
-            _context.LibraryEntries.Add(
-                new LibraryEntry
-                {
-                    Book = book,
-                    UserId = userId,
-                    Shelf = source.Shelf,
-                    Offer = BookOffer.None,
-                    AddedDate = source.AddedDate ?? DateTime.UtcNow,
-                    PageCount = source.PageCount,
-                    Format = source.Format,
-                }
-            );
+            var entry = new LibraryEntry
+            {
+                Book = book,
+                UserId = userId,
+                Shelf = source.Shelf,
+                Offer = BookOffer.None,
+                AddedDate = source.AddedDate ?? DateTime.UtcNow,
+                PageCount = source.PageCount,
+                Format = source.Format,
+            };
+
+            if (source.ReadDate != null)
+            {
+                entry.Readings.Add(
+                    new ReadingSession
+                    {
+                        FinishedDate = ReadingHistory.DayOf(source.ReadDate.Value),
+                    }
+                );
+            }
+
+            _context.LibraryEntries.Add(entry);
 
             outcome.Added++;
             outcome.ByShelf[source.Shelf] = outcome.ByShelf.GetValueOrDefault(source.Shelf) + 1;
@@ -171,6 +201,54 @@ public class LibraryImportService(AppDbContext context)
         }
 
         return outcome;
+    }
+
+    private bool FillBlanks(
+        LibraryEntry entry,
+        ImportedBook source,
+        HashSet<int> entriesWithReadings
+    )
+    {
+        var filled = false;
+
+        var formatFits =
+            entry.Offer == BookOffer.None || LendingService.CanOffer(source.Format);
+
+        if (
+            entry.Format == BookFormat.Unknown
+            && source.Format != BookFormat.Unknown
+            && formatFits
+        )
+        {
+            entry.Format = source.Format;
+            filled = true;
+        }
+
+        var countFitsPage = entry.Page == null || entry.Page <= source.PageCount;
+
+        if (entry.PageCount == null && source.PageCount != null && countFitsPage)
+        {
+            entry.PageCount = source.PageCount;
+            filled = true;
+        }
+
+        if (
+            source.ReadDate != null
+            && !entry.ReadingsEdited
+            && entriesWithReadings.Add(entry.Id)
+        )
+        {
+            _context.ReadingSessions.Add(
+                new ReadingSession
+                {
+                    LibraryEntryId = entry.Id,
+                    FinishedDate = ReadingHistory.DayOf(source.ReadDate.Value),
+                }
+            );
+            filled = true;
+        }
+
+        return filled;
     }
 
     private static string CoverUrlFor(string title, string isbn) =>

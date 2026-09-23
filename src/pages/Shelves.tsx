@@ -11,6 +11,14 @@ import { usePageTitle } from "../hooks/usePageTitle";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import "./Shelves.css";
 
+const orderLabels: Record<string, [string, string]> = {
+  added: ["Newest first", "Oldest first"],
+  title: ["A to Z", "Z to A"],
+  author: ["A to Z", "Z to A"],
+  rating: ["Highest first", "Lowest first"],
+  finished: ["Newest first", "Oldest first"],
+};
+
 function Shelves() {
   usePageTitle("My Shelves");
 
@@ -18,6 +26,7 @@ function Shelves() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
   const [sort, setSort] = useState("added");
+  const [reverse, setReverse] = useState(false);
   const [page, setPage] = useState(1);
   const [pageFor, setPageFor] = useState("");
   const currentPage = pageFor === debouncedSearch ? page : 1;
@@ -37,6 +46,7 @@ function Shelves() {
         shelf: activeShelf === "all" ? undefined : activeShelf,
         search: debouncedSearch,
         sort,
+        reverse,
         page: currentPage,
       });
       setBooks(result.items);
@@ -48,7 +58,7 @@ function Shelves() {
     } finally {
       setLoading(false);
     }
-  }, [activeShelf, debouncedSearch, sort, currentPage]);
+  }, [activeShelf, debouncedSearch, sort, reverse, currentPage]);
 
   useEffect(() => {
     load();
@@ -73,8 +83,16 @@ function Shelves() {
 
   const chooseSort = (next: string) => {
     setSort(next);
+    setReverse(false);
     setPage(1);
   };
+
+  const flipOrder = () => {
+    setReverse((flipped) => !flipped);
+    setPage(1);
+  };
+
+  const orderLabel = orderLabels[sort][reverse ? 1 : 0];
 
   const changePage = (next: number) => {
     setPage(next);
@@ -137,8 +155,18 @@ function Shelves() {
               { value: "title", label: "Title" },
               { value: "author", label: "Author" },
               { value: "rating", label: "My rating" },
+              { value: "finished", label: "Date finished" },
             ]}
           />
+          <button
+            type="button"
+            className="btn-pill"
+            aria-label={`${orderLabel}, click to flip`}
+            onClick={flipOrder}
+          >
+            <span aria-hidden="true">{reverse ? "↑" : "↓"}</span>
+            {orderLabel}
+          </button>
         </div>
       )}
 

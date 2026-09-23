@@ -133,7 +133,9 @@ public class UsersController : ControllerBase
             .OrderByDescending(e => e.Id)
             .ToListAsync();
 
-        return Ok(await LibraryEntryMapper.MapAsync(_context, entries, e => e.UserId));
+        return Ok(
+            await LibraryEntryMapper.MapAsync(_context, entries, e => e.UserId, requesterId)
+        );
     }
 
     [HttpGet("{username}/activity")]

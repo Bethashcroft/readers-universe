@@ -26,9 +26,10 @@ import {
 import SelectMenu from "../components/SelectMenu";
 import BookCover from "../components/BookCover";
 import ReadingProgress from "../components/ReadingProgress";
+import ReadingHistory from "../components/ReadingHistory";
 import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
-import { formatDate } from "../utils/dates";
+import { formatDate, today } from "../utils/dates";
 import "../styles/forms.css";
 import "./BookDetail.css";
 
@@ -127,6 +128,7 @@ function BookDetail() {
       shelf: changes.shelf ?? shelf,
       offer: changes.offer ?? offer,
       format: changes.format ?? format,
+      today: today(),
     });
     setBook({ ...book, myEntry: updated });
   };
@@ -389,9 +391,19 @@ function BookDetail() {
 
               {shelf === "currently-reading" && (
                 <ReadingProgress
-                  key={myEntry.id}
+                  key={`progress-${myEntry.id}`}
                   entry={myEntry}
                   onSaved={(updated) => setBook({ ...book, myEntry: updated })}
+                />
+              )}
+
+              {myEntry.timesRead > 0 && (
+                <ReadingHistory
+                  key={`history-${myEntry.id}`}
+                  entry={myEntry}
+                  onChanged={(changes) =>
+                    setBook({ ...book, myEntry: { ...myEntry, ...changes } })
+                  }
                 />
               )}
 

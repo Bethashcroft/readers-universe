@@ -51,8 +51,9 @@ public static class LibrarySort
     public const string Title = "title";
     public const string Author = "author";
     public const string Rating = "rating";
+    public const string Finished = "finished";
 
-    public static readonly string[] All = [Added, Title, Author, Rating];
+    public static readonly string[] All = [Added, Title, Author, Rating, Finished];
 }
 
 public static class FollowStates
