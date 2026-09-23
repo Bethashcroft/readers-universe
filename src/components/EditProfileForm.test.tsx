@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import EditProfileForm from "./EditProfileForm";
+
+vi.mock("./DeleteAccount", () => ({ default: () => null }));
 import type { ProfileResponse } from "../api/profile";
 
 const { mockUpdateProfile, mockUploadAvatar } = vi.hoisted(() => ({

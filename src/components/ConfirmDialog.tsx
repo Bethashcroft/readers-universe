@@ -11,6 +11,8 @@ type ConfirmDialogProps = {
   onCancel: () => void;
   secondaryLabel?: string;
   onSecondary?: () => void;
+  danger?: boolean;
+  confirmDisabled?: boolean;
   children: ReactNode;
 };
 
@@ -23,6 +25,8 @@ function ConfirmDialog({
   onCancel,
   secondaryLabel,
   onSecondary,
+  danger = false,
+  confirmDisabled = false,
   children,
 }: ConfirmDialogProps) {
   return (
@@ -50,9 +54,9 @@ function ConfirmDialog({
         )}
         <button
           type="button"
-          className="btn btn-primary"
+          className={`btn ${danger ? "btn-danger" : "btn-primary"}`}
           onClick={onConfirm}
-          disabled={busy}
+          disabled={busy || confirmDisabled}
         >
           {busy ? "Working..." : confirmLabel}
         </button>

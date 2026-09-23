@@ -1,4 +1,4 @@
-import { request } from "./client";
+import { request, requestVoid } from "./client";
 
 export interface AuthResponse {
   token: string;
@@ -55,5 +55,12 @@ export function googleRegister(
   return request("/auth/google/register", "Couldn't create your account", {
     method: "POST",
     body: JSON.stringify({ idToken, userName, displayName }),
+  });
+}
+
+export function deleteAccount(confirmUserName: string): Promise<void> {
+  return requestVoid("/auth/account", "Couldn't delete your account", {
+    method: "DELETE",
+    body: JSON.stringify({ confirmUserName }),
   });
 }

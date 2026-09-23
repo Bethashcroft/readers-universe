@@ -88,9 +88,9 @@ function Terms() {
 
       <h2>Leaving</h2>
       <p>
-        You can stop using the app whenever you like. To have your account and
-        your information deleted, email{" "}
-        <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
+        You can stop using the app whenever you like, and delete your account
+        at any time from <strong>Edit Profile</strong>. That removes your
+        account and everything in it straight away.
       </p>
 
       <h2>The small print</h2>

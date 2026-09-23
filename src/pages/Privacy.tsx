@@ -116,25 +116,35 @@ function Privacy() {
 
       <h2>How long we keep it</h2>
       <p>
-        We keep your information for as long as you have an account. When you
-        ask us to delete your account, we delete it and everything tied to it,
-        except that we may need to keep a record for a short time if it's
-        involved in stopping abuse.
+        We keep your information for as long as you have an account. You can
+        delete your account at any time from <strong>Edit Profile</strong>,
+        which removes it and everything tied to it straight away. Books you
+        added stay in the shared catalogue, because other readers may have them
+        too. Copies can remain in our database provider's backups for a short
+        time before they're overwritten.
       </p>
 
       <h2>Your rights</h2>
-      <p>You can ask us to:</p>
+      <p>
+        You have the right to see, correct and delete your information, and to
+        object to how it's used. Most of this you can do yourself:
+      </p>
       <ul>
-        <li>give you a copy of your information</li>
-        <li>correct anything that's wrong</li>
-        <li>delete your account and your information</li>
-        <li>stop using your information in a particular way</li>
+        <li>change your profile details in Edit Profile</li>
+        <li>edit or delete your reviews, and remove books from your shelves</li>
+        <li>make your account private</li>
+        <li>delete your whole account in Edit Profile</li>
       </ul>
       <p>
-        Email <a href={`mailto:${contactEmail}`}>{contactEmail}</a> and we'll
-        reply within one month. If you're unhappy with how we've handled your
-        information, you can complain to the Information Commissioner's Office
-        at <a href="https://ico.org.uk">ico.org.uk</a>.
+        For anything else, including a copy of your information, email{" "}
+        <a href={`mailto:${contactEmail}`}>{contactEmail}</a>. The Readers
+        Universe is run by one person, so please bear with us and we'll get back
+        to you as soon as we can.
+      </p>
+      <p>
+        If you're unhappy with how we've handled your information, you can
+        complain to the Information Commissioner's Office at{" "}
+        <a href="https://ico.org.uk">ico.org.uk</a>.
       </p>
 
       <h2>Age</h2>

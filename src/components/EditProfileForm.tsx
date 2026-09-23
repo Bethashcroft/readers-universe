@@ -4,6 +4,7 @@ import type { ProfileResponse } from "../api/profile";
 import Toggle from "./Toggle";
 import AvatarCropModal from "./AvatarCropModal";
 import "../styles/forms.css";
+import DeleteAccount from "./DeleteAccount";
 import "./EditProfileForm.css";
 
 type EditProfileFormProps = {
@@ -176,6 +177,8 @@ function EditProfileForm({
           Cancel
         </button>
       </div>
+
+      <DeleteAccount userName={profile.userName} />
 
       {pendingAvatarFile && (
         <AvatarCropModal

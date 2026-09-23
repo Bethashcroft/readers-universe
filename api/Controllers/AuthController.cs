@@ -242,6 +242,34 @@ public class AuthController : ControllerBase
         );
     }
 
+    [HttpDelete("account")]
+    [Authorize]
+    public async Task<IActionResult> DeleteAccount(
+        [FromBody] DeleteAccountRequest request,
+        [FromServices] AccountDeletion deletion
+    )
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _userManager.FindByIdAsync(userId!);
+
+        if (user == null)
+        {
+            return NotFound(new { message = "That account has already gone." });
+        }
+
+        if (!string.Equals(request.ConfirmUserName.Trim(), user.UserName, StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { message = "Type your username exactly to confirm." });
+        }
+
+        if (!await deletion.DeleteAsync(user))
+        {
+            return StatusCode(500, new { message = "We couldn't delete your account. Please try again." });
+        }
+
+        return NoContent();
+    }
+
     [HttpGet("profile")]
     [Authorize]
     public async Task<IActionResult> GetProfile()
@@ -492,6 +520,11 @@ public class RegisterRequest
     public string Email { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+}
+
+public class DeleteAccountRequest
+{
+    public string ConfirmUserName { get; set; } = string.Empty;
 }
 
 public class GoogleSignInRequest

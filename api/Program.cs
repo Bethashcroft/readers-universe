@@ -126,6 +126,7 @@ builder.Services.AddScoped<ReaderAccess>();
 builder.Services.AddScoped<LendingService>();
 builder.Services.AddScoped<ActivityService>();
 builder.Services.AddScoped<ReadingHistory>();
+builder.Services.AddScoped<AccountDeletion>();
 builder.Services.AddSingleton<IGoogleTokenValidator, GoogleTokenValidator>();
 builder.Services.AddScoped<IBookImportParser, GoodreadsCsvParser>();
 builder.Services.AddEndpointsApiExplorer();
