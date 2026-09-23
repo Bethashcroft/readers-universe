@@ -363,6 +363,7 @@ public class ProfileResponse
     public bool Trusted { get; set; }
     public bool TrustsMe { get; set; }
     public int FollowRequestCount { get; set; }
+    public GoalResponse? Goal { get; set; }
 
     public static ProfileResponse FromUser(AppUser user) =>
         new()

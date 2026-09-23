@@ -1,4 +1,5 @@
 import { getAuthHeaders, request } from "./client";
+import type { GoalResponse } from "./goals";
 import type { FollowState } from "./follows";
 
 export interface ProfileResponse {
@@ -17,6 +18,7 @@ export interface ProfileResponse {
   trusted: boolean;
   trustsMe: boolean;
   followRequestCount: number;
+  goal: GoalResponse | null;
 }
 
 export interface UpdateProfileRequest {

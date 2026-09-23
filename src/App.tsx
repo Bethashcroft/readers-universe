@@ -10,6 +10,7 @@ import FollowList from "./pages/FollowList";
 import TrustedBookClub from "./pages/TrustedBookClub";
 import Shelves from "./pages/Shelves";
 import AddBook from "./pages/AddBook";
+import ReadingGoals from "./pages/ReadingGoals";
 import BookDetail from "./pages/BookDetail";
 import Browse from "./pages/Browse";
 import Readers from "./pages/Readers";
@@ -65,6 +66,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Shelves />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/reading-goals"
+                element={
+                  <ProtectedRoute>
+                    <ReadingGoals />
                   </ProtectedRoute>
                 }
               />

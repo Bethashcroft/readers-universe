@@ -17,16 +17,19 @@ public class UsersController : ControllerBase
     private readonly AppDbContext _context;
     private readonly UserManager<AppUser> _userManager;
     private readonly ReaderAccess _access;
+    private readonly ReadingHistory _readings;
 
     public UsersController(
         AppDbContext context,
         UserManager<AppUser> userManager,
-        ReaderAccess access
+        ReaderAccess access,
+        ReadingHistory readings
     )
     {
         _context = context;
         _userManager = userManager;
         _access = access;
+        _readings = readings;
     }
 
     [HttpGet("search")]
@@ -104,6 +107,25 @@ public class UsersController : ControllerBase
             profile.FollowRequestCount = await _context.Follows.CountAsync(f =>
                 f.FollowingId == me && !f.Approved
             );
+        }
+
+        if (profile.CanView)
+        {
+            var year = DateTime.UtcNow.Year;
+            var target = await _context
+                .ReadingGoals.Where(g => g.UserId == user.Id && g.Year == year)
+                .Select(g => (int?)g.Target)
+                .FirstOrDefaultAsync();
+
+            if (target != null)
+            {
+                profile.Goal = new GoalResponse
+                {
+                    Year = year,
+                    Target = target,
+                    BooksRead = await _readings.BooksReadInAsync(user.Id, year),
+                };
+            }
         }
 
         return Ok(profile);

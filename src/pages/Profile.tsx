@@ -194,6 +194,14 @@ function Profile() {
                   <h2>Following</h2>
                   <p>{profile.followingCount}</p>
                 </Link>
+                {profile.goal && (
+                  <div className="profile-detail-card">
+                    <h2>{profile.goal.year} Goal</h2>
+                    <p>
+                      {profile.goal.booksRead} of {profile.goal.target}
+                    </p>
+                  </div>
+                )}
                 <div className="profile-detail-card">
                   <h2>Member Since</h2>
                   <p>

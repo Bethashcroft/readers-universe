@@ -39,6 +39,20 @@ public class ReadingHistory
             : DayOf(now);
     }
 
+    public async Task<Dictionary<int, int>> BooksReadByYearAsync(string userId) =>
+        (
+            await _context
+                .ReadingSessions.Where(r => r.LibraryEntry.UserId == userId)
+                .GroupBy(r => r.FinishedDate.Year)
+                .Select(g => new { Year = g.Key, Count = g.Count() })
+                .ToListAsync()
+        ).ToDictionary(y => y.Year, y => y.Count);
+
+    public Task<int> BooksReadInAsync(string userId, int year) =>
+        _context.ReadingSessions.CountAsync(r =>
+            r.LibraryEntry.UserId == userId && r.FinishedDate.Year == year
+        );
+
     public async Task<ReadingSession> RecordAsync(int libraryEntryId, DateTime finishedDate)
     {
         var day = DayOf(finishedDate);

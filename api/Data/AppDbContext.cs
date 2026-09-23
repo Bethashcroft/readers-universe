@@ -21,6 +21,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<Like> Likes { get; set; }
     public DbSet<Comment> Comments { get; set; }
     public DbSet<ReadingSession> ReadingSessions { get; set; }
+    public DbSet<ReadingGoal> ReadingGoals { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -171,6 +172,15 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .Entity<ReadingSession>()
             .HasIndex(r => new { r.LibraryEntryId, r.FinishedDate })
             .IsUnique();
+
+        builder
+            .Entity<ReadingGoal>()
+            .HasOne(g => g.User)
+            .WithMany()
+            .HasForeignKey(g => g.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<ReadingGoal>().HasIndex(g => new { g.UserId, g.Year }).IsUnique();
 
         builder
             .Entity<LibraryEntry>()

@@ -195,6 +195,7 @@ function Layout() {
               <NotificationBell />
               <NavMenu label="Library" badgeCount={pendingCount + unreadCount}>
                 <NavLink to="/shelves">My Shelves</NavLink>
+                <NavLink to="/reading-goals">Reading Goals</NavLink>
                 <NavLink to="/add-book">Add Books</NavLink>
                 <NavLink to="/browse">Browse</NavLink>
                 <NavLink to="/readers">Find Readers</NavLink>
