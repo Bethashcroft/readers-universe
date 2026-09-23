@@ -9,6 +9,8 @@ type ConfirmDialogProps = {
   error?: string;
   onConfirm: () => void;
   onCancel: () => void;
+  secondaryLabel?: string;
+  onSecondary?: () => void;
   children: ReactNode;
 };
 
@@ -19,6 +21,8 @@ function ConfirmDialog({
   error = "",
   onConfirm,
   onCancel,
+  secondaryLabel,
+  onSecondary,
   children,
 }: ConfirmDialogProps) {
   return (
@@ -34,6 +38,16 @@ function ConfirmDialog({
         >
           Cancel
         </button>
+        {secondaryLabel && onSecondary && (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onSecondary}
+            disabled={busy}
+          >
+            {secondaryLabel}
+          </button>
+        )}
         <button
           type="button"
           className="btn btn-primary"

@@ -5,6 +5,22 @@ import { formatDay, today } from "../utils/dates";
 import ConfirmDialog from "./ConfirmDialog";
 import "./ReadingHistory.css";
 
+function engagement(reading: ReadingResponse) {
+  const parts: string[] = [];
+
+  if (reading.likeCount > 0) {
+    parts.push(`${reading.likeCount} ${reading.likeCount === 1 ? "like" : "likes"}`);
+  }
+
+  if (reading.commentCount > 0) {
+    parts.push(
+      `${reading.commentCount} ${reading.commentCount === 1 ? "comment" : "comments"}`,
+    );
+  }
+
+  return parts.length > 0 ? ` with ${parts.join(" and ")}` : "";
+}
+
 type ReadingHistoryProps = {
   entry: LibraryEntryResponse;
   onChanged: (changes: {
@@ -76,13 +92,13 @@ function ReadingHistory({ entry, onChanged }: ReadingHistoryProps) {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (keepPost: boolean) => {
     if (!deleting) return;
     setBusy(true);
     setError("");
 
     try {
-      settle(await deleteReading(deleting.id));
+      settle(await deleteReading(deleting.id, keepPost));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete");
     } finally {
@@ -170,15 +186,23 @@ function ReadingHistory({ entry, onChanged }: ReadingHistoryProps) {
       {deleting && (
         <ConfirmDialog
           title="Delete this finish?"
-          confirmLabel="Delete"
+          confirmLabel={deleting.hasPost ? "Delete both" : "Delete"}
+          secondaryLabel={deleting.hasPost ? "Keep the post" : undefined}
+          onSecondary={() => handleDelete(true)}
           busy={busy}
-          onConfirm={handleDelete}
+          onConfirm={() => handleDelete(false)}
           onCancel={() => setDeleting(null)}
         >
           <p>
             {formatDay(deleting.finishedDate)} will come off your reading
-            history and your feed.
+            history.
           </p>
+          {deleting.hasPost && (
+            <p>
+              It also has a post in your feed{engagement(deleting)}. Delete
+              that too, or keep it?
+            </p>
+          )}
         </ConfirmDialog>
       )}
     </div>

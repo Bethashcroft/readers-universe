@@ -75,7 +75,7 @@ public class ReadingsController : ControllerBase
     }
 
     [HttpDelete("readings/{readingId}")]
-    public async Task<IActionResult> DeleteReading(int readingId)
+    public async Task<IActionResult> DeleteReading(int readingId, [FromQuery] bool keepPost)
     {
         var me = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var reading = await MineAsync(readingId, me);
@@ -86,24 +86,16 @@ public class ReadingsController : ControllerBase
         }
 
         var entryId = reading.LibraryEntryId;
-        var bookId = reading.LibraryEntry.BookId;
-        var day = reading.FinishedDate;
 
-        var posts = await _context
-            .Activities.Where(a =>
-                a.ReadingSessionId == readingId
-                || (
-                    a.ReadingSessionId == null
-                    && a.UserId == me
-                    && a.BookId == bookId
-                    && a.Type == ActivityTypes.Finished
-                    && a.Date >= day.AddDays(-1)
-                    && a.Date < day.AddDays(2)
-                )
-            )
-            .ToListAsync();
+        if (!keepPost)
+        {
+            var posts = await _context
+                .Activities.Where(a => a.ReadingSessionId == readingId)
+                .ToListAsync();
 
-        _context.Activities.RemoveRange(posts);
+            _context.Activities.RemoveRange(posts);
+        }
+
         _context.ReadingSessions.Remove(reading);
         reading.LibraryEntry.ReadingsEdited = true;
         await _context.SaveChangesAsync();
@@ -125,7 +117,18 @@ public class ReadingsController : ControllerBase
             .ReadingSessions.Where(r => r.LibraryEntryId == libraryEntryId)
             .OrderByDescending(r => r.FinishedDate)
             .ThenByDescending(r => r.Id)
-            .Select(r => new ReadingResponse { Id = r.Id, FinishedDate = r.FinishedDate })
+            .Select(r => new ReadingResponse
+            {
+                Id = r.Id,
+                FinishedDate = r.FinishedDate,
+                HasPost = _context.Activities.Any(a => a.ReadingSessionId == r.Id),
+                LikeCount = _context
+                    .Activities.Where(a => a.ReadingSessionId == r.Id)
+                    .Sum(a => a.Likes.Count),
+                CommentCount = _context
+                    .Activities.Where(a => a.ReadingSessionId == r.Id)
+                    .Sum(a => a.Comments.Count),
+            })
             .ToListAsync();
 }
 
@@ -138,4 +141,7 @@ public class ReadingResponse
 {
     public int Id { get; set; }
     public DateTime FinishedDate { get; set; }
+    public bool HasPost { get; set; }
+    public int LikeCount { get; set; }
+    public int CommentCount { get; set; }
 }

@@ -231,6 +231,9 @@ export function lookupPageCount(id: number): Promise<LibraryEntryResponse> {
 export interface ReadingResponse {
   id: number;
   finishedDate: string;
+  hasPost: boolean;
+  likeCount: number;
+  commentCount: number;
 }
 
 export function getReadings(entryId: number): Promise<ReadingResponse[]> {
@@ -250,10 +253,15 @@ export function editReading(
   });
 }
 
-export function deleteReading(readingId: number): Promise<ReadingResponse[]> {
-  return request(`/library/readings/${readingId}`, "Failed to delete that", {
-    method: "DELETE",
-  });
+export function deleteReading(
+  readingId: number,
+  keepPost: boolean,
+): Promise<ReadingResponse[]> {
+  return request(
+    `/library/readings/${readingId}?keepPost=${keepPost}`,
+    "Failed to delete that",
+    { method: "DELETE" },
+  );
 }
 
 export function deleteBook(id: number): Promise<void> {

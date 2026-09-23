@@ -61,8 +61,15 @@ function BookPage({
   );
 }
 
-const recent = { id: 2, finishedDate: "2026-09-23T00:00:00Z" };
-const older = { id: 1, finishedDate: "2024-03-11T00:00:00Z" };
+const noPost = { hasPost: false, likeCount: 0, commentCount: 0 };
+const recent = { id: 2, finishedDate: "2026-09-23T00:00:00Z", ...noPost };
+const older = { id: 1, finishedDate: "2024-03-11T00:00:00Z", ...noPost };
+const withPost = {
+  ...recent,
+  hasPost: true,
+  likeCount: 2,
+  commentCount: 1,
+};
 
 describe("ReadingHistory", () => {
   beforeEach(() => {
@@ -85,7 +92,7 @@ describe("ReadingHistory", () => {
   it("corrects a date and tells the page", async () => {
     mockGetReadings.mockResolvedValue([older]);
     mockEditReading.mockResolvedValue([
-      { id: 1, finishedDate: "2024-04-11T00:00:00Z" },
+      { ...older, finishedDate: "2024-04-11T00:00:00Z" },
     ]);
     const onChanged = vi.fn();
     render(
@@ -126,8 +133,13 @@ describe("ReadingHistory", () => {
       screen.getByText(/will come off your reading history/),
     ).toBeInTheDocument();
 
+    expect(
+      screen.queryByRole("button", { name: "Keep the post" }),
+    ).not.toBeInTheDocument();
+
     await userEvent.click(screen.getByRole("button", { name: "Delete" }));
 
+    expect(mockDeleteReading).toHaveBeenCalledWith(2, false);
     expect(await screen.findByText("11 Mar 2024")).toBeInTheDocument();
     expect(screen.queryByText("23 Sept 2026")).not.toBeInTheDocument();
     expect(screen.queryByText(/Read \d times/)).not.toBeInTheDocument();
@@ -158,5 +170,40 @@ describe("ReadingHistory", () => {
       }),
     );
     expect(screen.queryByText("Finished")).not.toBeInTheDocument();
+  });
+
+  it("asks about the post, and can keep it", async () => {
+    mockGetReadings.mockResolvedValue([withPost]);
+    mockDeleteReading.mockResolvedValue([]);
+    render(
+      <BookPage start={{ ...entry, timesRead: 1 }} onChanged={vi.fn()} />,
+    );
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Delete 23 Sept 2026" }),
+    );
+
+    expect(
+      screen.getByText(/has a post in your feed with 2 likes and 1 comment/),
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Keep the post" }));
+
+    expect(mockDeleteReading).toHaveBeenCalledWith(2, true);
+  });
+
+  it("can delete the finish and its post together", async () => {
+    mockGetReadings.mockResolvedValue([withPost]);
+    mockDeleteReading.mockResolvedValue([]);
+    render(
+      <BookPage start={{ ...entry, timesRead: 1 }} onChanged={vi.fn()} />,
+    );
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Delete 23 Sept 2026" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Delete both" }));
+
+    expect(mockDeleteReading).toHaveBeenCalledWith(2, false);
   });
 });

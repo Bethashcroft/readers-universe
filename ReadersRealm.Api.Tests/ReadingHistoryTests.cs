@@ -3,7 +3,13 @@ using System.Net.Http.Json;
 
 namespace ReadersRealm.Api.Tests;
 
-public record ReadingResult(int Id, DateTime FinishedDate);
+public record ReadingResult(
+    int Id,
+    DateTime FinishedDate,
+    bool HasPost,
+    int LikeCount,
+    int CommentCount
+);
 
 public class ReadingHistoryTests : IDisposable
 {
@@ -296,6 +302,39 @@ public class ReadingHistoryTests : IDisposable
         await DeleteReadingAsync(sophie, older.Id);
 
         Assert.Single(await FinishedPostsAsync(sophie));
+    }
+
+    [Fact]
+    public async Task YouCanDeleteAFinishButKeepItsPost()
+    {
+        var sophie = await _factory.SignInAsync("sophie");
+        var book = await FinishAsync(sophie, "Babel");
+        var finish = (await ReadingsAsync(sophie, book.Id)).Single();
+
+        (await sophie.DeleteAsync($"/api/library/readings/{finish.Id}?keepPost=true"))
+            .EnsureSuccessStatusCode();
+
+        Assert.Single(await FinishedPostsAsync(sophie));
+        Assert.Equal(0, (await sophie.GetLibraryAsync()).Single().TimesRead);
+    }
+
+    [Fact]
+    public async Task TheHistoryShowsWhichFinishesHaveAPostAndHowPopularItIs()
+    {
+        var sophie = await _factory.SignInAsync("sophie");
+        var beth = await _factory.SignInAsync("beth");
+        await beth.PostAsync("/api/users/sophie/follow", null);
+        var book = await FinishAsync(sophie, "Babel");
+
+        var post = (await FinishedPostsAsync(sophie)).Single();
+        await beth.PostAsync($"/api/feed/{post.Id}/like", null);
+        await beth.PostAsJsonAsync($"/api/feed/{post.Id}/comments", new { text = "Great book" });
+
+        var finish = (await ReadingsAsync(sophie, book.Id)).Single();
+
+        Assert.True(finish.HasPost);
+        Assert.Equal(1, finish.LikeCount);
+        Assert.Equal(1, finish.CommentCount);
     }
 
     [Fact]

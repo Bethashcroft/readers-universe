@@ -167,6 +167,11 @@ public class ImportTests : IDisposable
         Assert.Equal(new DateTime(2026, 7, 26), stand.FinishedDate);
         Assert.Equal(1, stand.TimesRead);
 
+        var imported = (
+            await _client.GetFromJsonAsync<ReadingResult[]>($"/api/library/{stand.Id}/readings")
+        )!.Single();
+        Assert.False(imported.HasPost);
+
         var neverRead = shelves.Single(b => b.Title == "I Who Have Never Known Men");
         Assert.Null(neverRead.FinishedDate);
         Assert.Equal(0, neverRead.TimesRead);
