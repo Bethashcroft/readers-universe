@@ -1,0 +1,24 @@
+.welcome-email,
+.welcome-hint {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.welcome-hint {
+  margin-top: -8px;
+}
+
+.welcome-handle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.welcome-handle span {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.welcome-handle input {
+  flex: 1;
+}

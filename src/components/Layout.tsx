@@ -237,6 +237,10 @@ function Layout() {
       <footer className="footer">
         <div className="footer-inner">
           <span>© {new Date().getFullYear()} The Readers Universe</span>
+          <nav className="footer-links" aria-label="Legal">
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Terms</Link>
+          </nav>
           <span className="footer-made">
             Made for book lovers
             <svg

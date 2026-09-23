@@ -15,10 +15,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   });
 
-  const login = async (email: string, password: string) => {
-    const data = await loginUser(email, password);
+  const signInWith = (data: AuthResponse) => {
     setUser(data);
     localStorage.setItem("user", JSON.stringify(data));
+  };
+
+  const login = async (email: string, password: string) => {
+    signInWith(await loginUser(email, password));
   };
 
   const register = async (
@@ -27,9 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     displayName: string,
     password: string,
   ) => {
-    const data = await registerUser(userName, email, displayName, password);
-    setUser(data);
-    localStorage.setItem("user", JSON.stringify(data));
+    signInWith(await registerUser(userName, email, displayName, password));
   };
 
   const logout = () => {
@@ -48,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, login, register, logout, updateUser }}
+      value={{ user, login, register, signInWith, logout, updateUser }}
     >
       {children}
     </AuthContext.Provider>

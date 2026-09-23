@@ -1,12 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using ReadersRealm.Api.Models;
+using ReadersRealm.Api.Services;
 
 namespace ReadersRealm.Api.Controllers;
 
@@ -51,6 +51,174 @@ public class AuthController : ControllerBase
             }
         );
     }
+
+    private const string GoogleProvider = "Google";
+
+    private const string GoogleNotSetUp = "Google sign-in isn't set up yet.";
+
+    private const string GoogleRejected = "Google couldn't confirm who you are. Try again.";
+
+    private const string EmailTaken =
+        "An account already uses that email. Sign in with your password instead.";
+
+    [HttpPost("google")]
+    public async Task<IActionResult> Google(
+        [FromBody] GoogleSignInRequest request,
+        [FromServices] IGoogleTokenValidator google
+    )
+    {
+        if (!google.IsConfigured)
+        {
+            return StatusCode(503, new { message = GoogleNotSetUp });
+        }
+
+        var identity = await google.ValidateAsync(request.IdToken);
+
+        if (identity == null)
+        {
+            return Unauthorized(new { message = GoogleRejected });
+        }
+
+        var user = await FindGoogleUserAsync(identity);
+
+        if (user != null)
+        {
+            return Ok(new GoogleSignInResponse { Auth = AuthFor(user) });
+        }
+
+        if (await _userManager.FindByEmailAsync(identity.Email) != null)
+        {
+            return Conflict(new { message = EmailTaken });
+        }
+
+        return Ok(
+            new GoogleSignInResponse
+            {
+                SignUp = new GoogleSignUpDetails
+                {
+                    SuggestedUserName = await SuggestUserNameAsync(identity),
+                    DisplayName = identity.Name,
+                    Email = identity.Email,
+                },
+            }
+        );
+    }
+
+    [HttpPost("google/register")]
+    public async Task<IActionResult> GoogleRegister(
+        [FromBody] GoogleRegisterRequest request,
+        [FromServices] IGoogleTokenValidator google
+    )
+    {
+        if (!google.IsConfigured)
+        {
+            return StatusCode(503, new { message = GoogleNotSetUp });
+        }
+
+        var identity = await google.ValidateAsync(request.IdToken);
+
+        if (identity == null)
+        {
+            return Unauthorized(new { message = GoogleRejected });
+        }
+
+        if (await FindGoogleUserAsync(identity) is { } existing)
+        {
+            return Ok(AuthFor(existing));
+        }
+
+        if (await _userManager.FindByEmailAsync(identity.Email) != null)
+        {
+            return Conflict(new { message = EmailTaken });
+        }
+
+        var userName = request.UserName.Trim();
+
+        if (!Usernames.IsValid(userName))
+        {
+            return BadRequest(new { message = Usernames.RulesMessage });
+        }
+
+        if (await _userManager.FindByNameAsync(userName) != null)
+        {
+            return BadRequest(new { message = "That username is taken." });
+        }
+
+        var displayName = request.DisplayName.Trim();
+
+        var user = new AppUser
+        {
+            UserName = userName,
+            Email = identity.Email,
+            EmailConfirmed = identity.EmailVerified,
+            DisplayName = displayName.Length > 0 ? displayName : userName,
+        };
+
+        var created = await _userManager.CreateAsync(user);
+
+        if (!created.Succeeded)
+        {
+            return BadRequest(new { message = created.Errors.First().Description });
+        }
+
+        await _userManager.AddLoginAsync(
+            user,
+            new UserLoginInfo(GoogleProvider, identity.Subject, GoogleProvider)
+        );
+
+        return Ok(AuthFor(user));
+    }
+
+    private async Task<AppUser?> FindGoogleUserAsync(GoogleIdentity identity)
+    {
+        var linked = await _userManager.FindByLoginAsync(GoogleProvider, identity.Subject);
+
+        if (linked != null)
+        {
+            return linked;
+        }
+
+        if (!identity.EmailVerified)
+        {
+            return null;
+        }
+
+        var sameEmail = await _userManager.FindByEmailAsync(identity.Email);
+
+        if (sameEmail != null)
+        {
+            await _userManager.AddLoginAsync(
+                sameEmail,
+                new UserLoginInfo(GoogleProvider, identity.Subject, GoogleProvider)
+            );
+        }
+
+        return sameEmail;
+    }
+
+    private async Task<string> SuggestUserNameAsync(GoogleIdentity identity)
+    {
+        foreach (var candidate in Usernames.Candidates(
+            Usernames.StartingPoint(identity.Name, identity.Email)
+        ))
+        {
+            if (await _userManager.FindByNameAsync(candidate) == null)
+            {
+                return candidate;
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private AuthResponse AuthFor(AppUser user) =>
+        new()
+        {
+            Token = GenerateToken(user),
+            UserId = user.Id,
+            UserName = user.UserName!,
+            DisplayName = user.DisplayName,
+        };
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
@@ -131,14 +299,9 @@ public class AuthController : ControllerBase
                 }
             }
 
-            if (!UsernameRegex.IsMatch(newUserName))
+            if (!Usernames.IsValid(newUserName))
             {
-                return BadRequest(
-                    new
-                    {
-                        message = "Username must be 5–20 characters, using only letters, numbers, dots and underscores.",
-                    }
-                );
+                return BadRequest(new { message = Usernames.RulesMessage });
             }
 
             var existing = await _userManager.FindByNameAsync(newUserName);
@@ -248,7 +411,6 @@ public class AuthController : ControllerBase
         return null;
     }
 
-    private static readonly Regex UsernameRegex = new("^[a-zA-Z0-9._]{5,20}$");
 
     private static readonly string[] VintedDomains =
     [
@@ -330,6 +492,31 @@ public class RegisterRequest
     public string Email { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+}
+
+public class GoogleSignInRequest
+{
+    public string IdToken { get; set; } = string.Empty;
+}
+
+public class GoogleRegisterRequest
+{
+    public string IdToken { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+}
+
+public class GoogleSignInResponse
+{
+    public AuthResponse? Auth { get; set; }
+    public GoogleSignUpDetails? SignUp { get; set; }
+}
+
+public class GoogleSignUpDetails
+{
+    public string SuggestedUserName { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
 }
 
 public class LoginRequest

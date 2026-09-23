@@ -5,6 +5,9 @@ import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Welcome from "./pages/Welcome";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 import Profile from "./pages/Profile";
 import FollowList from "./pages/FollowList";
 import TrustedBookClub from "./pages/TrustedBookClub";
@@ -29,6 +32,9 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/welcome" element={<Welcome />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
               <Route
                 path="/profile/:username"
                 element={

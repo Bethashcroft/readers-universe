@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { usePageTitle } from "../hooks/usePageTitle";
+import GoogleSignIn from "../components/GoogleSignIn";
 import "../styles/forms.css";
 
 function Register() {
@@ -36,6 +37,7 @@ function Register() {
     <div className="auth-page">
       <form className="auth-form" onSubmit={handleSubmit}>
         <h1>Create Account</h1>
+        <GoogleSignIn />
         {error && <p className="form-error">{error}</p>}
 
         <label htmlFor="userName">Username</label>
@@ -81,6 +83,10 @@ function Register() {
           required
         />
         <button type="submit">Register</button>
+        <p className="form-agree">
+          By continuing you agree to our <Link to="/terms">Terms</Link> and{" "}
+          <Link to="/privacy">Privacy Policy</Link>.
+        </p>
 
         <p className="form-footer">
           Already have an account? <Link to="/login">Login</Link>

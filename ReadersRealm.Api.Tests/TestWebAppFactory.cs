@@ -54,6 +54,18 @@ public class TestWebAppFactory : WebApplicationFactory<Program>
             }
             services.AddSingleton<ReadersRealm.Api.Services.IBookLookup, FakeBookLookup>();
 
+            var googleDescriptor = services.SingleOrDefault(d =>
+                d.ServiceType == typeof(ReadersRealm.Api.Services.IGoogleTokenValidator)
+            );
+            if (googleDescriptor != null)
+            {
+                services.Remove(googleDescriptor);
+            }
+            services.AddSingleton<
+                ReadersRealm.Api.Services.IGoogleTokenValidator,
+                FakeGoogleTokenValidator
+            >();
+
             var coverDescriptors = services
                 .Where(d => d.ServiceType == typeof(ReadersRealm.Api.Services.ICoverSource))
                 .ToList();

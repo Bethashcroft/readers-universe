@@ -28,3 +28,32 @@ export function registerUser(
     body: JSON.stringify({ userName, email, displayName, password }),
   });
 }
+
+export interface GoogleSignUpDetails {
+  suggestedUserName: string;
+  displayName: string;
+  email: string;
+}
+
+export interface GoogleSignInResponse {
+  auth: AuthResponse | null;
+  signUp: GoogleSignUpDetails | null;
+}
+
+export function googleSignIn(idToken: string): Promise<GoogleSignInResponse> {
+  return request("/auth/google", "Google sign-in failed", {
+    method: "POST",
+    body: JSON.stringify({ idToken }),
+  });
+}
+
+export function googleRegister(
+  idToken: string,
+  userName: string,
+  displayName: string,
+): Promise<AuthResponse> {
+  return request("/auth/google/register", "Couldn't create your account", {
+    method: "POST",
+    body: JSON.stringify({ idToken, userName, displayName }),
+  });
+}

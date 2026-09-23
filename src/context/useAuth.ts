@@ -10,6 +10,7 @@ export interface AuthContextType {
     displayName: string,
     password: string,
   ) => Promise<void>;
+  signInWith: (data: AuthResponse) => void;
   logout: () => void;
   updateUser: (changes: Partial<AuthResponse>) => void;
 }

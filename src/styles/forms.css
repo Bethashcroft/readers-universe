@@ -61,6 +61,12 @@
   color: var(--color-text);
 }
 
+.form-agree {
+  font-size: 12px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
 .form-footer {
   text-align: center;
   font-size: 14px;

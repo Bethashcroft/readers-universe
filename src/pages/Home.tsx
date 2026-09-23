@@ -75,7 +75,7 @@ function Home() {
           <path d="M20 3 L23.5 16.5 L37 20 L23.5 23.5 L20 37 L16.5 23.5 L3 20 L16.5 16.5 Z" />
         </svg>
         <h1>
-          Your reading and social life -{" "}
+          Your reading and social life{" "}
           <span className="hero-accent">connected</span>
         </h1>
         <p>

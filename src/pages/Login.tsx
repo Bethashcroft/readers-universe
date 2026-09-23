@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { usePageTitle } from "../hooks/usePageTitle";
+import GoogleSignIn from "../components/GoogleSignIn";
 import "../styles/forms.css";
 
 function Login() {
@@ -28,6 +29,7 @@ function Login() {
     <div className="auth-page">
       <form className="auth-form" onSubmit={handleSubmit}>
         <h1>Login</h1>
+        <GoogleSignIn />
         {error && <p className="form-error">{error}</p>}
         <label htmlFor="email">Email</label>
         <input
