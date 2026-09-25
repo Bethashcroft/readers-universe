@@ -111,10 +111,28 @@
   min-width: 56px;
 }
 
+.goal-current-header,
 .goal-history-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+a.goal-history-year {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-decoration-color: rgba(167, 139, 250, 0.45);
+  text-underline-offset: 4px;
+  transition:
+    color 0.15s ease,
+    text-decoration-color 0.15s ease;
+}
+
+a.goal-history-year:hover {
+  color: var(--color-primary);
+  text-decoration-color: var(--color-primary);
 }
 
 .goal-history-edit {

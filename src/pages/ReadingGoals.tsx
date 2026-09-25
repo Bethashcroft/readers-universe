@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { getGoals, setGoal, removeGoal } from "../api/goals";
 import type { GoalResponse } from "../api/goals";
 import { scheduleMessage } from "../utils/goals";
@@ -163,7 +164,12 @@ function ReadingGoals() {
       <h1>Reading Goals</h1>
 
       <section className="goal-current">
-        <h2 className="eyebrow">{thisYear} goal</h2>
+        <div className="goal-current-header">
+          <h2 className="eyebrow">{thisYear} goal</h2>
+          <Link className="btn-pill" to={`/reading-goals/${thisYear}`}>
+            See your {thisYear} so far
+          </Link>
+        </div>
 
         {current.target !== null && !editingThisYear ? (
           <>
@@ -262,7 +268,17 @@ function ReadingGoals() {
           <ul>
             {pastYears.map((year) => (
               <li key={year.year} className="goal-history-row">
-                <span className="goal-history-year">{year.year}</span>
+                {editingPast ? (
+                  <span className="goal-history-year">{year.year}</span>
+                ) : (
+                  <Link
+                    className="goal-history-year"
+                    to={`/reading-goals/${year.year}`}
+                    aria-label={`See your ${year.year} in books`}
+                  >
+                    {year.year}
+                  </Link>
+                )}
                 <span>{books(year.booksRead)}</span>
                 {editingPast ? (
                   <label className="goal-history-edit">

@@ -26,6 +26,7 @@ import {
 import SelectMenu from "../components/SelectMenu";
 import BookCover from "../components/BookCover";
 import ReadingProgress from "../components/ReadingProgress";
+import PageCount from "../components/PageCount";
 import ReadingHistory from "../components/ReadingHistory";
 import ErrorState from "../components/ErrorState";
 import { usePageTitle } from "../hooks/usePageTitle";
@@ -392,6 +393,14 @@ function BookDetail() {
               {shelf === "currently-reading" && (
                 <ReadingProgress
                   key={`progress-${myEntry.id}`}
+                  entry={myEntry}
+                  onSaved={(updated) => setBook({ ...book, myEntry: updated })}
+                />
+              )}
+
+              {shelf !== "currently-reading" && (
+                <PageCount
+                  key={`pages-${myEntry.id}`}
                   entry={myEntry}
                   onSaved={(updated) => setBook({ ...book, myEntry: updated })}
                 />

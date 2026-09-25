@@ -14,6 +14,7 @@ import TrustedBookClub from "./pages/TrustedBookClub";
 import Shelves from "./pages/Shelves";
 import AddBook from "./pages/AddBook";
 import ReadingGoals from "./pages/ReadingGoals";
+import YearInBooks from "./pages/YearInBooks";
 import BookDetail from "./pages/BookDetail";
 import Browse from "./pages/Browse";
 import Readers from "./pages/Readers";
@@ -80,6 +81,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ReadingGoals />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/reading-goals/:year"
+                element={
+                  <ProtectedRoute>
+                    <YearInBooks />
                   </ProtectedRoute>
                 }
               />

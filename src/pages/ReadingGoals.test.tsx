@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter, Routes, Route, useParams } from "react-router-dom";
 import ReadingGoals from "./ReadingGoals";
 
 const { mockGetGoals, mockSetGoal, mockRemoveGoal } = vi.hoisted(() => ({
@@ -16,6 +17,22 @@ vi.mock("../api/goals", () => ({
 
 const thisYear = new Date().getFullYear();
 
+function renderGoals() {
+  return render(
+    <MemoryRouter initialEntries={["/reading-goals"]}>
+      <Routes>
+        <Route path="/reading-goals" element={<ReadingGoals />} />
+        <Route path="/reading-goals/:year" element={<YearStub />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
+function YearStub() {
+  const { year } = useParams();
+  return <p>Year page for {year}</p>;
+}
+
 describe("ReadingGoals", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -26,7 +43,7 @@ describe("ReadingGoals", () => {
       { year: thisYear, target: null, booksRead: 12 },
     ]);
     mockSetGoal.mockResolvedValue({ year: thisYear, target: 40, booksRead: 12 });
-    render(<ReadingGoals />);
+    renderGoals();
 
     expect(
       await screen.findByText("You've read 12 books so far this year."),
@@ -50,7 +67,7 @@ describe("ReadingGoals", () => {
       { year: thisYear, target: 40, booksRead: 12 },
     ]);
     mockSetGoal.mockResolvedValue({ year: thisYear, target: 60, booksRead: 12 });
-    render(<ReadingGoals />);
+    renderGoals();
 
     await userEvent.click(
       await screen.findByRole("button", { name: "Edit goal" }),
@@ -75,7 +92,7 @@ describe("ReadingGoals", () => {
       target: null,
       booksRead: 12,
     });
-    render(<ReadingGoals />);
+    renderGoals();
 
     await userEvent.click(
       await screen.findByRole("button", { name: "Edit goal" }),
@@ -99,7 +116,7 @@ describe("ReadingGoals", () => {
       { year: thisYear - 2, target: 50, booksRead: 31 },
       { year: thisYear - 3, target: null, booksRead: 1 },
     ]);
-    render(<ReadingGoals />);
+    renderGoals();
 
     expect(await screen.findByText("Goal of 40 reached")).toBeInTheDocument();
     expect(screen.getByText("Goal was 50")).toBeInTheDocument();
@@ -107,11 +124,32 @@ describe("ReadingGoals", () => {
     expect(screen.getByText("1 book")).toBeInTheDocument();
   });
 
+  it("links this year and every past year to their year in books", async () => {
+    const lastYear = thisYear - 1;
+    mockGetGoals.mockResolvedValue([
+      { year: thisYear, target: null, booksRead: 3 },
+      { year: lastYear, target: 40, booksRead: 43 },
+    ]);
+    renderGoals();
+
+    expect(
+      await screen.findByRole("link", { name: `See your ${thisYear} so far` }),
+    ).toHaveAttribute("href", `/reading-goals/${thisYear}`);
+
+    await userEvent.click(
+      screen.getByRole("link", { name: `See your ${lastYear} in books` }),
+    );
+
+    expect(
+      await screen.findByText(`Year page for ${lastYear}`),
+    ).toBeInTheDocument();
+  });
+
   it("only takes digits in the goal box", async () => {
     mockGetGoals.mockResolvedValue([
       { year: thisYear, target: null, booksRead: 0 },
     ]);
-    render(<ReadingGoals />);
+    renderGoals();
 
     const box = await screen.findByLabelText("How many books this year?");
     await userEvent.type(box, "4a0!");
@@ -128,7 +166,7 @@ describe("ReadingGoals", () => {
       { year: yearBefore, target: 50, booksRead: 31 },
     ]);
     mockSetGoal.mockResolvedValue({ year: lastYear, target: 40, booksRead: 43 });
-    render(<ReadingGoals />);
+    renderGoals();
 
     await userEvent.click(
       await screen.findByRole("button", { name: "Edit past years' goals" }),
@@ -156,7 +194,7 @@ describe("ReadingGoals", () => {
       target: null,
       booksRead: 43,
     });
-    render(<ReadingGoals />);
+    renderGoals();
 
     await userEvent.click(
       await screen.findByRole("button", { name: "Edit past years' goals" }),

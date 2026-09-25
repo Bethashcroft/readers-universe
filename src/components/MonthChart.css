@@ -1,0 +1,72 @@
+.month-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.month-chart-plot {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  align-items: end;
+  height: 170px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.month-chart-column {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  cursor: default;
+  outline: none;
+}
+
+.month-chart-column:focus-visible {
+  box-shadow: inset 0 0 0 2px rgba(167, 139, 250, 0.6);
+  border-radius: 6px;
+}
+
+.month-chart-bar {
+  width: min(24px, 70%);
+  border-radius: 4px 4px 0 0;
+  background-color: #8b5cf6;
+  transition: background-color 0.15s ease;
+}
+
+.month-chart-column.active .month-chart-bar {
+  background-color: #a78bfa;
+}
+
+.month-chart-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.month-chart-tooltip {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 2;
+  transform: translate(-50%, -100%);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background-color: rgba(16, 12, 44, 0.96);
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--color-text);
+  pointer-events: none;
+}
+
+.month-chart-axis {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  font-size: 11px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
