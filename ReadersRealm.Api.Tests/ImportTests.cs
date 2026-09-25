@@ -570,6 +570,33 @@ public class ImportTests : IDisposable
     }
 
     [Fact]
+    public async Task AGoogleBooksCoverIsConfirmedAndAppliedToo()
+    {
+        var beth = await _client.RegisterAsync("beth");
+        _client.Authenticate(beth.Token);
+        await ImportAsync(_client);
+
+        const string googleCover =
+            "https://books.google.com/books/content?id=abc&printsec=frontcover&img=1&zoom=1&source=gbs_api";
+        var source = (FakeCoverSource)_factory.Services.GetRequiredService<ICoverSource>();
+        source.Result = CoverResult.Found(googleCover);
+        _factory.Handler.Status = System.Net.HttpStatusCode.OK;
+        _factory.Handler.ContentLength = 5000;
+
+        var run = await _client.PostAsync(
+            "/api/library/refresh-covers?afterId=0&withTotal=true",
+            null
+        );
+        run.EnsureSuccessStatusCode();
+        var result = (await run.Content.ReadFromJsonAsync<CoverBackfillResult>())!;
+
+        Assert.Equal(1, result.Fixed);
+
+        var shelves = await _client.GetLibraryAsync();
+        Assert.Equal(googleCover, shelves.Single(b => b.Title == "The Profiler").CoverUrl);
+    }
+
+    [Fact]
     public async Task AThrottledSourceStopsTheRunInsteadOfHammeringOn()
     {
         var beth = await _client.RegisterAsync("beth");

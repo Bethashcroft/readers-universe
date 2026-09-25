@@ -1,22 +1,42 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import Shelves from "./Shelves";
 import type { LibraryEntryResponse } from "../api/books";
 
-const { mockGetMyBooks, mockGetShelfCounts, mockOfferBook, mockGetBorrowing } =
-  vi.hoisted(() => ({
-    mockGetMyBooks: vi.fn(),
-    mockGetShelfCounts: vi.fn(),
-    mockOfferBook: vi.fn(),
-    mockGetBorrowing: vi.fn(),
-  }));
+const {
+  mockGetMyBooks,
+  mockGetShelfCounts,
+  mockOfferBook,
+  mockGetBorrowing,
+  mockRefreshCovers,
+} = vi.hoisted(() => ({
+  mockGetMyBooks: vi.fn(),
+  mockGetShelfCounts: vi.fn(),
+  mockOfferBook: vi.fn(),
+  mockGetBorrowing: vi.fn(),
+  mockRefreshCovers: vi.fn(),
+}));
 
 vi.mock("../api/books", () => ({
   getMyBooks: mockGetMyBooks,
   getShelfCounts: mockGetShelfCounts,
   offerBook: mockOfferBook,
+  refreshCovers: mockRefreshCovers,
 }));
+
+const coverRun = (fixed: number) => ({
+  checked: 1,
+  fixed,
+  alreadyFine: 0,
+  notFound: 1 - fixed,
+  unverifiable: 0,
+  unreachable: 0,
+  nextAfterId: 1,
+  total: 0,
+  done: true,
+  throttled: false,
+});
 
 vi.mock("../api/borrow", () => ({
   getBorrowing: mockGetBorrowing,
@@ -88,6 +108,26 @@ describe("Shelves", () => {
     mockGetShelfCounts.mockResolvedValue({ read: 1, tbr: 2 });
     mockGetBorrowing.mockResolvedValue(lending(0));
     mockOfferBook.mockReset();
+    mockRefreshCovers.mockReset();
+    mockRefreshCovers.mockResolvedValue(coverRun(0));
+  });
+
+  it("quietly looks for missing covers and shows any it finds", async () => {
+    mockRefreshCovers.mockResolvedValue(coverRun(1));
+    mockGetMyBooks
+      .mockResolvedValueOnce(shelvesOf(book))
+      .mockResolvedValueOnce(shelvesOf({ ...book, coverUrl: "found.jpg" }));
+    renderShelves();
+
+    const cover = await screen.findByRole("img", { name: "Cover of Piranesi" });
+    expect(cover).toHaveAttribute("src", "x");
+
+    await waitFor(
+      () => expect(screen.getByRole("img", { name: "Cover of Piranesi" })).toHaveAttribute("src", "found.jpg"),
+      { timeout: 3000 },
+    );
+    expect(mockRefreshCovers).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("Loading your shelves...")).not.toBeInTheDocument();
   });
 
   it("offers a book to borrow straight from its card", async () => {

@@ -37,7 +37,11 @@ public class CoverService(
 
     private static readonly TimeSpan RecheckAfter = TimeSpan.FromDays(30);
 
-    private static readonly string[] VerifiableHosts = ["covers.openlibrary.org"];
+    private static readonly string[] VerifiableHosts =
+    [
+        "covers.openlibrary.org",
+        GoogleBooksCoverSource.Host,
+    ];
 
     private readonly AppDbContext _context = context;
     private readonly IEnumerable<ICoverSource> _sources = sources;

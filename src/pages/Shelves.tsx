@@ -11,6 +11,7 @@ import { shelfLabels, canOffer } from "../types/book";
 import type { ShelfType } from "../types/book";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useQuietCoverSearch } from "../hooks/useQuietCoverSearch";
 import "./Shelves.css";
 
 const orderLabels: Record<string, [string, string]> = {
@@ -78,6 +79,21 @@ function Shelves() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useQuietCoverSearch(async () => {
+    try {
+      const result = await getMyBooks({
+        shelf: activeShelf === "all" ? undefined : activeShelf,
+        search: debouncedSearch,
+        sort,
+        reverse,
+        page: currentPage,
+      });
+      setBooks(result.items);
+    } catch (err) {
+      console.error("Failed to show new covers:", err);
+    }
+  });
 
   useEffect(() => {
     const loadCounts = async () => {

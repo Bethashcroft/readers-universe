@@ -108,7 +108,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
-void ConfigureOpenLibraryClient(HttpClient client)
+void ConfigureBookApiClient(HttpClient client)
 {
     client.Timeout = TimeSpan.FromSeconds(10);
     client.DefaultRequestHeaders.UserAgent.ParseAdd(
@@ -116,9 +116,18 @@ void ConfigureOpenLibraryClient(HttpClient client)
     );
 }
 
-builder.Services.AddHttpClient<IBookLookup, OpenLibraryBookLookup>(ConfigureOpenLibraryClient);
-builder.Services.AddHttpClient<ICoverSource, OpenLibraryCoverSource>(ConfigureOpenLibraryClient);
-builder.Services.AddHttpClient<CoverService>(ConfigureOpenLibraryClient);
+builder.Services.AddHttpClient<IBookLookup, OpenLibraryBookLookup>(ConfigureBookApiClient);
+builder.Services.AddHttpClient<ICoverSource, OpenLibraryCoverSource>(ConfigureBookApiClient);
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration[GoogleBooksCoverSource.KeySetting]))
+{
+    builder.Services.AddHttpClient<GoogleBooksCoverSource>(ConfigureBookApiClient);
+    builder.Services.AddTransient<ICoverSource>(services =>
+        services.GetRequiredService<GoogleBooksCoverSource>()
+    );
+}
+
+builder.Services.AddHttpClient<CoverService>(ConfigureBookApiClient);
 builder.Services.AddSingleton<CoverBackfillLimiter>();
 builder.Services.AddScoped<LibraryImportService>();
 builder.Services.AddScoped<NotificationService>();
