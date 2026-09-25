@@ -10,8 +10,23 @@ public class Book
     [MaxLength(300)]
     public string Title { get; set; } = string.Empty;
 
+    private string _author = string.Empty;
+
     [MaxLength(200)]
-    public string Author { get; set; } = string.Empty;
+    public string Author
+    {
+        get => _author;
+        set
+        {
+            _author = value;
+            RefreshAuthorSort();
+        }
+    }
+
+    [MaxLength(200)]
+    public string AuthorSort { get; private set; } = string.Empty;
+
+    public void RefreshAuthorSort() => AuthorSort = AuthorNames.SortKey(Author);
 
     [MaxLength(2000)]
     public string CoverUrl { get; set; } = string.Empty;

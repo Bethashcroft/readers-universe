@@ -17,4 +17,17 @@ public static class AppDbContextExtensions
             return false;
         }
     }
+
+    public static int FillMissingAuthorSorts(this AppDbContext context)
+    {
+        var books = context.Books.Where(b => b.AuthorSort == "" && b.Author != "").ToList();
+
+        foreach (var book in books)
+        {
+            book.RefreshAuthorSort();
+        }
+
+        context.SaveChanges();
+        return books.Count;
+    }
 }

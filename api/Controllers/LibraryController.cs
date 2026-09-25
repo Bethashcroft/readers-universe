@@ -92,7 +92,7 @@ public class LibraryController : ControllerBase
         {
             LibrarySort.Title => query.SortBy(e => e.Book.Title, descending: reverse),
             LibrarySort.Author => query
-                .SortBy(e => e.Book.Author, descending: reverse)
+                .SortBy(e => e.Book.AuthorSort, descending: reverse)
                 .ThenBy(e => e.Book.Title),
             LibrarySort.Rating => query
                 .OrderBy(e =>

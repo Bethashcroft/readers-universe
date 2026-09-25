@@ -190,6 +190,19 @@ if (app.Configuration.GetValue<bool>("RunMigrationsOnStartup"))
         Console.WriteLine($"[startup] MIGRATIONS FAILED: {ex.Message}");
         throw;
     }
+
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Console.WriteLine(
+            $"[startup] author sort names filled for {db.FillMissingAuthorSorts()} books"
+        );
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[startup] author sort names not filled: {ex.Message}");
+    }
 }
 else
 {

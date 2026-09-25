@@ -453,7 +453,10 @@ public class ImportTests : IDisposable
         );
 
         var byAuthor = await _client.GetLibraryPageAsync("?sort=author");
-        Assert.Equal("Claire McGowan", byAuthor.Items.First().Author);
+        Assert.Equal(
+            ["Adams", "Fields", "Harpman", "McGowan", "Stacey"],
+            byAuthor.Items.Select(b => b.Author.Split(' ', StringSplitOptions.RemoveEmptyEntries)[^1])
+        );
 
         var byRating = await _client.GetLibraryPageAsync("?sort=rating");
         Assert.Equal(3, byRating.Items.First().Rating);
