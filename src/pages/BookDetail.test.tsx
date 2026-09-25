@@ -33,11 +33,15 @@ vi.mock("../api/reviews", () => ({
   deleteReview: vi.fn(),
 }));
 
+const { mockRemoveBook } = vi.hoisted(() => ({
+  mockRemoveBook: vi.fn(),
+}));
+
 vi.mock("../context/useBooks", () => ({
   useBooks: () => ({
     addBook: mockAddBook,
     updateBook: mockUpdateBook,
-    removeBook: vi.fn(),
+    removeBook: mockRemoveBook,
   }),
 }));
 
@@ -401,6 +405,54 @@ describe("BookDetail", () => {
         screen.queryByText(/lend it to your Trusted Book Club/),
       ).not.toBeInTheDocument();
     });
+  });
+
+  it("asks in the app's own pop-up before removing a book", async () => {
+    mockGetBook.mockResolvedValue({
+      ...book,
+      myEntry: { ...myEntry, offer: "available-to-borrow" },
+    });
+    mockGetReviews.mockResolvedValue([]);
+    mockRemoveBook.mockReset();
+    mockRemoveBook.mockRejectedValueOnce(
+      new Error("This book is out on loan. Mark it returned before removing it."),
+    );
+    mockRemoveBook.mockResolvedValueOnce(undefined);
+    renderBookDetail();
+
+    await screen.findByText("Gone Girl");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Remove from My Shelves" }),
+    );
+
+    expect(
+      screen.getByRole("dialog", { name: "Remove from My Shelves?" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/have their request declined/)).toBeInTheDocument();
+    expect(mockRemoveBook).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("button", { name: "Remove" }));
+    expect(
+      await screen.findByText(/Mark it returned before removing it/),
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Remove" }));
+    expect(mockRemoveBook).toHaveBeenLastCalledWith(9);
+  });
+
+  it("marks a review as containing spoilers with a toggle", async () => {
+    mockGetBook.mockResolvedValue(book);
+    mockGetReviews.mockResolvedValue([]);
+    renderBookDetail();
+
+    const spoilers = await screen.findByRole("switch", {
+      name: "This review contains spoilers",
+    });
+    expect(spoilers).toHaveAttribute("aria-checked", "false");
+
+    await userEvent.click(spoilers);
+
+    expect(spoilers).toHaveAttribute("aria-checked", "true");
   });
 
   it("fills in a missing page count for a book you are reading", async () => {

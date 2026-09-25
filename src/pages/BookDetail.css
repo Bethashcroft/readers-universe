@@ -89,19 +89,6 @@
   border-color: var(--color-primary);
 }
 
-.review-spoiler-check {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: var(--color-text-muted);
-  cursor: pointer;
-}
-
-.review-spoiler-check input {
-  width: auto;
-}
-
 .book-detail-header {
   display: flex;
   gap: 32px;
@@ -324,7 +311,7 @@
   border-color: var(--color-primary);
 }
 
-.review-form button {
+.review-form-actions button {
   padding: 12px;
   background-color: var(--color-primary);
   color: white;
@@ -338,7 +325,7 @@
   align-self: flex-start;
 }
 
-.review-form button:hover {
+.review-form-actions button:hover {
   background-color: var(--color-primary-hover);
 }
 

@@ -29,6 +29,8 @@ import ReadingProgress from "../components/ReadingProgress";
 import PageCount from "../components/PageCount";
 import ReadingHistory from "../components/ReadingHistory";
 import ErrorState from "../components/ErrorState";
+import ConfirmDialog from "../components/ConfirmDialog";
+import Toggle from "../components/Toggle";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { formatDate, today } from "../utils/dates";
 import "../styles/forms.css";
@@ -55,6 +57,9 @@ function BookDetail() {
   const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
   const [dnfNudge, setDnfNudge] = useState(false);
   const [lendNudge, setLendNudge] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [removeBusy, setRemoveBusy] = useState(false);
+  const [removeError, setRemoveError] = useState("");
   const reviewTextRef = useRef<HTMLTextAreaElement>(null);
   const [addShelf, setAddShelf] = useState<ShelfType>("tbr");
   const [adding, setAdding] = useState(false);
@@ -254,18 +259,24 @@ function BookDetail() {
     }
   };
 
+  const startRemoving = () => {
+    setRemoveError("");
+    setRemoving(true);
+  };
+
   const handleRemove = async () => {
     if (!myEntry) return;
-
-    if (!window.confirm(`Remove "${book.title}" from your shelves?`)) {
-      return;
-    }
+    setRemoveBusy(true);
+    setRemoveError("");
 
     try {
       await removeBook(myEntry.id);
       navigate("/shelves");
     } catch (err) {
-      console.error("Failed to remove book:", err);
+      setRemoveError(
+        err instanceof Error ? err.message : "Failed to remove book",
+      );
+      setRemoveBusy(false);
     }
   };
 
@@ -479,10 +490,30 @@ function BookDetail() {
               {offer !== "lent-out" && (
                 <button
                   className="btn btn-secondary remove-entry"
-                  onClick={handleRemove}
+                  onClick={startRemoving}
                 >
                   Remove from My Shelves
                 </button>
+              )}
+
+              {removing && (
+                <ConfirmDialog
+                  title="Remove from My Shelves?"
+                  confirmLabel="Remove"
+                  danger
+                  busy={removeBusy}
+                  error={removeError}
+                  onConfirm={handleRemove}
+                  onCancel={() => setRemoving(false)}
+                >
+                  <p>
+                    <strong>{book.title}</strong> comes off your shelves along
+                    with its reading history. Your review and feed posts stay.
+                  </p>
+                  {offer === "available-to-borrow" && (
+                    <p>Anyone waiting to borrow it will have their request declined.</p>
+                  )}
+                </ConfirmDialog>
               )}
             </>
           ) : (
@@ -678,14 +709,12 @@ function BookDetail() {
               rows={4}
             />
 
-            <label className="review-spoiler-check">
-              <input
-                type="checkbox"
-                checked={reviewSpoiler}
-                onChange={(e) => setReviewSpoiler(e.target.checked)}
-              />
-              This review contains spoilers
-            </label>
+            <Toggle
+              id="review-spoiler"
+              label="This review contains spoilers"
+              checked={reviewSpoiler}
+              onChange={setReviewSpoiler}
+            />
 
             <div className="review-form-actions">
               <button type="submit">

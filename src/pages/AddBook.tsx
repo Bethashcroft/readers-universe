@@ -18,6 +18,7 @@ import { usePageTitle } from "../hooks/usePageTitle";
 import ImportLibrary from "../components/ImportLibrary";
 import BookFinder from "../components/BookFinder";
 import BarcodeScanner from "../components/BarcodeScanner";
+import Toggle from "../components/Toggle";
 import "../styles/forms.css";
 import "./AddBook.css";
 
@@ -248,14 +249,12 @@ function AddBook() {
             onChange={(e) => setReviewText(e.target.value)}
             rows={4}
           />
-          <label className="review-spoiler-check">
-            <input
-              type="checkbox"
-              checked={containsSpoiler}
-              onChange={(e) => setContainsSpoiler(e.target.checked)}
-            />
-            This review contains spoilers
-          </label>
+          <Toggle
+            id="add-spoiler"
+            label="This review contains spoilers"
+            checked={containsSpoiler}
+            onChange={setContainsSpoiler}
+          />
 
           <button type="submit">Add book</button>
         </form>
