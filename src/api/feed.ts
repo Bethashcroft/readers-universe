@@ -1,4 +1,5 @@
 import { request } from "./client";
+import type { FormatType } from "../types/book";
 
 export type ActivityType =
   | "started-reading"
@@ -29,6 +30,7 @@ export interface ActivityResponse {
   rating: number | null;
   page: number | null;
   pageCount: number | null;
+  format: FormatType;
   likeCount: number;
   likedByMe: boolean;
   commentCount: number;

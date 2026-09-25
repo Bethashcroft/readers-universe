@@ -198,7 +198,6 @@ function Layout() {
                 <NavLink to="/reading-goals">Reading Goals</NavLink>
                 <NavLink to="/add-book">Add Books</NavLink>
                 <NavLink to="/browse">Browse</NavLink>
-                <NavLink to="/readers">Find Readers</NavLink>
                 <NavLink to="/borrowing">
                   Borrowing
                   {pendingCount > 0 && (
@@ -213,6 +212,7 @@ function Layout() {
               </NavMenu>
               <NavMenu label="Account">
                 <NavLink to={`/profile/${user.userName}`}>Profile</NavLink>
+                <NavLink to="/readers">Find Readers</NavLink>
                 <NavLink to="/trusted-book-club">Trusted Book Club</NavLink>
                 <button className="nav-logout" onClick={handleLogout}>
                   Log Out

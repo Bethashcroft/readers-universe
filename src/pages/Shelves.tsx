@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import { getMyBooks, getShelfCounts } from "../api/books";
+import { Link } from "react-router-dom";
+import { getMyBooks, getShelfCounts, offerBook } from "../api/books";
 import type { LibraryEntryResponse } from "../api/books";
+import { getBorrowing } from "../api/borrow";
 import BookCard from "../components/BookCard";
 import Pager from "../components/Pager";
 import SelectMenu from "../components/SelectMenu";
 import ErrorState from "../components/ErrorState";
-import { shelfLabels } from "../types/book";
+import { shelfLabels, canOffer } from "../types/book";
 import type { ShelfType } from "../types/book";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
@@ -18,6 +20,11 @@ const orderLabels: Record<string, [string, string]> = {
   rating: ["Highest first", "Lowest first"],
   finished: ["Newest first", "Oldest first"],
 };
+
+const offerable = (entry: LibraryEntryResponse) =>
+  entry.shelf !== "want-to-read" &&
+  entry.offer === "none" &&
+  canOffer(entry.format);
 
 function Shelves() {
   usePageTitle("My Shelves");
@@ -36,6 +43,14 @@ function Shelves() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [slots, setSlots] = useState<{ used: number; limit: number } | null>(
+    null,
+  );
+  const [offering, setOffering] = useState<number | null>(null);
+  const [offerError, setOfferError] = useState<{
+    id: number;
+    message: string;
+  } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -73,8 +88,40 @@ function Shelves() {
       }
     };
 
+    const loadSlots = async () => {
+      try {
+        const borrowing = await getBorrowing();
+        setSlots({ used: borrowing.offering.length, limit: borrowing.limit });
+      } catch (err) {
+        console.error("Failed to fetch lending spots:", err);
+      }
+    };
+
     loadCounts();
+    loadSlots();
   }, []);
+
+  const handleOffer = async (entry: LibraryEntryResponse) => {
+    setOffering(entry.id);
+    setOfferError(null);
+
+    try {
+      await offerBook(entry.id);
+      setBooks((all) =>
+        all.map((b) =>
+          b.id === entry.id ? { ...b, offer: "available-to-borrow" } : b,
+        ),
+      );
+      setSlots((current) => current && { ...current, used: current.used + 1 });
+    } catch (err) {
+      setOfferError({
+        id: entry.id,
+        message: err instanceof Error ? err.message : "Failed to offer that book",
+      });
+    } finally {
+      setOffering(null);
+    }
+  };
 
   const chooseShelf = (shelf: ShelfType | "all") => {
     setActiveShelf(shelf);
@@ -110,6 +157,27 @@ function Shelves() {
   }
 
   const allCount = Object.values(counts).reduce((sum, n) => sum + n, 0);
+  const room = slots !== null && slots.used < slots.limit;
+  const full = slots !== null && !room;
+  const anyOfferable = books.some(offerable);
+
+  const offerAction = (entry: LibraryEntryResponse) =>
+    room && offerable(entry) ? (
+      <>
+        <button
+          type="button"
+          className="btn-pill"
+          aria-label={`Offer ${entry.title} to borrow`}
+          onClick={() => handleOffer(entry)}
+          disabled={offering !== null}
+        >
+          {offering === entry.id ? "Offering..." : "Offer to borrow"}
+        </button>
+        {offerError?.id === entry.id && (
+          <p className="form-error">{offerError.message}</p>
+        )}
+      </>
+    ) : undefined;
 
   return (
     <div className="shelves">
@@ -174,9 +242,16 @@ function Shelves() {
         <p>Loading your shelves...</p>
       ) : (
         <>
+          {full && anyOfferable && (
+            <p className="shelf-lending-note">
+              All {slots?.limit} of your lending spots are taken. Take a book
+              back on <Link to="/borrowing">Borrowing</Link> to offer another.
+            </p>
+          )}
+
           <div className="book-grid">
             {books.map((book) => (
-              <BookCard key={book.id} book={book} />
+              <BookCard key={book.id} book={book} action={offerAction(book)} />
             ))}
           </div>
 

@@ -44,7 +44,7 @@ public class FeedController : ControllerBase
             .OrderByDescending(a => a.Date)
             .ThenByDescending(a => a.Id)
             .Take(ActivityMapper.PageLength)
-            .ToResponses(me)
+            .ToResponses(me, _context.LibraryEntries)
             .ToListAsync();
 
         return Ok(feed);

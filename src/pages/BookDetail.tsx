@@ -4,7 +4,7 @@ import { useBooks } from "../context/useBooks";
 import { useAuth } from "../context/useAuth";
 import { getBook, lookupPageCount } from "../api/books";
 import type { BookDetailResponse } from "../api/books";
-import { createBorrowRequest } from "../api/borrow";
+import { createBorrowRequest, getBorrowing } from "../api/borrow";
 import VintedButton from "../components/VintedButton";
 import type { ShelfType } from "../types/book";
 import {
@@ -54,6 +54,7 @@ function BookDetail() {
   const [reviewSpoiler, setReviewSpoiler] = useState(false);
   const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
   const [dnfNudge, setDnfNudge] = useState(false);
+  const [lendNudge, setLendNudge] = useState(false);
   const reviewTextRef = useRef<HTMLTextAreaElement>(null);
   const [addShelf, setAddShelf] = useState<ShelfType>("tbr");
   const [adding, setAdding] = useState(false);
@@ -134,10 +135,30 @@ function BookDetail() {
     setBook({ ...book, myEntry: updated });
   };
 
+  const hasLendingRoom = async () => {
+    try {
+      const { offering, limit } = await getBorrowing();
+      return offering.length < limit;
+    } catch {
+      return false;
+    }
+  };
+
   const handleShelfChange = async (newShelf: string) => {
+    const justFinished =
+      newShelf === "read" &&
+      myEntry?.shelf !== "read" &&
+      offer === "none" &&
+      canOffer(format);
+
     setShelf(newShelf);
+    setLendNudge(false);
     try {
       await saveEntry({ shelf: newShelf });
+
+      if (justFinished && (await hasLendingRoom())) {
+        setLendNudge(true);
+      }
 
       if (newShelf === "dnf" && !myReview) {
         setDnfNudge(true);
@@ -164,6 +185,11 @@ function BookDetail() {
       );
       setOffer(myEntry?.offer ?? "");
     }
+  };
+
+  const lendIt = async () => {
+    setLendNudge(false);
+    await handleOfferChange("available-to-borrow");
   };
 
   const onLoan = offer === "lent-out";
@@ -387,6 +413,31 @@ function BookDetail() {
                   />
                 )}
               </div>
+
+              {lendNudge && (
+                <div className="lend-nudge" role="status">
+                  <p>
+                    <strong>Finished!</strong> If it's your own copy, you could
+                    lend it to your Trusted Book Club.
+                  </p>
+                  <div className="lend-nudge-actions">
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={lendIt}
+                    >
+                      Offer to borrow
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setLendNudge(false)}
+                    >
+                      Not now
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {offerError && <p className="form-error">{offerError}</p>}
 

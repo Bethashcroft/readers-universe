@@ -7,6 +7,7 @@ import Avatar from "./Avatar";
 import BookCover from "./BookCover";
 import CommentThread from "./CommentThread";
 import { percentThrough } from "../utils/progress";
+import { formatLabels } from "../types/book";
 import "./ActivityItem.css";
 
 const verbs: Record<Exclude<ActivityType, "progress">, string> = {
@@ -18,6 +19,13 @@ const verbs: Record<Exclude<ActivityType, "progress">, string> = {
   offered: "is offering",
   followed: "started following",
 };
+
+const showsFormat: ActivityType[] = [
+  "started-reading",
+  "progress",
+  "finished",
+  "did-not-finish",
+];
 
 function verbFor(activity: ActivityResponse) {
   if (activity.type !== "progress") return verbs[activity.type];
@@ -84,6 +92,11 @@ function ActivityItem({
             </Link>
           )}
           {activity.type === "offered" && " to borrow"}
+          {activity.format && showsFormat.includes(activity.type) && (
+            <span className="badge badge-violet activity-format">
+              {formatLabels[activity.format]}
+            </span>
+          )}
           {rating && (
             <span className="activity-rating">
               {"★".repeat(rating)}

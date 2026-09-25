@@ -50,6 +50,12 @@
   gap: 24px;
 }
 
+.shelf-lending-note {
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
 .empty-shelf {
   text-align: center;
   color: var(--color-text-muted);

@@ -1,6 +1,18 @@
-a.book-card {
+a.book-card-link {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   color: inherit;
   text-decoration: none;
+}
+
+.book-card-action {
+  padding: 0 16px 16px;
+}
+
+.book-card-action .form-error {
+  margin-top: 8px;
+  font-size: 12px;
 }
 
 .book-card {

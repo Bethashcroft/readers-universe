@@ -17,6 +17,21 @@ vi.mock("../context/useBooks", () => ({
   useBooks: () => ({ addBook: vi.fn() }),
 }));
 
+vi.mock("../components/BarcodeScanner", () => ({
+  default: ({ onScan }: { onScan: (isbn: string) => void }) => (
+    <button type="button" onClick={() => onScan("9780261103344")}>
+      Pretend to scan
+    </button>
+  ),
+}));
+
+function withCamera() {
+  Object.defineProperty(navigator, "mediaDevices", {
+    value: { getUserMedia: vi.fn() },
+    configurable: true,
+  });
+}
+
 function renderAddBook(path = "/add-book") {
   return render(
     <MemoryRouter initialEntries={[path]}>
@@ -29,6 +44,39 @@ describe("AddBook ISBN lookup", () => {
   beforeEach(() => {
     mockLookupBook.mockReset();
     mockFindBooks.mockReset();
+  });
+
+  afterEach(() => {
+    Reflect.deleteProperty(navigator, "mediaDevices");
+  });
+
+  it("fills in the book from a scanned barcode", async () => {
+    withCamera();
+    mockLookupBook.mockResolvedValue({
+      title: "The Hobbit",
+      author: "J.R.R. Tolkien",
+      coverUrl: "",
+    });
+    const user = userEvent.setup();
+    renderAddBook();
+
+    await user.click(screen.getByRole("button", { name: "Scan the barcode" }));
+    await user.click(screen.getByRole("button", { name: "Pretend to scan" }));
+
+    expect(await screen.findByDisplayValue("The Hobbit")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("9780261103344")).toBeInTheDocument();
+    expect(mockLookupBook).toHaveBeenCalledWith("9780261103344");
+    expect(
+      screen.queryByRole("button", { name: "Pretend to scan" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides the scan button when there's no camera to use", () => {
+    renderAddBook();
+
+    expect(
+      screen.queryByRole("button", { name: "Scan the barcode" }),
+    ).not.toBeInTheDocument();
   });
 
   it("searches straight away when you arrive with a query and fills the form from a pick", async () => {

@@ -40,6 +40,13 @@
   color: var(--color-primary);
 }
 
+.activity-format {
+  margin-left: 8px;
+  padding: 1px 8px;
+  font-size: 11px;
+  vertical-align: 1px;
+}
+
 .activity-rating {
   margin-left: 8px;
   color: #f59e0b;

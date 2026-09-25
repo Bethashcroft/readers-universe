@@ -13,6 +13,7 @@ public record ActivityResult(
     int? Rating,
     int? Page,
     int? PageCount,
+    string Format,
     int LikeCount,
     bool LikedByMe,
     int CommentCount,
@@ -164,6 +165,29 @@ public class FeedTests : IDisposable
 
         var offered = (await ActivityAsync(sophie, "sophie")).Single(a => a.Type == "offered");
         Assert.Equal("Piranesi", offered.Book!.Title);
+    }
+
+    [Fact]
+    public async Task PostsShowTheFormatOnYourShelvesRightNow()
+    {
+        var sophie = await _factory.SignInAsync("sophie");
+        var beth = await _factory.SignInAsync("beth");
+        await beth.PostAsync("/api/users/sophie/follow", null);
+        var book = await sophie.AddBookAsync("Piranesi", shelf: "currently-reading");
+
+        Assert.Equal("", (await FeedAsync(beth)).Single().Format);
+
+        await sophie.PutAsJsonAsync(
+            $"/api/library/{book.Id}",
+            new { shelf = "currently-reading", offer = "none", format = "audiobook" }
+        );
+
+        Assert.Equal("audiobook", (await FeedAsync(beth)).Single().Format);
+        Assert.Equal("audiobook", (await ActivityAsync(sophie, "sophie")).Single().Format);
+
+        await sophie.DeleteAsync($"/api/library/{book.Id}");
+
+        Assert.Equal("", (await FeedAsync(beth)).Single().Format);
     }
 
     [Fact]

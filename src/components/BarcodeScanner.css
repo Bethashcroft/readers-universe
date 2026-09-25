@@ -1,0 +1,35 @@
+.barcode-modal {
+  max-width: 480px;
+}
+
+.barcode-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background-color: #000;
+  aspect-ratio: 4 / 3;
+}
+
+.barcode-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.barcode-guide {
+  position: absolute;
+  inset: 32% 12%;
+  border: 2px solid rgba(167, 139, 250, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 0 0 999px rgba(10, 8, 32, 0.45);
+}
+
+.barcode-hint {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.barcode-modal .btn {
+  align-self: flex-end;
+}

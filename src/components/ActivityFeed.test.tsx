@@ -57,6 +57,7 @@ function activity(
     rating: null,
     page: null,
     pageCount: null,
+    format: "",
     likeCount: 0,
     likedByMe: false,
     commentCount: 0,
@@ -118,6 +119,23 @@ describe("ActivityFeed", () => {
       "href",
       "/book/10",
     );
+  });
+
+  it("shows the format on reading posts only", async () => {
+    renderFeed(async () => [
+      activity(1, { type: "started-reading", format: "ebook" }),
+      activity(2, { type: "progress", page: 120, pageCount: 340, format: "audiobook" }),
+      activity(3, { type: "finished", format: "physical" }),
+      activity(4, { type: "did-not-finish", format: "" }),
+      activity(5, { type: "offered", format: "physical" }),
+      activity(6, { type: "wants-to-read", format: "ebook" }),
+    ]);
+
+    expect(await screen.findAllByText("Sophie Bell")).toHaveLength(6);
+    expect(screen.getAllByText("Ebook")).toHaveLength(1);
+    expect(screen.getByText("Audiobook")).toBeInTheDocument();
+    expect(screen.getAllByText("Physical")).toHaveLength(1);
+    expect(screen.queryByText("Not set")).not.toBeInTheDocument();
   });
 
   it("shows the empty state when there is nothing", async () => {

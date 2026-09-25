@@ -8,7 +8,8 @@ public static class ActivityMapper
 
     public static IQueryable<ActivityResponse> ToResponses(
         this IQueryable<Activity> activities,
-        string? me
+        string? me,
+        IQueryable<LibraryEntry> shelves
     ) =>
         activities.Select(a => new ActivityResponse
         {
@@ -18,6 +19,11 @@ public static class ActivityMapper
             Rating = a.Rating,
             Page = a.Page,
             PageCount = a.PageCount,
+            Format =
+                shelves
+                    .Where(e => e.UserId == a.UserId && e.BookId == a.BookId)
+                    .Select(e => e.Format)
+                    .FirstOrDefault() ?? "",
             LikeCount = a.Likes.Count,
             LikedByMe = a.Likes.Any(l => l.UserId == me),
             CommentCount = a.Comments.Count,
@@ -53,6 +59,7 @@ public class ActivityResponse
     public int? Rating { get; set; }
     public int? Page { get; set; }
     public int? PageCount { get; set; }
+    public string Format { get; set; } = string.Empty;
     public int LikeCount { get; set; }
     public bool LikedByMe { get; set; }
     public int CommentCount { get; set; }

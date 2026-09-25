@@ -41,9 +41,23 @@ vi.mock("../context/useBooks", () => ({
   }),
 }));
 
+const { mockGetBorrowing } = vi.hoisted(() => ({
+  mockGetBorrowing: vi.fn(),
+}));
+
 vi.mock("../api/borrow", () => ({
   createBorrowRequest: vi.fn(),
+  getBorrowing: mockGetBorrowing,
 }));
+
+const lendingSpotsUsed = (used: number) => ({
+  offering: Array.from({ length: used }, (_, i) => ({ libraryEntryId: 100 + i })),
+  borrowed: [],
+  incoming: [],
+  outgoing: [],
+  history: [],
+  limit: 3,
+});
 
 vi.mock("../context/useAuth", () => ({
   useAuth: mockUseAuth,
@@ -307,6 +321,86 @@ describe("BookDetail", () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Review (optional)")).toHaveFocus();
     expect(scrollIntoView).toHaveBeenCalled();
+  });
+
+  describe("finishing a book you could lend", () => {
+    const reading = {
+      ...myEntry,
+      shelf: "currently-reading",
+      format: "physical",
+      pageCount: 400,
+    };
+
+    async function finish() {
+      await screen.findByText("Gone Girl");
+      await userEvent.click(
+        screen.getByRole("button", { name: "Shelf Currently Reading" }),
+      );
+      await userEvent.click(screen.getByRole("option", { name: "Read" }));
+    }
+
+    beforeEach(() => {
+      mockUpdateBook.mockReset();
+      mockGetBorrowing.mockReset();
+      mockGetReviews.mockResolvedValue([]);
+    });
+
+    it("offers to lend it out and does so in one click", async () => {
+      mockGetBook.mockResolvedValue({ ...book, myEntry: reading });
+      mockGetBorrowing.mockResolvedValue(lendingSpotsUsed(1));
+      mockUpdateBook
+        .mockResolvedValueOnce({ ...reading, shelf: "read" })
+        .mockResolvedValueOnce({
+          ...reading,
+          shelf: "read",
+          offer: "available-to-borrow",
+        });
+      renderBookDetail();
+
+      await finish();
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Offer to borrow" }),
+      );
+
+      expect(mockUpdateBook).toHaveBeenLastCalledWith(9, {
+        shelf: "read",
+        offer: "available-to-borrow",
+        format: "physical",
+        today: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+      });
+      expect(
+        screen.queryByText(/lend it to your Trusted Book Club/),
+      ).not.toBeInTheDocument();
+    });
+
+    it("keeps quiet when every lending spot is taken", async () => {
+      mockGetBook.mockResolvedValue({ ...book, myEntry: reading });
+      mockGetBorrowing.mockResolvedValue(lendingSpotsUsed(3));
+      mockUpdateBook.mockResolvedValue({ ...reading, shelf: "read" });
+      renderBookDetail();
+
+      await finish();
+
+      await vi.waitFor(() => expect(mockGetBorrowing).toHaveBeenCalled());
+      expect(
+        screen.queryByText(/lend it to your Trusted Book Club/),
+      ).not.toBeInTheDocument();
+    });
+
+    it("never asks about an ebook", async () => {
+      const ebook = { ...reading, format: "ebook" };
+      mockGetBook.mockResolvedValue({ ...book, myEntry: ebook });
+      mockUpdateBook.mockResolvedValue({ ...ebook, shelf: "read" });
+      renderBookDetail();
+
+      await finish();
+
+      await vi.waitFor(() => expect(mockUpdateBook).toHaveBeenCalled());
+      expect(mockGetBorrowing).not.toHaveBeenCalled();
+      expect(
+        screen.queryByText(/lend it to your Trusted Book Club/),
+      ).not.toBeInTheDocument();
+    });
   });
 
   it("fills in a missing page count for a book you are reading", async () => {

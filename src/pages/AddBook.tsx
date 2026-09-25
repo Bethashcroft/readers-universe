@@ -17,6 +17,7 @@ import { placeholderCover } from "../types/covers";
 import { usePageTitle } from "../hooks/usePageTitle";
 import ImportLibrary from "../components/ImportLibrary";
 import BookFinder from "../components/BookFinder";
+import BarcodeScanner from "../components/BarcodeScanner";
 import "../styles/forms.css";
 import "./AddBook.css";
 
@@ -42,14 +43,16 @@ function AddBook() {
   const [error, setError] = useState("");
   const [lastLookup, setLastLookup] = useState<BookLookupResult | null>(null);
   const [showMore, setShowMore] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const canScan = Boolean(navigator.mediaDevices?.getUserMedia);
 
-  const handleLookup = async () => {
-    if (!isbn.trim()) return;
+  const lookUp = async (code: string) => {
+    if (!code.trim()) return;
     setLookupStatus("looking");
     setError("");
 
     try {
-      const result = await lookupBook(isbn.trim());
+      const result = await lookupBook(code.trim());
       setTitle(result.title);
       setAuthor(result.author);
       setCoverUrl(result.coverUrl);
@@ -70,6 +73,12 @@ function AddBook() {
       setLastLookup(null);
       setLookupStatus("notfound");
     }
+  };
+
+  const handleScan = (code: string) => {
+    setScanning(false);
+    setIsbn(code);
+    lookUp(code);
   };
 
   const handleFormatChange = (chosen: string) => {
@@ -126,7 +135,25 @@ function AddBook() {
             onPick={handlePick}
           />
 
-          <label htmlFor="isbn">Or enter its ISBN to auto-fill</label>
+          <div className="isbn-label-row">
+            <label htmlFor="isbn">Or enter its ISBN to auto-fill</label>
+            {canScan && (
+              <button
+                type="button"
+                className="btn-pill"
+                onClick={() => setScanning(true)}
+              >
+                <svg
+                  className="isbn-scan-icon"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M11 8v8M14 8v8M17 8v8" />
+                </svg>
+                Scan the barcode
+              </button>
+            )}
+          </div>
           <div className="isbn-lookup">
             <input
               type="text"
@@ -138,7 +165,7 @@ function AddBook() {
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={handleLookup}
+              onClick={() => lookUp(isbn)}
               disabled={lookupStatus === "looking" || !isbn.trim()}
             >
               {lookupStatus === "looking"
@@ -248,6 +275,10 @@ function AddBook() {
           {showMore && <ImportLibrary />}
         </section>
       </div>
+
+      {scanning && (
+        <BarcodeScanner onScan={handleScan} onClose={() => setScanning(false)} />
+      )}
     </div>
   );
 }

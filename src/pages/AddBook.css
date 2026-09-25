@@ -50,6 +50,24 @@
   color: var(--color-text-muted);
 }
 
+.isbn-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.isbn-scan-icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .isbn-lookup {
   display: flex;
   gap: 8px;
